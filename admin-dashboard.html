@@ -151,6 +151,29 @@
                 <div id="membersTable"></div>
             </div>
 
+            <!-- Data Backup & Restore -->
+            <div class="card">
+                <h2>💾 Data Backup & Restore</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Backup all your data and use on another device</p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">📥 Export Data</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Download all data as JSON file</p>
+                        <button class="btn btn-success" onclick="exportAllData()" style="width: 100%;">⬇️ Export Backup</button>
+                    </div>
+                    
+                    <div>
+                        <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">📤 Import Data</h3>
+                        <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Restore from JSON file</p>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('importFile').click()" style="width: 100%;">⬆️ Import Backup</button>
+                    </div>
+                </div>
+                
+                <div id="backupResult" style="margin-top: 1rem;"></div>
+            </div>
+
             <!-- Edit User ID Section -->
             <div class="card">
                 <h2>🔧 Edit User ID</h2>
@@ -861,6 +884,103 @@
                 printWindow.print();
             }, 250);
         }
+
+        // Export all data as JSON
+        function exportAllData() {
+            const allData = {
+                users: localStorage.getItem(StorageManager.KEYS.USERS),
+                contributions: localStorage.getItem(StorageManager.KEYS.CONTRIBUTIONS),
+                collectors: localStorage.getItem(StorageManager.KEYS.COLLECTORS),
+                announcements: localStorage.getItem(StorageManager.KEYS.ANNOUNCEMENTS),
+                monthlyReports: localStorage.getItem(StorageManager.KEYS.MONTHLY_REPORTS),
+                exportDate: new Date().toISOString()
+            };
+
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `meat-app-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            
+            document.getElementById('backupResult').innerHTML = `
+                <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 4px;">
+                    ✓ Data exported successfully! File downloaded.
+                </div>
+            `;
+            
+            setTimeout(() => {
+                document.getElementById('backupResult').innerHTML = '';
+            }, 3000);
+        }
+
+        // Import data from JSON file
+        function importAllData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                App.showToast('Please select a file', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // Validate data structure
+                    if (!importedData.users || !importedData.contributions) {
+                        throw new Error('Invalid backup file format');
+                    }
+
+                    // Ask for confirmation
+                    if (!confirm('⚠️ This will replace ALL current data with the backup.\n\nAre you sure?\n\nThis cannot be undone!')) {
+                        return;
+                    }
+
+                    // Restore data
+                    localStorage.setItem(StorageManager.KEYS.USERS, importedData.users);
+                    localStorage.setItem(StorageManager.KEYS.CONTRIBUTIONS, importedData.contributions);
+                    localStorage.setItem(StorageManager.KEYS.COLLECTORS, importedData.collectors || '[]');
+                    localStorage.setItem(StorageManager.KEYS.ANNOUNCEMENTS, importedData.announcements || '[]');
+                    localStorage.setItem(StorageManager.KEYS.MONTHLY_REPORTS, importedData.monthlyReports || '[]');
+
+                    document.getElementById('backupResult').innerHTML = `
+                        <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 4px;">
+                            ✓ Data imported successfully! Reloading page...
+                        </div>
+                    `;
+                    
+                    fileInput.value = '';
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } catch (error) {
+                    document.getElementById('backupResult').innerHTML = `
+                        <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 1rem; border-radius: 4px;">
+                            ✗ Error: ${error.message}
+                        </div>
+                    `;
+                    fileInput.value = '';
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Setup import file listener
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('importFile');
+            if (fileInput) {
+                fileInput.addEventListener('change', importAllData);
+            }
+        });
 
         function handleLogout() {
             if (confirm('Are you sure you want to logout?')) {
