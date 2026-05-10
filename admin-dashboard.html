@@ -138,11 +138,11 @@
                 <div id="collectorsList"></div>
             </div>
 
-            <!-- Member Financial Summary -->
+            <!-- Members Pending Payment This Month -->
             <div class="card">
-                <h2>💰 Member Financial Summary</h2>
-                <p style="color: #666; margin-bottom: 1rem;">View and edit each member's monthly charge and total contribution amount</p>
-                <div id="memberFinancialTable"></div>
+                <h2>⚠️ Members Pending Payment This Month</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Members who have not paid yet this month</p>
+                <div id="pendingPaymentTable"></div>
             </div>
 
             <!-- All Members with Status -->
@@ -332,8 +332,8 @@
             // Load collectors
             loadCollectors(month, year);
 
-            // Load member financial summary
-            loadMemberFinancial();
+            // Load pending payment members
+            loadPendingPaymentMembers(month, year);
 
             // Load all members
             loadAllMembers(month, year);
@@ -551,12 +551,15 @@
             document.getElementById('collectorsList').innerHTML = html;
         }
 
-        function loadMemberFinancial() {
-            const users = StorageManager.getUsers();
-            const members = users.filter(u => u.role === 'member');
+        function loadPendingPaymentMembers(month, year) {
+            const stats = StorageManager.getMonthlyStats(month, year);
+            const contributions = stats.contributions;
+            
+            // Filter only unpaid contributions
+            const unpaidContributions = contributions.filter(c => c.status === 'unpaid');
 
-            if (members.length === 0) {
-                document.getElementById('memberFinancialTable').innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No members registered yet.</p>';
+            if (unpaidContributions.length === 0) {
+                document.getElementById('pendingPaymentTable').innerHTML = '<div style="text-align: center; padding: 2rem; background: #d4edda; border-radius: 4px; color: #155724;"><strong>✓ All members have paid this month!</strong></div>';
                 return;
             }
 
@@ -566,45 +569,28 @@
                         <tr>
                             <th>Member ID</th>
                             <th>Member Name</th>
-                            <th>Phone</th>
+                            <th>Amount Due</th>
                             <th>Status</th>
-                            <th>Monthly Charge</th>
-                            <th>Total Months</th>
-                            <th>Total Amount</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            members.forEach(member => {
-                const monthlyCharge = member.monthlyCharge || 500;
-                const totalMonths = member.totalMonths || 12;
-                const totalAmount = monthlyCharge * totalMonths;
-                const statusBadge = member.status === 'active' 
-                    ? '<span class="table-badge badge-success">ACTIVE</span>'
-                    : member.status === 'pending'
-                    ? '<span class="table-badge badge-warning">PENDING</span>'
-                    : '<span class="table-badge badge-danger">INACTIVE</span>';
-
+            unpaidContributions.forEach(c => {
+                const user = StorageManager.getUserById(c.userId);
+                
                 html += `
                     <tr>
-                        <td><strong>#${member.id}</strong></td>
-                        <td><strong>${escapeHtml(member.name)}</strong></td>
-                        <td>${escapeHtml(member.phone)}</td>
-                        <td>${statusBadge}</td>
-                        <td>${App.formatCurrency(monthlyCharge)}</td>
-                        <td style="text-align: center;">${totalMonths}</td>
-                        <td><strong>${App.formatCurrency(totalAmount)}</strong></td>
-                        <td>
-                            <button class="btn btn-primary btn-sm" onclick="openEditChargeModal(${member.id}, '${escapeHtml(member.name)}', ${monthlyCharge}, ${totalMonths})">Edit</button>
-                        </td>
+                        <td><strong>#${user.id}</strong></td>
+                        <td><strong>${escapeHtml(user.name)}</strong></td>
+                        <td><span style="color: red; font-weight: bold;">${App.formatCurrency(c.amount)}</span></td>
+                        <td><span class="table-badge badge-danger">✗ UNPAID</span></td>
                     </tr>
                 `;
             });
 
             html += '</tbody></table>';
-            document.getElementById('memberFinancialTable').innerHTML = html;
+            document.getElementById('pendingPaymentTable').innerHTML = html;
         }
 
         function openEditChargeModal(memberId, memberName, monthlyCharge, totalMonths) {
@@ -651,7 +637,7 @@
             if (updated) {
                 closeEditChargeModal();
                 initializeEditSelects();
-                loadMemberFinancial();
+                refreshReport();
                 App.showToast('Member contribution updated successfully', 'success');
             } else {
                 App.showToast('Could not update member', 'error');
@@ -947,8 +933,7 @@
             // Refresh all displays
             initializeEditSelects();
             loadAdminUsers();
-            loadMemberFinancial();
-            loadAllMembers(getCurrentMonthYear().month - 1, getCurrentMonthYear().year);
+            refreshReport();
         }
 
         // Load Member Details
