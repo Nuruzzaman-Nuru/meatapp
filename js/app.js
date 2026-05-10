@@ -189,7 +189,8 @@ const App = {
                 id: c.id,
                 userId: c.userId,
                 name: user ? user.name : 'Unknown',
-                email: user ? user.email : 'N/A'
+                email: user ? user.email : 'N/A',
+                phone: user ? user.phone : 'N/A'
             };
         });
     },
