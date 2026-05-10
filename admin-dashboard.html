@@ -558,6 +558,7 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>Member ID</th>
                             <th>Member Name</th>
                             <th>Phone</th>
                             <th>Status</th>
@@ -582,6 +583,7 @@
 
                 html += `
                     <tr>
+                        <td><strong>#${member.id}</strong></td>
                         <td><strong>${escapeHtml(member.name)}</strong></td>
                         <td>${escapeHtml(member.phone)}</td>
                         <td>${statusBadge}</td>
