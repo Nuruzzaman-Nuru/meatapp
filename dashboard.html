@@ -245,12 +245,57 @@
 
             const result = App.recordPayment(contribution.id, method);
             if (result.success) {
-                App.showToast('Payment recorded successfully!', 'success');
-                initializeDashboard();
+                // Show success screen
+                showPaymentSuccessScreen(result.contribution, method);
+                
+                // Reset form
                 document.getElementById('paymentMonth').value = '';
+                document.getElementById('paymentMethod').value = 'cash';
+                
+                // Update dashboard
+                setTimeout(() => {
+                    initializeDashboard();
+                }, 2000);
             } else {
                 App.showToast(result.message, 'error');
             }
+        }
+
+        function showPaymentSuccessScreen(contribution, method) {
+            const monthName = App.getMonthName(contribution.month);
+            const paidDate = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let html = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                    
+                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Recorded Successfully!</h2>
+                    
+                    <div style="background: #d5f4e6; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; text-align: left;">
+                        <p style="margin: 0.5rem 0;"><strong>Member:</strong> ${currentUser.name}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Month:</strong> ${monthName} ${contribution.year}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Amount:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Payment Method:</strong> ${method.charAt(0).toUpperCase() + method.slice(1)}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Date & Time:</strong> ${paidDate}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #27ae60; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">✓ PAID</span></p>
+                    </div>
+
+                    <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment has been successfully recorded in the system.</p>
+                    </div>
+
+                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem;">Great! Close</button>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('paymentModal').classList.add('show');
         }
 
         function loadHistory() {
