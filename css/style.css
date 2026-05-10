@@ -211,8 +211,9 @@ body {
     margin: 0 auto 2rem;
     border: 1px solid rgba(44, 62, 80, 0.12);
     box-shadow: 0 12px 34px rgba(26, 37, 47, 0.18);
-    max-height: 400px;
-    object-fit: cover;
+    max-height: none;
+    min-height: 300px;
+    object-fit: contain;
 }
 
 .home-content-grid {
