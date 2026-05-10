@@ -337,6 +337,9 @@
 
             // Load all members
             loadAllMembers(month, year);
+
+            // Load member total amount summary
+            loadMemberTotalAmountSummary();
         }
 
         function escapeHtml(value) {
@@ -984,11 +987,11 @@
                         <div>
                             <h3 style="margin-top: 0;">Financial Summary</h3>
                             <p><strong>Total Contributions:</strong> ${summary.totalContributions}</p>
-                            <p><strong>Paid:</strong> <span style="color: green; font-weight: bold;">${summary.paidCount} ✓</span></p>
-                            <p><strong>Unpaid:</strong> <span style="color: red; font-weight: bold;">${summary.unpaidCount} ✗</span></p>
+                            <p><strong>✓ Paid:</strong> <span style="color: green; font-weight: bold;">${summary.paidCount}</span></p>
+                            <p><strong>✗ Unpaid:</strong> <span style="color: red; font-weight: bold;">${summary.unpaidCount}</span></p>
                             <hr>
                             <p><strong>Total Amount Paid:</strong> <span style="color: green; font-weight: bold; font-size: 1.1rem;">${App.formatCurrency(summary.totalPaid)}</span></p>
-                            <p><strong>Total Amount Due:</strong> <span style="color: red; font-weight: bold; font-size: 1.1rem;">${App.formatCurrency(summary.totalDue)}</span></p>
+                            <p><strong>Total Amount Unpaid:</strong> <span style="color: red; font-weight: bold; font-size: 1.1rem;">${App.formatCurrency(summary.totalDue)}</span></p>
                         </div>
                     </div>
 
@@ -1030,6 +1033,53 @@
 
             html += '</tbody></table>';
             document.getElementById('memberDetailResult').innerHTML = html;
+        }
+
+        // Load Member Total Amount Summary
+        function loadMemberTotalAmountSummary() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member');
+
+            if (members.length === 0) {
+                document.getElementById('memberTotalSummary').innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No members registered yet.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Member ID</th>
+                            <th>Member Name</th>
+                            <th>Total Paid Amount</th>
+                            <th>Total Unpaid Amount</th>
+                            <th>Grand Total</th>
+                            <th>Paid Count</th>
+                            <th>Unpaid Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            members.forEach(member => {
+                const summary = App.getUserContributionSummary(member.id);
+                const grandTotal = summary.totalPaid + summary.totalDue;
+
+                html += `
+                    <tr>
+                        <td><strong>#${member.id}</strong></td>
+                        <td><strong>${escapeHtml(member.name)}</strong></td>
+                        <td><span style="color: green; font-weight: bold;">✓ ${App.formatCurrency(summary.totalPaid)}</span></td>
+                        <td><span style="color: red; font-weight: bold;">✗ ${App.formatCurrency(summary.totalDue)}</span></td>
+                        <td><strong>${App.formatCurrency(grandTotal)}</strong></td>
+                        <td style="text-align: center;"><span class="table-badge badge-success">${summary.paidCount}</span></td>
+                        <td style="text-align: center;"><span class="table-badge badge-danger">${summary.unpaidCount}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('memberTotalSummary').innerHTML = html;
         }
     </script>
 </body>
