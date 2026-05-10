@@ -386,6 +386,7 @@
                 <table class="table admin-users-table">
                     <thead>
                         <tr>
+                            <th>Member ID</th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone</th>
@@ -404,6 +405,7 @@
 
                 html += `
                     <tr>
+                        <td><strong>#${user.id}</strong></td>
                         <td><strong>${escapeHtml(user.name)}</strong></td>
                         <td>${escapeHtml(user.email)}</td>
                         <td>${escapeHtml(user.phone)}</td>
@@ -655,6 +657,7 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th>Member ID</th>
                             <th>Member Name</th>
                             <th>Email</th>
                             <th>Amount</th>
@@ -673,6 +676,7 @@
 
                 html += `
                     <tr>
+                        <td><strong>#${user.id}</strong></td>
                         <td><strong>${user.name}</strong></td>
                         <td>${user.email}</td>
                         <td>${App.formatCurrency(c.amount)}</td>
