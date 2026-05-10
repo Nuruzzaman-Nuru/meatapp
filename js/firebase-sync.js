@@ -1,299 +1,142 @@
 /**
- * Firebase Cloud Storage Manager
- * Syncs all data with Firestore database for multi-device support
- * 
- * Setup Required:
- * 1. Complete FIREBASE_SETUP.md first
- * 2. Copy your Firebase config to firebase-config.js
- * 3. Include this script AFTER firebase-config.js
+ * Firebase Cloud Sync
+ * Mirrors StorageManager localStorage data to Firestore.
  */
 
-// Check if Firebase is available
-let isFirebaseEnabled = false;
-let db = null;
-let auth = null;
-
-// Try to initialize Firebase
-async function initializeFirebase() {
-    try {
-        // Dynamically import Firebase modules
-        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js');
-        const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
-        const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js');
-        
-        // Import Firebase config
-        const { firebaseConfig } = await import('./firebase-config.js');
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        isFirebaseEnabled = true;
-        
-        console.log('✅ Firebase initialized successfully!');
-        return true;
-    } catch (error) {
-        console.log('⚠️ Firebase not configured. Using localStorage only.');
-        console.log('To enable cloud sync, complete FIREBASE_SETUP.md');
-        return false;
-    }
-}
-
-// Storage Manager with Firebase support
-const FirebaseStorageManager = {
-    /**
-     * All localStorage keys
-     */
-    KEYS: {
-        USERS: 'users',
-        CURRENT_USER: 'currentUser',
-        CONTRIBUTIONS: 'contributions',
-        COLLECTORS: 'collectors',
-        ANNOUNCEMENTS: 'announcements',
-        MONTHLY_REPORTS: 'monthlyReports'
+const FirebaseSync = {
+    enabled: false,
+    db: null,
+    collectionPaths: {
+        users: 'users',
+        contributions: 'contributions',
+        collectors: 'collectors',
+        announcements: 'announcements',
+        monthlyReports: 'monthlyReports'
     },
 
-    /**
-     * Initialize storage - sync from Firebase if available
-     */
     async init() {
-        // Try Firebase first
-        if (isFirebaseEnabled) {
-            try {
-                await this.syncFromFirebase();
-                console.log('✅ Data synced from Firebase');
-                return;
-            } catch (error) {
-                console.log('⚠️ Firebase sync failed, using localStorage');
-            }
-        }
-
-        // Fallback to localStorage initialization
-        if (!localStorage.getItem(this.KEYS.USERS)) {
-            const adminUser = {
-                id: 1,
-                name: 'Admin User',
-                email: 'admin@meatsystem.com',
-                phone: '01700000000',
-                password: 'admin123',
-                role: 'admin',
-                joinDate: new Date().toISOString(),
-                status: 'active'
-            };
-            localStorage.setItem(this.KEYS.USERS, JSON.stringify([adminUser]));
-        }
-
-        if (!localStorage.getItem(this.KEYS.CONTRIBUTIONS)) {
-            localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify([]));
-        }
-
-        if (!localStorage.getItem(this.KEYS.COLLECTORS)) {
-            localStorage.setItem(this.KEYS.COLLECTORS, JSON.stringify([]));
-        }
-
-        if (!localStorage.getItem(this.KEYS.ANNOUNCEMENTS)) {
-            localStorage.setItem(this.KEYS.ANNOUNCEMENTS, JSON.stringify([]));
-        }
-
-        if (!localStorage.getItem(this.KEYS.MONTHLY_REPORTS)) {
-            localStorage.setItem(this.KEYS.MONTHLY_REPORTS, JSON.stringify([]));
-        }
-    },
-
-    /**
-     * Sync data FROM Firebase TO localStorage
-     */
-    async syncFromFirebase() {
-        if (!isFirebaseEnabled || !db) return;
-
         try {
-            const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
-            
-            // Get all collections
-            const dataKey = auth.currentUser?.uid || 'default';
-            
-            // Fetch each collection
-            const collections = ['users', 'contributions', 'collectors', 'announcements', 'monthlyReports'];
-            
-            for (const collName of collections) {
-                try {
-                    const colRef = collection(db, 'users', dataKey, collName);
-                    const snapshot = await getDocs(colRef);
-                    
-                    let data = [];
-                    snapshot.forEach(doc => {
-                        data.push(doc.data());
-                    });
-                    
-                    // Store in localStorage
-                    const key = collName.charAt(0).toUpperCase() + collName.slice(1).toUpperCase();
-                    const storageKey = Object.keys(this.KEYS).find(k => k.replace(/_/g, '').toLowerCase() === collName.toLowerCase());
-                    if (storageKey) {
-                        localStorage.setItem(this.KEYS[storageKey], JSON.stringify(data));
-                    }
-                } catch (e) {
-                    // Collection might not exist yet
-                    console.log(`Collection ${collName} not found in Firebase`);
-                }
-            }
+            const configModule = await import('../firebase-config.js');
+            this.db = configModule.db;
+            this.enabled = Boolean(this.db);
+
+            await this.syncFromFirebase();
+            this.patchStorageManager();
+            await this.syncAllToFirebase();
+
+            console.log('Firebase sync ready');
         } catch (error) {
-            console.error('Error syncing from Firebase:', error);
+            this.enabled = false;
+            console.warn('Firebase sync disabled. Using localStorage only.', error);
         }
     },
 
-    /**
-     * Sync data to Firebase (call after every save)
-     */
-    async syncToFirebase() {
-        if (!isFirebaseEnabled || !db || !auth.currentUser) return;
+    getKeyMap() {
+        if (!window.StorageManager) return {};
 
-        try {
-            const { collection, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js');
-            
-            const userId = auth.currentUser.uid;
-            const timestamp = new Date().toISOString();
-
-            // Sync each collection
-            for (const [localKey, storageKey] of Object.entries(this.KEYS)) {
-                if (localKey === 'CURRENT_USER') continue; // Skip current user
-                
-                const data = localStorage.getItem(storageKey);
-                if (data) {
-                    try {
-                        const items = JSON.parse(data);
-                        
-                        // Save collection metadata
-                        const colRef = doc(db, 'users', userId, storageKey.toLowerCase(), '_meta');
-                        await setDoc(colRef, {
-                            lastSync: timestamp,
-                            itemCount: Array.isArray(items) ? items.length : 0
-                        }, { merge: true });
-
-                        console.log(`✅ Synced ${storageKey} to Firebase`);
-                    } catch (e) {
-                        console.log(`Could not sync ${storageKey}`);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error syncing to Firebase:', error);
-        }
-    },
-
-    /**
-     * Get all users
-     */
-    getUsers() {
-        const users = localStorage.getItem(this.KEYS.USERS);
-        return users ? JSON.parse(users) : [];
-    },
-
-    /**
-     * Get user by ID
-     */
-    getUserById(id) {
-        const users = this.getUsers();
-        return users.find(u => u.id === id);
-    },
-
-    /**
-     * Get user by phone
-     */
-    getUserByPhone(phone) {
-        const users = this.getUsers();
-        return users.find(u => u.phone === phone);
-    },
-
-    /**
-     * Add new user
-     */
-    addUser(userData) {
-        const users = this.getUsers();
-        const newUser = {
-            id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-            status: 'active',
-            ...userData,
-            joinDate: new Date().toISOString()
+        return {
+            users: StorageManager.KEYS.USERS,
+            contributions: StorageManager.KEYS.CONTRIBUTIONS,
+            collectors: StorageManager.KEYS.COLLECTORS,
+            announcements: StorageManager.KEYS.ANNOUNCEMENTS,
+            monthlyReports: StorageManager.KEYS.MONTHLY_REPORTS
         };
-        users.push(newUser);
-        localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
-        
-        // Sync to Firebase
-        this.syncToFirebase();
-        
-        return newUser;
     },
 
-    /**
-     * Update user
-     */
-    updateUser(id, updates) {
-        const users = this.getUsers();
-        const user = users.find(u => u.id === id);
-        
-        if (!user) return null;
-        
-        Object.assign(user, updates);
-        localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
-        
-        // Sync to Firebase
-        this.syncToFirebase();
-        
-        return user;
+    getDocId(item, index) {
+        return String(item?.id ?? index + 1);
     },
 
-    /**
-     * Delete user
-     */
-    deleteUser(id) {
-        const users = this.getUsers();
-        const index = users.findIndex(u => u.id === id);
-        
-        if (index === -1) return false;
-        
-        users.splice(index, 1);
-        localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
-        
-        // Sync to Firebase
-        this.syncToFirebase();
-        
-        return true;
+    async syncFromFirebase() {
+        if (!this.enabled || !window.StorageManager) return;
+
+        const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const keyMap = this.getKeyMap();
+
+        for (const [name, storageKey] of Object.entries(keyMap)) {
+            const snapshot = await getDocs(collection(this.db, 'meatAppData', 'default', name));
+            if (snapshot.empty) continue;
+
+            const data = [];
+            snapshot.forEach(docSnap => {
+                if (docSnap.id !== '_meta') {
+                    data.push(docSnap.data());
+                }
+            });
+
+            if (data.length > 0) {
+                localStorage.setItem(storageKey, JSON.stringify(data));
+            }
+        }
     },
 
-    // Add remaining methods (contributions, collectors, etc.) similar to StorageManager
-    // For brevity, they follow the same pattern as above
+    async syncCollectionToFirebase(name) {
+        if (!this.enabled || !window.StorageManager) return;
 
-    /**
-     * Set current user session
-     */
-    setCurrentUser(user) {
-        localStorage.setItem(this.KEYS.CURRENT_USER, JSON.stringify(user));
+        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+        const storageKey = this.getKeyMap()[name];
+        if (!storageKey) return;
+
+        const rawData = localStorage.getItem(storageKey);
+        const items = rawData ? JSON.parse(rawData) : [];
+        const safeItems = Array.isArray(items) ? items : [];
+
+        await setDoc(doc(this.db, 'meatAppData', 'default', name, '_meta'), {
+            lastSync: new Date().toISOString(),
+            itemCount: safeItems.length
+        }, { merge: true });
+
+        await Promise.all(safeItems.map((item, index) => {
+            return setDoc(
+                doc(this.db, 'meatAppData', 'default', name, this.getDocId(item, index)),
+                item,
+                { merge: true }
+            );
+        }));
     },
 
-    /**
-     * Get current user session
-     */
-    getCurrentUser() {
-        const user = localStorage.getItem(this.KEYS.CURRENT_USER);
-        return user ? JSON.parse(user) : null;
+    async syncAllToFirebase() {
+        await Promise.all(Object.keys(this.getKeyMap()).map(name => this.syncCollectionToFirebase(name)));
     },
 
-    /**
-     * Clear current user session
-     */
-    clearCurrentUser() {
-        localStorage.removeItem(this.KEYS.CURRENT_USER);
+    syncSoon(name) {
+        if (!this.enabled) return;
+        setTimeout(() => {
+            this.syncCollectionToFirebase(name).catch(error => {
+                console.error(`Firebase ${name} sync failed`, error);
+            });
+        }, 0);
+    },
+
+    patchStorageManager() {
+        if (!window.StorageManager || StorageManager.__firebaseSyncPatched) return;
+
+        const patch = (methodName, collections) => {
+            const original = StorageManager[methodName];
+            if (typeof original !== 'function') return;
+
+            StorageManager[methodName] = function patchedStorageMethod(...args) {
+                const result = original.apply(this, args);
+                collections.forEach(collectionName => FirebaseSync.syncSoon(collectionName));
+                return result;
+            };
+        };
+
+        patch('addUser', ['users']);
+        patch('updateUser', ['users']);
+        patch('deleteUser', ['users', 'contributions', 'collectors']);
+        patch('addContribution', ['contributions']);
+        patch('updateContribution', ['contributions']);
+        patch('setCollectors', ['collectors']);
+        patch('addAnnouncement', ['announcements']);
+        patch('deleteAnnouncement', ['announcements']);
+
+        StorageManager.__firebaseSyncPatched = true;
     }
 };
 
-// Initialize Firebase on load
-window.addEventListener('load', async () => {
-    await initializeFirebase();
-    if (typeof StorageManager !== 'undefined') {
-        await FirebaseStorageManager.init();
-    }
-});
+window.FirebaseSync = FirebaseSync;
 
-// Make available globally
-window.FirebaseStorageManager = FirebaseStorageManager;
-window.initializeFirebase = initializeFirebase;
+window.addEventListener('load', () => {
+    FirebaseSync.init();
+});
