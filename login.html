@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Login - Monthly Contribution Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container site-header-content">
+            <a class="site-brand" href="index.html">মাংসের সমিতি</a>
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="index.html">Home</a>
+                <a href="contact.html">Contact</a>
+                <a class="nav-login-btn" href="login.html">Login</a>
+                <a class="nav-register-btn" href="register.html">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="auth-page">
+        <section class="member-access">
+            <div class="section-heading">
+                <p class="section-kicker">Member Area</p>
+                <h2>Login to your account</h2>
+            </div>
+
+            <div id="loginForm">
+                <h1>Login</h1>
+                <div id="loginAlert" class="alert"></div>
+
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="Enter your phone number">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+
+                <div class="form-buttons">
+                    <button class="btn btn-primary btn-block" onclick="handleLogin()">Login</button>
+                </div>
+
+                <div class="switch-form">
+                    Don't have an account? <a href="register.html">Register here</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <h3>মাংসের সমিতি</h3>
+                <p>ভাই ব্রাদার্স সমিতির সদস্য, চাঁদা, কালেক্টর এবং মাসিক রিপোর্ট ব্যবস্থাপনার জন্য তৈরি।</p>
+            </div>
+            <div>
+                <h3>Quick Links</h3>
+                <a href="index.html#overview">Overview</a>
+                <a href="login.html">Member Login</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div>
+                <h3>Contact</h3>
+                <p>Admin: admin@meatsystem.com</p>
+                <p>Phone: 01307347646</p>
+            </div>
+            <div>
+                <h4>Payment Method</h4>
+                <div class="badge-grid">
+                    <span class="pay-pill">Bkash</span>
+                    <span class="pay-pill">Nagad</span>
+                    <span class="pay-pill">Rocket</span>
+                    <span class="pay-pill">Visa</span>
+                    <span class="pay-pill">Mastercard</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">Copyright 2026 Meat Association. All rights reserved.</div>
+    </footer>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            AuthManager.blockIfLoggedIn();
+        });
+
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            const result = AuthManager.login(phone, password);
+            const alert = document.getElementById('loginAlert');
+
+            if (result.success) {
+                alert.className = 'alert alert-success';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+
+                setTimeout(() => {
+                    const user = AuthManager.getCurrentUser();
+                    window.location.href = user.role === 'admin' ? 'admin-dashboard.html' : 'dashboard.html';
+                }, 1000);
+            } else {
+                alert.className = 'alert alert-error';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+    </script>
+</body>
+</html>

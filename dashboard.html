@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Member Dashboard - Contribution System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <div class="navbar-brand">💰 Contribution System</div>
+                <div class="navbar-menu">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="profile.html">Profile</a>
+                    <a href="announcements.html">Announcements</a>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Welcome Section -->
+        <div style="margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+            <h1>Welcome, <span id="userName">User</span>! 👋</h1>
+            <p id="userInfo"></p>
+        </div>
+
+        <!-- Alerts -->
+        <div id="toast-notification" class="alert"></div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-container">
+            <!-- Stats Section -->
+            <div class="stats-grid">
+                <div class="stat-box primary">
+                    <div class="stat-label">Total Contributions</div>
+                    <div class="stat-value" id="totalContrib">0</div>
+                </div>
+                <div class="stat-box success">
+                    <div class="stat-label">Amount Paid</div>
+                    <div class="stat-value" id="totalPaid">0 BDT</div>
+                </div>
+                <div class="stat-box danger">
+                    <div class="stat-label">Amount Due</div>
+                    <div class="stat-value" id="totalDue">0 BDT</div>
+                </div>
+                <div class="stat-box warning">
+                    <div class="stat-label">Join Date</div>
+                    <div class="stat-value font-sm" id="joinDate">-</div>
+                </div>
+            </div>
+
+            <!-- Current Month Section -->
+            <div class="card">
+                <h2>📅 Current Month Status</h2>
+                <div id="currentMonthContent"></div>
+            </div>
+
+            <!-- Collector Info -->
+            <div class="card">
+                <h2>👥 This Month's Collectors</h2>
+                <div id="collectorInfo"></div>
+            </div>
+
+            <!-- Quick Pay Section -->
+            <div class="card">
+                <h2>💳 Record Payment</h2>
+                <div class="form-group">
+                    <label for="paymentMonth">Select Month</label>
+                    <select id="paymentMonth">
+                        <option value="">-- Select Month --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="paymentMethod">Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="cash">Cash</option>
+                        <option value="online">Online Transfer</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">Mark as Paid</button>
+            </div>
+
+            <!-- Contribution History -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2>📊 Contribution History</h2>
+                    <button class="btn btn-primary" onclick="handlePrintReport()" style="margin: 0;">🖨️ Print Report</button>
+                </div>
+                <div id="historyTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Detailed Payment -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Payment Details</h2>
+                <button class="close-btn" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!AuthManager.requireAuth()) return;
+
+            currentUser = AuthManager.getCurrentUser();
+            initializeDashboard();
+            populateMonthSelector();
+        });
+
+        function initializeDashboard() {
+            // Set user info
+            document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
+            document.getElementById('userInfo').textContent = `Email: ${currentUser.email} | Phone: ${currentUser.phone}`;
+
+            // Get stats
+            const summary = App.getUserContributionSummary(currentUser.id);
+            document.getElementById('totalContrib').textContent = summary.totalContributions;
+            document.getElementById('totalPaid').textContent = App.formatCurrency(summary.totalPaid);
+            document.getElementById('totalDue').textContent = App.formatCurrency(summary.totalDue);
+            document.getElementById('joinDate').textContent = App.formatDate(currentUser.joinDate);
+
+            // Current month status
+            loadCurrentMonthStatus();
+
+            // Collector info
+            loadCollectorInfo();
+
+            // History
+            loadHistory();
+        }
+
+        function loadCurrentMonthStatus() {
+            const { month, year } = App.getCurrentMonthYear();
+            const contributions = StorageManager.getMonthContributions(month, year);
+            const userContribution = contributions.find(c => c.userId === currentUser.id);
+
+            let html = '';
+            if (userContribution) {
+                const statusBadge = userContribution.status === 'paid' 
+                    ? `<span class="table-badge badge-success">✓ PAID</span>`
+                    : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+
+                html = `
+                    <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+                        <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                        <p><strong>Amount:</strong> ${App.formatCurrency(userContribution.amount)}</p>
+                        <p><strong>Status:</strong> ${statusBadge}</p>
+                        ${userContribution.paymentDate ? `<p><strong>Paid on:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
+                    </div>
+                `;
+            } else {
+                // Generate if not exists
+                const generated = StorageManager.getOrCreateContribution(currentUser.id, month, year);
+                html = `
+                    <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+                        <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                        <p><strong>Amount:</strong> ${App.formatCurrency(200)}</p>
+                        <p><strong>Status:</strong> <span class="table-badge badge-danger">✗ UNPAID</span></p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('currentMonthContent').innerHTML = html;
+        }
+
+        function loadCollectorInfo() {
+            const { month, year } = App.getCurrentMonthYear();
+            const collectors = App.getMonthCollectorNames(month, year);
+
+            let html = '';
+            if (collectors.length > 0) {
+                html = '<div style="display: grid; gap: 1rem;">';
+                collectors.forEach(collector => {
+                    html += `
+                        <div style="padding: 1rem; background: #f9f9f9; border-left: 4px solid var(--primary-color); border-radius: 4px;">
+                            <p><strong>📌 ${collector.name}</strong></p>
+                            <p style="font-size: 0.9rem; color: #666;">Email: ${collector.email}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            } else {
+                html = '<p style="color: #999;">No collectors assigned for this month yet.</p>';
+            }
+
+            document.getElementById('collectorInfo').innerHTML = html;
+        }
+
+        function populateMonthSelector() {
+            const select = document.getElementById('paymentMonth');
+            const { month, year } = App.getCurrentMonthYear();
+
+            // Add last 12 months
+            for (let i = 11; i >= 0; i--) {
+                let m = month - i;
+                let y = year;
+                if (m <= 0) {
+                    m += 12;
+                    y -= 1;
+                }
+                const monthName = App.getMonthName(m);
+                const option = document.createElement('option');
+                option.value = `${m}-${y}`;
+                option.textContent = `${monthName} ${y}`;
+                select.appendChild(option);
+            }
+        }
+
+        function recordCurrentPayment() {
+            const monthYear = document.getElementById('paymentMonth').value;
+            const method = document.getElementById('paymentMethod').value;
+
+            if (!monthYear) {
+                App.showToast('Please select a month', 'warning');
+                return;
+            }
+
+            const [month, year] = monthYear.split('-').map(Number);
+            const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
+
+            if (contribution.status === 'paid') {
+                App.showToast('This contribution is already marked as paid', 'warning');
+                return;
+            }
+
+            const result = App.recordPayment(contribution.id, method);
+            if (result.success) {
+                App.showToast('Payment recorded successfully!', 'success');
+                initializeDashboard();
+                document.getElementById('paymentMonth').value = '';
+            } else {
+                App.showToast(result.message, 'error');
+            }
+        }
+
+        function loadHistory() {
+            const summary = App.getUserContributionSummary(currentUser.id);
+            const contributions = summary.contributions.sort((a, b) => {
+                const aKey = a.year * 12 + a.month;
+                const bKey = b.year * 12 + b.month;
+                return bKey - aKey; // Newest first
+            });
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Payment Method</th>
+                            <th>Paid Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (contributions.length === 0) {
+                html += '<tr><td colspan="5" style="text-align: center; color: #999;">No contribution history</td></tr>';
+            } else {
+                contributions.forEach(c => {
+                    const statusBadge = c.status === 'paid'
+                        ? `<span class="table-badge badge-success">✓ PAID</span>`
+                        : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+
+                    html += `
+                        <tr>
+                            <td>${App.getMonthName(c.month)} ${c.year}</td>
+                            <td>${App.formatCurrency(c.amount)}</td>
+                            <td>${statusBadge}</td>
+                            <td>${c.paymentMethod || '-'}</td>
+                            <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table>';
+            document.getElementById('historyTable').innerHTML = html;
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+        }
+
+        function handlePrintReport() {
+            const summary = App.getUserContributionSummary(currentUser.id);
+            const { month, year } = App.getCurrentMonthYear();
+            
+            let printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Contribution Report - ${currentUser.name}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        .header h1 { margin: 0; color: #333; }
+                        .header p { margin: 5px 0; color: #666; }
+                        .section { margin: 20px 0; }
+                        .section h2 { background: #f0f0f0; padding: 10px; margin: 10px 0 10px 0; border-left: 4px solid #667eea; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                        th { background-color: #667eea; color: white; }
+                        .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+                        .summary-box { padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+                        .summary-label { font-size: 0.9rem; color: #666; }
+                        .summary-value { font-size: 1.5rem; font-weight: bold; color: #333; }
+                        .footer { margin-top: 30px; text-align: center; color: #999; font-size: 0.9rem; border-top: 1px solid #ddd; padding-top: 10px; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Contribution Report</h1>
+                        <p><strong>${currentUser.name}</strong></p>
+                        <p>Email: ${currentUser.email} | Phone: ${currentUser.phone}</p>
+                        <p>Printed on: ${new Date().toLocaleString()}</p>
+                    </div>
+
+                    <div class="section">
+                        <h2>Summary</h2>
+                        <div class="summary">
+                            <div class="summary-box">
+                                <div class="summary-label">Total Contributions</div>
+                                <div class="summary-value">${summary.totalContributions}</div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-label">Amount Paid</div>
+                                <div class="summary-value">${App.formatCurrency(summary.totalPaid)}</div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-label">Amount Due</div>
+                                <div class="summary-value">${App.formatCurrency(summary.totalDue)}</div>
+                            </div>
+                            <div class="summary-box">
+                                <div class="summary-label">Member Since</div>
+                                <div class="summary-value">${App.formatDate(currentUser.joinDate)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Contribution History</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Method</th>
+                                    <th>Paid Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${summary.contributions.sort((a, b) => {
+                                    const aKey = a.year * 12 + a.month;
+                                    const bKey = b.year * 12 + b.month;
+                                    return bKey - aKey;
+                                }).map(c => `
+                                    <tr>
+                                        <td>${App.getMonthName(c.month)} ${c.year}</td>
+                                        <td>${App.formatCurrency(c.amount)}</td>
+                                        <td>${c.status === 'paid' ? 'PAID' : 'UNPAID'}</td>
+                                        <td>${c.paymentMethod || '-'}</td>
+                                        <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="footer">
+                        <p>মাংসের সমিতি - Contribution Management System</p>
+                        <p>This is an official report. Please keep it safe for your records.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            const printWindow = window.open('', 'printReport', 'height=600,width=900');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            setTimeout(() => { printWindow.print(); }, 250);
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AuthManager.logout();
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

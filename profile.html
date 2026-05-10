@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Profile - Contribution System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <div class="navbar-brand">💰 Contribution System</div>
+                <div class="navbar-menu">
+                    <a href="dashboard.html">Dashboard</a>
+                    <a href="profile.html">Profile</a>
+                    <a href="announcements.html">Announcements</a>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Alerts -->
+        <div id="toast-notification" class="alert"></div>
+
+        <!-- Profile Card -->
+        <div class="dashboard-container" style="margin: 2rem 0;">
+            <!-- Profile Info -->
+            <div class="card">
+                <h2>👤 Profile Information</h2>
+                
+                <div id="profileInfo"></div>
+
+                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--light-bg);">
+                    <h3>Edit Profile</h3>
+                    
+                    <div class="form-group">
+                        <label for="editName">Full Name</label>
+                        <input type="text" id="editName" placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPhone">Phone Number</label>
+                        <input type="tel" id="editPhone" placeholder="Enter your phone number">
+                    </div>
+
+                    <button class="btn btn-primary btn-block" onclick="updateProfile()">💾 Save Changes</button>
+                </div>
+            </div>
+
+            <!-- Contribution Summary -->
+            <div class="card">
+                <h2>📊 Contribution Summary</h2>
+                
+                <div class="stats-grid" style="margin-bottom: 2rem;">
+                    <div class="stat-box primary">
+                        <div class="stat-label">Total Contributions</div>
+                        <div class="stat-value" id="summaryTotal">0</div>
+                    </div>
+                    <div class="stat-box success">
+                        <div class="stat-label">Paid</div>
+                        <div class="stat-value" id="summaryPaid">0</div>
+                    </div>
+                    <div class="stat-box danger">
+                        <div class="stat-label">Unpaid</div>
+                        <div class="stat-value" id="summaryUnpaid">0</div>
+                    </div>
+                </div>
+
+                <div style="background: #f5f5f5; padding: 1.5rem; border-radius: 4px;">
+                    <p><strong>Total Amount Paid:</strong> <span id="summaryAmountPaid" class="text-success font-bold">0 BDT</span></p>
+                    <p><strong>Total Amount Due:</strong> <span id="summaryAmountDue" class="text-danger font-bold">0 BDT</span></p>
+                </div>
+            </div>
+
+            <!-- Collector Assignments -->
+            <div class="card">
+                <h2>🎯 Collector Assignments</h2>
+                <div id="collectorAssignments"></div>
+            </div>
+
+            <!-- Full Contribution History -->
+            <div class="card">
+                <h2>📋 Full Contribution History</h2>
+                <div id="fullHistory"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let currentUser = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!AuthManager.requireAuth()) return;
+
+            currentUser = AuthManager.getCurrentUser();
+            loadProfileInfo();
+            loadSummary();
+            loadCollectorAssignments();
+            loadFullHistory();
+        });
+
+        function loadProfileInfo() {
+            const user = StorageManager.getUserById(currentUser.id);
+            
+            const html = `
+                <div style="background: #f9f9f9; padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                    <p><strong>Name:</strong> ${user.name}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Phone:</strong> ${user.phone}</p>
+                    <p><strong>Role:</strong> <span class="table-badge ${user.role === 'admin' ? 'badge-admin' : 'badge-success'}">${user.role.toUpperCase()}</span></p>
+                    <p><strong>Join Date:</strong> ${App.formatDate(user.joinDate)}</p>
+                    <p><strong>Status:</strong> <span class="table-badge badge-success">${user.status.toUpperCase()}</span></p>
+                </div>
+            `;
+
+            document.getElementById('profileInfo').innerHTML = html;
+            
+            // Pre-fill edit form
+            document.getElementById('editName').value = user.name;
+            document.getElementById('editPhone').value = user.phone;
+        }
+
+        function loadSummary() {
+            const summary = App.getUserContributionSummary(currentUser.id);
+            
+            document.getElementById('summaryTotal').textContent = summary.totalContributions;
+            document.getElementById('summaryPaid').textContent = summary.paidCount;
+            document.getElementById('summaryUnpaid').textContent = summary.unpaidCount;
+            document.getElementById('summaryAmountPaid').textContent = App.formatCurrency(summary.totalPaid);
+            document.getElementById('summaryAmountDue').textContent = App.formatCurrency(summary.totalDue);
+        }
+
+        function loadCollectorAssignments() {
+            const collectors = StorageManager.getCollectors();
+            const userAssignments = collectors.filter(c => c.userId === currentUser.id);
+
+            let html = '';
+            if (userAssignments.length === 0) {
+                html = '<p style="color: #999; text-align: center; padding: 2rem;">Not assigned as collector yet.</p>';
+            } else {
+                html = '<div style="display: grid; gap: 1rem;">';
+                userAssignments.forEach(assignment => {
+                    const monthName = App.getMonthName(assignment.month);
+                    html += `
+                        <div style="padding: 1rem; background: #e3f2fd; border-left: 4px solid var(--primary-color); border-radius: 4px;">
+                            <p><strong>📅 ${monthName} ${assignment.year}</strong></p>
+                            <p style="font-size: 0.9rem; color: #666;">Assigned: ${App.formatDate(assignment.assignedDate)}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            document.getElementById('collectorAssignments').innerHTML = html;
+        }
+
+        function loadFullHistory() {
+            const summary = App.getUserContributionSummary(currentUser.id);
+            const contributions = summary.contributions.sort((a, b) => {
+                const aKey = a.year * 12 + a.month;
+                const bKey = b.year * 12 + b.month;
+                return bKey - aKey; // Newest first
+            });
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Year</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Payment Method</th>
+                            <th>Paid Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (contributions.length === 0) {
+                html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
+            } else {
+                contributions.forEach(c => {
+                    const statusBadge = c.status === 'paid'
+                        ? `<span class="table-badge badge-success">✓ PAID</span>`
+                        : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+
+                    html += `
+                        <tr>
+                            <td>${App.getMonthName(c.month)}</td>
+                            <td>${c.year}</td>
+                            <td>${App.formatCurrency(c.amount)}</td>
+                            <td>${statusBadge}</td>
+                            <td>${c.paymentMethod || '-'}</td>
+                            <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table>';
+            document.getElementById('fullHistory').innerHTML = html;
+        }
+
+        function updateProfile() {
+            const name = document.getElementById('editName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+
+            if (!name || !phone) {
+                App.showToast('All fields are required', 'warning');
+                return;
+            }
+
+            StorageManager.updateUser(currentUser.id, { name, phone });
+            
+            // Update session
+            const updatedUser = StorageManager.getUserById(currentUser.id);
+            const sessionUser = {
+                id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                phone: updatedUser.phone,
+                joinDate: updatedUser.joinDate
+            };
+            StorageManager.setCurrentUser(sessionUser);
+            currentUser = sessionUser;
+
+            App.showToast('Profile updated successfully!', 'success');
+            loadProfileInfo();
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AuthManager.logout();
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

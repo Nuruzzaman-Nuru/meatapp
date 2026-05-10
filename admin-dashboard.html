@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Admin Dashboard - Contribution System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <div class="navbar-brand">💰 Admin Dashboard</div>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html">Dashboard</a>
+                    <a href="announcements.html">Announcements</a>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Welcome Section -->
+        <div style="margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
+            <h1>👨‍💼 Admin Dashboard</h1>
+            <p>Manage members, collections, and assignments</p>
+        </div>
+
+        <!-- Alerts -->
+        <div id="toast-notification" class="alert"></div>
+
+        <!-- Month Selector -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3>Select Month</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
+                <div>
+                    <label for="adminMonth">Month</label>
+                    <select id="adminMonth">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="adminYear">Year</label>
+                    <input type="number" id="adminYear" min="2020" />
+                </div>
+                <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
+                    <button class="btn btn-primary" onclick="refreshReport()">📊 Load Report</button>
+                    <button class="btn btn-success" onclick="printReport()" title="Print the monthly report">🖨️ Print</button>
+                </div>
+            </div>
+        </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-container">
+            <!-- Stats Section -->
+            <div class="stats-grid">
+                <div class="stat-box primary">
+                    <div class="stat-label">Total Members</div>
+                    <div class="stat-value" id="totalMembers">0</div>
+                </div>
+                <div class="stat-box success">
+                    <div class="stat-label">Total Collected</div>
+                    <div class="stat-value" id="totalCollected">0 BDT</div>
+                </div>
+                <div class="stat-box danger">
+                    <div class="stat-label">Total Due</div>
+                    <div class="stat-value" id="totalDueAmount">0 BDT</div>
+                </div>
+                <div class="stat-box warning">
+                    <div class="stat-label">Expected Amount</div>
+                    <div class="stat-value" id="expectedAmount">0 BDT</div>
+                </div>
+            </div>
+
+            <!-- User Management -->
+            <div class="card">
+                <h2>User Management</h2>
+                <div class="stats-grid compact-stats">
+                    <div class="stat-box primary">
+                        <div class="stat-label">Active Users</div>
+                        <div class="stat-value" id="activeUserCount">0</div>
+                    </div>
+                    <div class="stat-box warning">
+                        <div class="stat-label">Pending Approval</div>
+                        <div class="stat-value" id="pendingUserCount">0</div>
+                    </div>
+                    <div class="stat-box danger">
+                        <div class="stat-label">Inactive Users</div>
+                        <div class="stat-value" id="inactiveUserCount">0</div>
+                    </div>
+                </div>
+                <div id="adminUsersTable"></div>
+            </div>
+
+            <!-- Collector Assignment Section -->
+            <div class="card">
+                <h2>👥 Assign Collectors</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Admin selects 2 active members. Their names will show as collectors for the selected month.</p>
+                
+                <div class="form-group">
+                    <label for="collector1">First Collector</label>
+                    <select id="collector1"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="collector2">Second Collector</label>
+                    <select id="collector2"></select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <button class="btn btn-success" onclick="assignCollectors()">✓ Assign</button>
+                    <button class="btn btn-primary" onclick="autoRotateCollectors()">🔄 Auto-Rotate</button>
+                </div>
+            </div>
+
+            <!-- Current Collectors -->
+            <div class="card">
+                <h2>📋 Current Collectors</h2>
+                <div id="collectorsList"></div>
+            </div>
+
+            <!-- Member Financial Summary -->
+            <div class="card">
+                <h2>💰 Member Financial Summary</h2>
+                <p style="color: #666; margin-bottom: 1rem;">View and edit each member's monthly charge and total contribution amount</p>
+                <div id="memberFinancialTable"></div>
+            </div>
+
+            <!-- All Members with Status -->
+            <div class="card">
+                <h2>👥 All Members Status</h2>
+                <div id="membersTable"></div>
+            </div>
+
+            <!-- Edit User ID Section -->
+            <div class="card">
+                <h2>🔧 Edit User ID</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Update member's ID number</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="editUserSelect">Select Member</label>
+                        <select id="editUserSelect"></select>
+                    </div>
+                    <div>
+                        <label for="newUserId">New ID</label>
+                        <input type="number" id="newUserId" placeholder="Enter new ID" />
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="updateUserId()" style="width: 100%;">💾 Update ID</button>
+                    </div>
+                </div>
+                <div id="editUserResult" style="margin-top: 1rem;"></div>
+            </div>
+
+            <!-- Individual Member Account Details -->
+            <div class="card">
+                <h2>📊 Individual Member Account Details</h2>
+                <p style="color: #666; margin-bottom: 1rem;">View detailed account information for each member</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label for="memberDetailSelect">Select Member</label>
+                        <select id="memberDetailSelect"></select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-primary" onclick="loadMemberDetails()" style="width: 100%;">🔍 View Details</button>
+                    </div>
+                </div>
+                <div id="memberDetailResult"></div>
+            </div>
+
+            <!-- Member Total Summary -->
+            <div class="card">
+                <h2>💵 Member Total Amount Summary</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Total contribution amount for each member (All Time)</p>
+                <div id="memberTotalSummary"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit User</h2>
+                <button class="close-btn" type="button" onclick="closeEditUserModal()">&times;</button>
+            </div>
+
+            <input type="hidden" id="editUserId">
+
+            <div class="form-group">
+                <label for="editUserName">Full Name</label>
+                <input type="text" id="editUserName">
+            </div>
+
+            <div class="form-group">
+                <label for="editUserEmail">Email</label>
+                <input type="email" id="editUserEmail">
+            </div>
+
+            <div class="form-group">
+                <label for="editUserPhone">Phone</label>
+                <input type="tel" id="editUserPhone">
+            </div>
+
+            <div class="form-group">
+                <label for="editUserStatus">Status</label>
+                <select id="editUserStatus">
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="editUserPassword">New Password</label>
+                <input type="password" id="editUserPassword" placeholder="Leave blank to keep current password">
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeEditUserModal()">Cancel</button>
+                <button class="btn btn-primary" type="button" onclick="saveUserEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Member Charge Modal -->
+    <div id="editMemberChargeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Member Contribution</h2>
+                <button class="close-btn" type="button" onclick="closeEditChargeModal()">&times;</button>
+            </div>
+
+            <input type="hidden" id="editChargeMemberId">
+            <input type="hidden" id="editChargeMemberName">
+
+            <div class="form-group">
+                <label>Member Name</label>
+                <input type="text" id="editChargeMemberNameDisplay" readonly style="background: #f0f0f0; cursor: not-allowed;">
+            </div>
+
+            <div class="form-group">
+                <label for="editChargeMonthly">Monthly Charge (BDT)</label>
+                <input type="number" id="editChargeMonthly" min="0" placeholder="Enter monthly amount">
+            </div>
+
+            <div class="form-group">
+                <label for="editChargeTotalMonths">Total Months Liable</label>
+                <input type="number" id="editChargeTotalMonths" value="1" min="1" placeholder="Number of months">
+            </div>
+
+            <div style="background: #f0f7ff; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">
+                <p style="margin: 0;"><strong>Total Amount: </strong><span id="editChargeTotalAmount">0 BDT</span></p>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" onclick="closeEditChargeModal()">Cancel</button>
+                <button class="btn btn-primary" type="button" onclick="saveMemberCharge()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            if (!AuthManager.requireAdmin()) return;
+
+            // Set default month/year to current
+            const now = new Date();
+            document.getElementById('adminMonth').value = now.getMonth();
+            document.getElementById('adminYear').value = now.getFullYear();
+
+            initializeCollectorSelects();
+            loadAdminUsers();
+            refreshReport();
+        });
+
+        function getCurrentMonthYear() {
+            const month = parseInt(document.getElementById('adminMonth').value) + 1;
+            const year = parseInt(document.getElementById('adminYear').value);
+            return { month, year };
+        }
+
+        function initializeCollectorSelects() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member' && u.status === 'active');
+
+            let html = '<option value="">-- Select Member --</option>';
+            members.forEach(member => {
+                html += `<option value="${member.id}">${member.name}</option>`;
+            });
+
+            document.getElementById('collector1').innerHTML = html;
+            document.getElementById('collector2').innerHTML = html;
+        }
+
+        function refreshReport() {
+            const { month, year } = getCurrentMonthYear();
+
+            // Generate contributions if not exist
+            App.generateMonthlyContributions(month, year);
+
+            // Get stats
+            const stats = StorageManager.getMonthlyStats(month, year);
+            document.getElementById('totalMembers').textContent = stats.totalMembers;
+            document.getElementById('totalCollected').textContent = App.formatCurrency(stats.totalPaid);
+            document.getElementById('totalDueAmount').textContent = App.formatCurrency(stats.totalDue);
+            document.getElementById('expectedAmount').textContent = App.formatCurrency(stats.totalExpected);
+
+            // Load collectors
+            loadCollectors(month, year);
+
+            // Load member financial summary
+            loadMemberFinancial();
+
+            // Load all members
+            loadAllMembers(month, year);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'active') {
+                return '<span class="table-badge badge-success">ACTIVE</span>';
+            }
+
+            if (status === 'pending') {
+                return '<span class="table-badge badge-warning">PENDING</span>';
+            }
+
+            return '<span class="table-badge badge-danger">INACTIVE</span>';
+        }
+
+        function loadAdminUsers() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(user => user.role === 'member');
+            const activeCount = members.filter(user => user.status === 'active').length;
+            const pendingCount = members.filter(user => user.status === 'pending').length;
+            const inactiveCount = members.filter(user => user.status === 'inactive').length;
+
+            document.getElementById('activeUserCount').textContent = activeCount;
+            document.getElementById('pendingUserCount').textContent = pendingCount;
+            document.getElementById('inactiveUserCount').textContent = inactiveCount;
+
+            if (members.length === 0) {
+                document.getElementById('adminUsersTable').innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No member registrations yet.</p>';
+                return;
+            }
+
+            const sortedMembers = [...members].sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return new Date(b.joinDate) - new Date(a.joinDate);
+            });
+
+            let html = `
+                <table class="table admin-users-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedMembers.forEach(user => {
+                const approveButton = user.status !== 'active'
+                    ? `<button class="btn btn-success btn-sm" onclick="approveUser(${user.id})">Approve</button>`
+                    : '';
+
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(user.name)}</strong></td>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td>${escapeHtml(user.phone)}</td>
+                        <td>${getStatusBadge(user.status)}</td>
+                        <td>${App.formatDate(user.joinDate)}</td>
+                        <td>
+                            <div class="table-actions">
+                                ${approveButton}
+                                <button class="btn btn-primary btn-sm" onclick="openEditUserModal(${user.id})">Edit</button>
+                                <button class="btn btn-secondary btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('adminUsersTable').innerHTML = html;
+        }
+
+        function approveUser(userId) {
+            const updated = StorageManager.updateUser(userId, { status: 'active' });
+            if (!updated) {
+                App.showToast('User not found', 'error');
+                return;
+            }
+
+            initializeCollectorSelects();
+            loadAdminUsers();
+            refreshReport();
+            App.showToast('User approved successfully', 'success');
+        }
+
+        function openEditUserModal(userId) {
+            const user = StorageManager.getUserById(userId);
+            if (!user || user.role === 'admin') {
+                App.showToast('User not found', 'error');
+                return;
+            }
+
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserName').value = user.name || '';
+            document.getElementById('editUserEmail').value = user.email || '';
+            document.getElementById('editUserPhone').value = user.phone || '';
+            document.getElementById('editUserStatus').value = user.status || 'pending';
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserModal').classList.add('show');
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').classList.remove('show');
+        }
+
+        function saveUserEdit() {
+            const userId = Number(document.getElementById('editUserId').value);
+            const name = document.getElementById('editUserName').value.trim();
+            const email = document.getElementById('editUserEmail').value.trim();
+            const phone = document.getElementById('editUserPhone').value.trim();
+            const status = document.getElementById('editUserStatus').value;
+            const password = document.getElementById('editUserPassword').value;
+
+            if (!name || !email || !phone) {
+                App.showToast('Name, email, and phone are required', 'warning');
+                return;
+            }
+
+            const existingUser = StorageManager.getUserByEmail(email);
+            if (existingUser && existingUser.id !== userId) {
+                App.showToast('Email already used by another user', 'warning');
+                return;
+            }
+
+            const updates = { name, email, phone, status };
+            if (password) {
+                if (password.length < 6) {
+                    App.showToast('Password must be at least 6 characters', 'warning');
+                    return;
+                }
+                updates.password = password;
+            }
+
+            const updated = StorageManager.updateUser(userId, updates);
+            if (!updated) {
+                App.showToast('User not found', 'error');
+                return;
+            }
+
+            closeEditUserModal();
+            initializeCollectorSelects();
+            loadAdminUsers();
+            refreshReport();
+            App.showToast('User updated successfully', 'success');
+        }
+
+        function deleteUser(userId) {
+            const user = StorageManager.getUserById(userId);
+            if (!user || user.role === 'admin') {
+                App.showToast('User not found', 'error');
+                return;
+            }
+
+            if (!confirm(`Delete ${user.name}? This will also remove this user's contributions and collector assignments.`)) {
+                return;
+            }
+
+            const deleted = StorageManager.deleteUser(userId);
+            if (!deleted) {
+                App.showToast('User could not be deleted', 'error');
+                return;
+            }
+
+            initializeCollectorSelects();
+            loadAdminUsers();
+            refreshReport();
+            App.showToast('User deleted successfully', 'success');
+        }
+
+        function loadCollectors(month, year) {
+            const collectors = App.getMonthCollectorNames(month, year);
+            let html = '';
+
+            if (collectors.length === 0) {
+                html = '<p style="color: #999; text-align: center; padding: 2rem;">No collectors assigned yet. Assign or auto-rotate above.</p>';
+            } else {
+                html = '<div style="display: grid; gap: 1rem;">';
+                collectors.forEach(collector => {
+                    html += `
+                        <div style="padding: 1rem; background: #f0f7ff; border-left: 4px solid var(--primary-color); border-radius: 4px;">
+                            <p><strong>📌 ${collector.name}</strong></p>
+                            <p style="font-size: 0.9rem; color: #666;">Email: ${collector.email}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            document.getElementById('collectorsList').innerHTML = html;
+        }
+
+        function loadMemberFinancial() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member');
+
+            if (members.length === 0) {
+                document.getElementById('memberFinancialTable').innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No members registered yet.</p>';
+                return;
+            }
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Member Name</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Monthly Charge</th>
+                            <th>Total Months</th>
+                            <th>Total Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            members.forEach(member => {
+                const monthlyCharge = member.monthlyCharge || 500;
+                const totalMonths = member.totalMonths || 12;
+                const totalAmount = monthlyCharge * totalMonths;
+                const statusBadge = member.status === 'active' 
+                    ? '<span class="table-badge badge-success">ACTIVE</span>'
+                    : member.status === 'pending'
+                    ? '<span class="table-badge badge-warning">PENDING</span>'
+                    : '<span class="table-badge badge-danger">INACTIVE</span>';
+
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(member.name)}</strong></td>
+                        <td>${escapeHtml(member.phone)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${App.formatCurrency(monthlyCharge)}</td>
+                        <td style="text-align: center;">${totalMonths}</td>
+                        <td><strong>${App.formatCurrency(totalAmount)}</strong></td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="openEditChargeModal(${member.id}, '${escapeHtml(member.name)}', ${monthlyCharge}, ${totalMonths})">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('memberFinancialTable').innerHTML = html;
+        }
+
+        function openEditChargeModal(memberId, memberName, monthlyCharge, totalMonths) {
+            document.getElementById('editChargeMemberId').value = memberId;
+            document.getElementById('editChargeMemberName').value = memberName;
+            document.getElementById('editChargeMemberNameDisplay').value = memberName;
+            document.getElementById('editChargeMonthly').value = monthlyCharge;
+            document.getElementById('editChargeTotalMonths').value = totalMonths;
+            updateChargeTotalAmount();
+            document.getElementById('editMemberChargeModal').classList.add('show');
+        }
+
+        function closeEditChargeModal() {
+            document.getElementById('editMemberChargeModal').classList.remove('show');
+        }
+
+        function updateChargeTotalAmount() {
+            const monthly = parseInt(document.getElementById('editChargeMonthly').value) || 0;
+            const months = parseInt(document.getElementById('editChargeTotalMonths').value) || 1;
+            const total = monthly * months;
+            document.getElementById('editChargeTotalAmount').textContent = App.formatCurrency(total);
+        }
+
+        function saveMemberCharge() {
+            const memberId = parseInt(document.getElementById('editChargeMemberId').value);
+            const monthlyCharge = parseInt(document.getElementById('editChargeMonthly').value);
+            const totalMonths = parseInt(document.getElementById('editChargeTotalMonths').value);
+
+            if (!monthlyCharge || monthlyCharge <= 0) {
+                App.showToast('Monthly charge must be greater than 0', 'warning');
+                return;
+            }
+
+            if (!totalMonths || totalMonths <= 0) {
+                App.showToast('Total months must be greater than 0', 'warning');
+                return;
+            }
+
+            const updated = StorageManager.updateUser(memberId, {
+                monthlyCharge: monthlyCharge,
+                totalMonths: totalMonths
+            });
+
+            if (updated) {
+                closeEditChargeModal();
+                loadMemberFinancial();
+                App.showToast('Member contribution updated successfully', 'success');
+            } else {
+                App.showToast('Could not update member', 'error');
+            }
+        }
+
+        function loadAllMembers(month, year) {
+            const stats = StorageManager.getMonthlyStats(month, year);
+            const contributions = stats.contributions;
+
+            let html = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Member Name</th>
+                            <th>Email</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Paid Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            contributions.forEach(c => {
+                const user = StorageManager.getUserById(c.userId);
+                const statusBadge = c.status === 'paid'
+                    ? `<span class="table-badge badge-success">✓ PAID</span>`
+                    : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+
+                html += `
+                    <tr>
+                        <td><strong>${user.name}</strong></td>
+                        <td>${user.email}</td>
+                        <td>${App.formatCurrency(c.amount)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('membersTable').innerHTML = html;
+        }
+
+        function assignCollectors() {
+            const c1 = document.getElementById('collector1').value;
+            const c2 = document.getElementById('collector2').value;
+
+            if (!c1 || !c2) {
+                App.showToast('Please select 2 collectors', 'warning');
+                return;
+            }
+
+            if (c1 === c2) {
+                App.showToast('Please select different members', 'warning');
+                return;
+            }
+
+            const { month, year } = getCurrentMonthYear();
+            const result = App.assignCollectors(month, year, [c1, c2]);
+
+            if (result.success) {
+                App.showToast('Collectors assigned successfully!', 'success');
+                loadCollectors(month, year);
+                document.getElementById('collector1').value = '';
+                document.getElementById('collector2').value = '';
+            } else {
+                App.showToast(result.message || 'Collectors could not be assigned', 'error');
+            }
+        }
+
+        function autoRotateCollectors() {
+            const { month, year } = getCurrentMonthYear();
+            
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member' && u.status === 'active');
+
+            if (members.length < 2) {
+                App.showToast('Need at least 2 active members', 'error');
+                return;
+            }
+
+            const result = App.assignCollectors(month, year);
+            if (result.success) {
+                App.showToast('Collectors auto-rotated successfully!', 'success');
+                loadCollectors(month, year);
+            }
+        }
+
+        function printReport() {
+            const { month, year } = getCurrentMonthYear();
+            const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 
+                             'July', 'August', 'September', 'October', 'November', 'December'][month];
+            
+            const stats = StorageManager.getMonthlyStats(month, year);
+            const collectors = App.getMonthCollectorNames(month, year);
+            
+            let printContent = `
+                <html>
+                <head>
+                    <title>Monthly Report - ${monthName} ${year}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                        .header h1 { margin: 0; font-size: 24px; }
+                        .header p { margin: 5px 0; font-size: 14px; }
+                        .stats-row { display: flex; justify-content: space-around; margin: 20px 0; }
+                        .stat { text-align: center; padding: 15px; border: 1px solid #ddd; border-radius: 5px; flex: 1; margin: 0 10px; }
+                        .stat-label { font-weight: bold; font-size: 12px; color: #666; }
+                        .stat-value { font-size: 20px; font-weight: bold; color: #000; margin-top: 5px; }
+                        .section { margin: 30px 0; }
+                        .section h2 { font-size: 16px; border-bottom: 1px solid #999; padding-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                        th { background-color: #f0f0f0; padding: 10px; text-align: left; font-weight: bold; border-bottom: 1px solid #999; }
+                        td { padding: 8px; border-bottom: 1px solid #ddd; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .text-right { text-align: right; }
+                        .collectors { display: flex; gap: 20px; margin: 15px 0; }
+                        .collector-item { flex: 1; padding: 10px; background: #f0f7ff; border-left: 4px solid #0066cc; }
+                        .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #ddd; padding-top: 20px; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>মাংসের সমিতি - Monthly Report</h1>
+                        <p><strong>${monthName} ${year}</strong></p>
+                        <p>Generated on ${new Date().toLocaleDateString()}</p>
+                    </div>
+
+                    <div class="stats-row">
+                        <div class="stat">
+                            <div class="stat-label">Total Members</div>
+                            <div class="stat-value">${stats.totalMembers}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Total Collected</div>
+                            <div class="stat-value">${App.formatCurrency(stats.totalPaid)}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Total Due</div>
+                            <div class="stat-value">${App.formatCurrency(stats.totalDue)}</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Expected Amount</div>
+                            <div class="stat-value">${App.formatCurrency(stats.totalExpected)}</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>📋 Collectors for ${monthName} ${year}</h2>
+                        <div class="collectors">
+            `;
+
+            if (collectors.length > 0) {
+                collectors.forEach((collector, index) => {
+                    printContent += `
+                        <div class="collector-item">
+                            <div style="font-weight: bold;">Collector ${index + 1}</div>
+                            <div>${collector.name}</div>
+                            <div style="font-size: 12px; color: #666;">📧 ${collector.email}</div>
+                            <div style="font-size: 12px; color: #666;">📱 ${collector.phone}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                printContent += '<p style="color: #999;">No collectors assigned</p>';
+            }
+
+            printContent += `
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>💰 Payment Status</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Member Name</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Paid Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+
+            stats.contributions.forEach(c => {
+                const user = StorageManager.getUserById(c.userId);
+                const status = c.status === 'paid' ? '✓ PAID' : '✗ UNPAID';
+                const paidDate = c.paymentDate ? App.formatDate(c.paymentDate) : '-';
+                printContent += `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td class="text-right">${App.formatCurrency(c.amount)}</td>
+                        <td style="text-align: center;">${status}</td>
+                        <td>${paidDate}</td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="footer">
+                        <p>This is a system-generated report. Please verify all information before processing.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const printWindow = window.open('', 'printReport', 'height=600,width=900');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                AuthManager.logout();
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

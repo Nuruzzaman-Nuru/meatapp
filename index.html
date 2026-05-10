@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Monthly Contribution Management System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container site-header-content">
+            <a class="site-brand" href="index.html">
+                মাংসের সমিতি
+            </a>
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="index.html">Home</a>
+                <a href="contact.html">Contact</a>
+                <a class="nav-login-btn" href="login.html">Login</a>
+                <a class="nav-register-btn" href="register.html">Register</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-form">
+            <img class="association-cover" src="home%20page.png" alt="মাংসের সমিতি cover photo">
+
+            <section id="overview" class="home-content-grid">
+                <div class="content-block">
+                    <p class="section-kicker">About The Association</p>
+                    <h1>Organized monthly contribution management for all members</h1>
+                    <p>Every active member contributes 200 BDT each month. To keep the responsibility balanced, two active members are assigned each month to collect contributions from everyone.</p>
+                </div>
+
+                <aside class="side-card">
+                    <h2>Monthly Rules</h2>
+                    <ul>
+                        <li>Contribution amount: 200 BDT</li>
+                        <li>Two collectors are assigned every month</li>
+                        <li>New members need admin approval</li>
+                        <li>Admin can manage members and payment status</li>
+                    </ul>
+                </aside>
+            </section>
+
+            <section id="member-access" class="member-access">
+                <div class="section-heading">
+                    <p class="section-kicker">Member Area</p>
+                    <h2>Login or request membership</h2>
+                </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <h1>🔐 Login</h1>
+                <div id="loginAlert" class="alert"></div>
+                
+                <div class="form-group">
+                    <label for="loginPhone">Phone Number</label>
+                    <input type="tel" id="loginPhone" placeholder="Enter your phone number">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+
+                <div class="form-buttons">
+                    <button class="btn btn-primary btn-block" onclick="handleLogin()">Login</button>
+                </div>
+
+                <div class="switch-form">
+                    Don't have an account? <a onclick="switchToRegister()">Register here</a>
+                </div>
+            </div>
+
+            <!-- Register Form (Hidden) -->
+            <div id="registerForm" style="display: none;">
+                <h1>📝 Register</h1>
+                <div id="registerAlert" class="alert"></div>
+                
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+                    <input type="text" id="registerName" placeholder="Enter your full name">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" placeholder="Enter your email">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPhone">Phone Number</label>
+                    <input type="tel" id="registerPhone" placeholder="Enter your phone number">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" placeholder="At least 6 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerConfirm">Confirm Password</label>
+                    <input type="password" id="registerConfirm" placeholder="Confirm your password">
+                </div>
+
+                <div class="form-buttons">
+                    <button class="btn btn-primary" onclick="handleRegister()">Register</button>
+                    <button class="btn btn-secondary" onclick="switchToLogin()">Back to Login</button>
+                </div>
+
+                <div class="switch-form">
+                    Already have an account? <a onclick="switchToLogin()">Login here</a>
+                </div>
+            </div>
+            </section>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <h3>মাংসের সমিতি</h3>
+                <p>ভাই ব্রাদার্স সমিতির সদস্য, চাঁদা, কালেক্টর এবং মাসিক রিপোর্ট ব্যবস্থাপনার জন্য তৈরি।</p>
+            </div>
+            <div>
+                <h3>Quick Links</h3>
+                <a href="#overview">Overview</a>
+                <a href="login.html">Member Login</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div>
+                <h3>Contact</h3>
+                <p>Admin: admin@meatsystem.com</p>
+                <p>Phone: 01307347646</p>
+            </div>
+            <div>
+                <h4>Payment Method</h4>
+                <div class="badge-grid">
+                    <span class="pay-pill">Bkash</span>
+                    <span class="pay-pill">Nagad</span>
+                    <span class="pay-pill">Rocket</span>
+                    <span class="pay-pill">Visa</span>
+                    <span class="pay-pill">Mastercard</span>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">Copyright 2026 Meat Association. All rights reserved.</div>
+    </footer>
+
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            AuthManager.blockIfLoggedIn();
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('form') === 'register' || window.location.hash === '#register') {
+                switchToRegister();
+                document.getElementById('member-access').scrollIntoView();
+            }
+        });
+
+        function switchToRegister() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('registerForm').style.display = 'block';
+        }
+
+        function switchToLogin() {
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('registerForm').style.display = 'none';
+        }
+
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = AuthManager.login(phone, password);
+            const alert = document.getElementById('loginAlert');
+            
+            if (result.success) {
+                alert.className = 'alert alert-success';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+                
+                setTimeout(() => {
+                    const user = AuthManager.getCurrentUser();
+                    if (user.role === 'admin') {
+                        window.location.href = 'admin-dashboard.html';
+                    } else {
+                        window.location.href = 'dashboard.html';
+                    }
+                }, 1000);
+            } else {
+                alert.className = 'alert alert-error';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+            }
+        }
+
+        function handleRegister() {
+            const formData = {
+                name: document.getElementById('registerName').value,
+                email: document.getElementById('registerEmail').value,
+                phone: document.getElementById('registerPhone').value,
+                password: document.getElementById('registerPassword').value,
+                confirmPassword: document.getElementById('registerConfirm').value
+            };
+            
+            const result = AuthManager.register(formData);
+            const alert = document.getElementById('registerAlert');
+            
+            if (result.success) {
+                alert.className = 'alert alert-success';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+                
+                // Clear form
+                document.getElementById('registerName').value = '';
+                document.getElementById('registerEmail').value = '';
+                document.getElementById('registerPhone').value = '';
+                document.getElementById('registerPassword').value = '';
+                document.getElementById('registerConfirm').value = '';
+                
+                setTimeout(() => {
+                    switchToLogin();
+                }, 2000);
+            } else {
+                alert.className = 'alert alert-error';
+                alert.textContent = result.message;
+                alert.style.display = 'block';
+            }
+        }
+
+        // Allow Enter key to submit
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                
+                if (loginForm.style.display !== 'none') {
+                    handleLogin();
+                } else if (registerForm.style.display !== 'none') {
+                    handleRegister();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
