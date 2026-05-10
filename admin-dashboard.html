@@ -292,6 +292,7 @@
             document.getElementById('adminYear').value = now.getFullYear();
 
             initializeCollectorSelects();
+            initializeEditSelects();
             loadAdminUsers();
             refreshReport();
         });
@@ -434,6 +435,7 @@
             }
 
             initializeCollectorSelects();
+            initializeEditSelects();
             loadAdminUsers();
             refreshReport();
             App.showToast('User approved successfully', 'success');
@@ -518,6 +520,7 @@
             }
 
             initializeCollectorSelects();
+            initializeEditSelects();
             loadAdminUsers();
             refreshReport();
             App.showToast('User deleted successfully', 'success');
@@ -644,6 +647,7 @@
 
             if (updated) {
                 closeEditChargeModal();
+                initializeEditSelects();
                 loadMemberFinancial();
                 App.showToast('Member contribution updated successfully', 'success');
             } else {
@@ -875,6 +879,157 @@
                 AuthManager.logout();
                 window.location.href = 'index.html';
             }
+        }
+
+        // Initialize Edit User ID and Member Detail selects
+        function initializeEditSelects() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member');
+
+            let html = '<option value="">-- Select Member --</option>';
+            members.forEach(member => {
+                html += `<option value="${member.id}">#${member.id} - ${escapeHtml(member.name)}</option>`;
+            });
+
+            document.getElementById('editUserSelect').innerHTML = html;
+            document.getElementById('memberDetailSelect').innerHTML = html;
+        }
+
+        // Update User ID
+        function updateUserId() {
+            const userId = document.getElementById('editUserSelect').value;
+            const newId = document.getElementById('newUserId').value.trim();
+
+            if (!userId) {
+                App.showToast('Please select a member', 'warning');
+                return;
+            }
+
+            if (!newId || isNaN(newId)) {
+                App.showToast('Please enter a valid ID number', 'warning');
+                return;
+            }
+
+            const users = StorageManager.getUsers();
+            const existingUser = users.find(u => u.id === parseInt(newId));
+            
+            if (existingUser && existingUser.id !== parseInt(userId)) {
+                App.showToast('This ID is already assigned to another member', 'error');
+                return;
+            }
+
+            const user = StorageManager.getUserById(parseInt(userId));
+            const oldId = user.id;
+            user.id = parseInt(newId);
+            
+            // Update in storage
+            const allUsers = StorageManager.getUsers();
+            const userIndex = allUsers.findIndex(u => u.id === oldId);
+            if (userIndex > -1) {
+                allUsers[userIndex].id = parseInt(newId);
+                localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(allUsers));
+            }
+
+            document.getElementById('editUserResult').innerHTML = `
+                <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                    ✓ Member ID updated successfully! ${user.name} now has ID #${newId}
+                </div>
+            `;
+
+            document.getElementById('editUserSelect').value = '';
+            document.getElementById('newUserId').value = '';
+            
+            App.showToast('Member ID updated successfully!', 'success');
+            
+            // Refresh all displays
+            initializeEditSelects();
+            loadAdminUsers();
+            loadMemberFinancial();
+            loadAllMembers(getCurrentMonthYear().month - 1, getCurrentMonthYear().year);
+        }
+
+        // Load Member Details
+        function loadMemberDetails() {
+            const userId = document.getElementById('memberDetailSelect').value;
+
+            if (!userId) {
+                App.showToast('Please select a member', 'warning');
+                return;
+            }
+
+            const user = StorageManager.getUserById(parseInt(userId));
+            if (!user) {
+                App.showToast('Member not found', 'error');
+                return;
+            }
+
+            const summary = App.getUserContributionSummary(parseInt(userId));
+            const joinDate = new Date(user.joinDate);
+            const daysSinceJoin = Math.floor((new Date() - joinDate) / (1000 * 60 * 60 * 24));
+
+            let html = `
+                <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                        <div>
+                            <h3 style="margin-top: 0;">Personal Information</h3>
+                            <p><strong>Member ID:</strong> #${user.id}</p>
+                            <p><strong>Name:</strong> ${escapeHtml(user.name)}</p>
+                            <p><strong>Email:</strong> ${escapeHtml(user.email)}</p>
+                            <p><strong>Phone:</strong> ${escapeHtml(user.phone)}</p>
+                            <p><strong>Status:</strong> <span class="table-badge ${user.status === 'active' ? 'badge-success' : user.status === 'pending' ? 'badge-warning' : 'badge-danger'}">${user.status.toUpperCase()}</span></p>
+                            <p><strong>Join Date:</strong> ${App.formatDate(user.joinDate)}</p>
+                            <p><strong>Days as Member:</strong> ${daysSinceJoin} days</p>
+                        </div>
+
+                        <div>
+                            <h3 style="margin-top: 0;">Financial Summary</h3>
+                            <p><strong>Total Contributions:</strong> ${summary.totalContributions}</p>
+                            <p><strong>Paid:</strong> <span style="color: green; font-weight: bold;">${summary.paidCount} ✓</span></p>
+                            <p><strong>Unpaid:</strong> <span style="color: red; font-weight: bold;">${summary.unpaidCount} ✗</span></p>
+                            <hr>
+                            <p><strong>Total Amount Paid:</strong> <span style="color: green; font-weight: bold; font-size: 1.1rem;">${App.formatCurrency(summary.totalPaid)}</span></p>
+                            <p><strong>Total Amount Due:</strong> <span style="color: red; font-weight: bold; font-size: 1.1rem;">${App.formatCurrency(summary.totalDue)}</span></p>
+                        </div>
+                    </div>
+
+                    <h3>Contribution History</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Year</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Payment Method</th>
+                                <th>Paid Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            if (summary.contributions.length === 0) {
+                html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
+            } else {
+                summary.contributions.forEach(c => {
+                    const statusBadge = c.status === 'paid'
+                        ? `<span class="table-badge badge-success">✓ PAID</span>`
+                        : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+
+                    html += `
+                        <tr>
+                            <td>${App.getMonthName(c.month)}</td>
+                            <td>${c.year}</td>
+                            <td>${App.formatCurrency(c.amount)}</td>
+                            <td>${statusBadge}</td>
+                            <td>${c.paymentMethod || '-'}</td>
+                            <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            html += '</tbody></table>';
+            document.getElementById('memberDetailResult').innerHTML = html;
         }
     </script>
 </body>
