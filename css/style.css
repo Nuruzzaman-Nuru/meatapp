@@ -47,6 +47,8 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .text-center {
@@ -189,12 +191,15 @@ body {
     align-items: flex-start;
     padding: 1.5rem 0 3.5rem;
     background: #f4f7f2;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .auth-form {
     width: 100%;
     max-width: 1280px;
     padding: 0 1rem;
+    margin: 0 auto;
 }
 
 .auth-form h1 {
@@ -318,17 +323,30 @@ body {
     background: #f4f7f2;
     padding: 4rem 1rem;
     min-height: 62vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .contact-page {
     background: #f4f7f2;
     padding: 3rem 0 4rem;
     min-height: 60vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.contact-page .container {
+    width: 100%;
 }
 
 .contact-hero {
-    max-width: 760px;
+    max-width: 100%;
     margin-bottom: 2rem;
+    width: 100%;
 }
 
 .contact-hero h1 {
@@ -345,6 +363,8 @@ body {
 .contact-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    margin: 0 auto;
     gap: 1.5rem;
 }
 
@@ -352,6 +372,8 @@ body {
     background: white;
     border: 1px solid rgba(44, 62, 80, 0.08);
     border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
     box-shadow: 0 8px 24px rgba(26, 37, 47, 0.07);
     padding: 2rem;
 }
@@ -569,7 +591,9 @@ body {
     display: grid;
     grid-template-columns: 1fr;
     gap: 2rem;
-    margin: 2rem 0;
+    margin: 2rem auto;
+    width: 100%;
+    max-width: 100%;
 }
 
 .card {
@@ -1110,13 +1134,27 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .contact-grid {
+        width: 100%;
+        margin: 0 auto;
+    }
+
     .content-block h1 {
+        font-size: 1.55rem;
+    }
+
+    .contact-hero h1 {
         font-size: 1.55rem;
     }
 
     .member-access,
     .content-block,
     .side-card {
+        padding: 1.25rem;
+    }
+
+    .contact-card {
+        width: 100%;
         padding: 1.25rem;
     }
 
@@ -1207,7 +1245,9 @@ body {
     }
 
     .container {
-        padding: 0 10px;
+        padding: 0 12px;
+        width: 100%;
+        margin: 0 auto;
     }
 
     .site-header-content {
@@ -1435,6 +1475,26 @@ body {
         padding: 1rem;
     }
 
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .contact-card {
+        padding: 1rem;
+        width: 100%;
+    }
+
+    .contact-page {
+        padding: 2rem 0 3rem;
+    }
+
+    .contact-hero {
+        width: 100%;
+    }
+
     .footer-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -1467,10 +1527,6 @@ body {
         font-size: 0.75rem;
     }
 
-    .contact-card {
-        padding: 1rem;
-    }
-
     .contact-detail {
         margin-bottom: 0.75rem;
     }
@@ -1490,6 +1546,355 @@ body {
         padding: 1rem 0.5rem;
         font-size: 0.75rem;
     }
+}
+
+/* Extra Small Phones (320px - 480px) - Additional Responsive Rules */
+@media (max-width: 360px) {
+    html {
+        font-size: 13px;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+
+    .site-header-content {
+        min-height: auto;
+        padding: 0.5rem 0;
+    }
+
+    .site-brand {
+        font-size: 1rem;
+    }
+
+    .site-nav {
+        gap: 0.4rem;
+    }
+
+    .site-nav a {
+        padding: 0.3rem 0.3rem;
+        font-size: 0.75rem;
+    }
+
+    .site-nav .nav-login-btn,
+    .site-nav .nav-register-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .content-block h1,
+    .contact-hero h1 {
+        font-size: 1.1rem;
+    }
+
+    .stat-value {
+        font-size: 1.1rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Universal Responsive Improvements - All Devices */
+* {
+    max-width: 100%;
+}
+
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Prevent horizontal scrolling */
+body, html {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+img, video, iframe, embed {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Better form handling on all devices */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="tel"],
+select,
+textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Touch-friendly buttons */
+.btn, button, a.btn {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Better table handling on mobile */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 100%;
+    }
+}
+
+/* Better grid handling on all screen sizes */
+@media (max-width: 640px) {
+    [style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-list {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Better spacing on all devices */
+@media (max-width: 640px) {
+    .card,
+    .content-block,
+    .contact-card,
+    .side-card,
+    .member-access {
+        padding: 1rem;
+    }
+
+    .modal-content {
+        padding: 1rem;
+    }
+}
+
+/* Better navbar/header responsiveness */
+@media (max-width: 640px) {
+    .site-header-content,
+    .navbar-content {
+        flex-direction: column;
+        min-height: auto;
+        align-items: stretch;
+    }
+
+    .site-nav,
+    .navbar-menu {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .site-nav a,
+    .navbar-menu a,
+    .navbar-menu button {
+        padding: 0.5rem;
+        text-align: center;
+    }
+}
+
+/* Improved form layouts on small screens */
+@media (max-width: 640px) {
+    .form-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    #loginForm,
+    #registerForm {
+        max-width: 100%;
+        padding: 0;
+    }
+}
+
+/* Better link/button sizing for touch */
+@media (max-width: 768px) {
+    a, button, input[type="button"], input[type="submit"] {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .btn-sm {
+        min-width: 40px;
+        min-height: 40px;
+        padding: 0.4rem 0.7rem;
+    }
+}
+
+/* Ensure proper width on all containers */
+main, .container, .content, section, article {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Better header spacing */
+h1, h2, h3, h4, h5, h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Better paragraph handling */
+p {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Modal responsive on small screens */
+@media (max-width: 480px) {
+    .modal {
+        padding: 0 !important;
+    }
+
+    .modal-content {
+        width: 100% !important;
+        max-width: calc(100vw - 20px) !important;
+        border-radius: 4px;
+    }
+}
+
+/* Better input focus states */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* Better spacing consistency */
+@media (max-width: 640px) {
+    body {
+        padding: 0;
+        margin: 0;
+    }
+
+    .auth-container,
+    .contact-page,
+    .auth-page {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+/* Improved flex wrapping */
+@media (max-width: 640px) {
+    .navbar-menu,
+    .site-nav,
+    .form-buttons {
+        flex-wrap: wrap;
+    }
+}
+
+/* Better table display on mobile */
+@media (max-width: 768px) {
+    .admin-users-table {
+        min-width: auto;
+    }
+
+    #adminUsersTable {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Ensure proper centering on all pages */
+.auth-form,
+.contact-page .container,
+.auth-page .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Better spacing for dashboard */
+@media (max-width: 768px) {
+    .dashboard-container,
+    .stats-grid,
+    .card {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Prevent text overflow */
+.card,
+.contact-card,
+.content-block,
+.side-card {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Better modal positioning on small screens */
+@media (max-width: 480px) {
+    .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Improve footer on mobile */
+@media (max-width: 640px) {
+    .footer-grid {
+        gap: 1rem;
+        padding: 1.5rem 10px;
+    }
+
+    .footer-grid > div {
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Better notification/alert positioning */
+.alert {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Extra Small Phones (320px - 480px) */
