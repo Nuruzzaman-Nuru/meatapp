@@ -851,6 +851,17 @@ body {
     text-align: center;
 }
 
+.footer-bottom span,
+.footer-bottom .developer-credit {
+    display: block;
+}
+
+.footer-bottom .developer-credit {
+    color: #d7e0e4;
+    font-weight: 600;
+    margin: 0.35rem 0 0;
+}
+
 /* Extra Large Screens (1200px+) */
 @media (min-width: 1200px) {
     .container {
