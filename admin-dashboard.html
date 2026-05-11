@@ -494,11 +494,21 @@
             const name = document.getElementById('editUserName').value.trim();
             const email = document.getElementById('editUserEmail').value.trim();
             const phone = document.getElementById('editUserPhone').value.trim();
-            const status = document.getElementById('editUserStatus').value;
+            const status = document.getElementById('editUserStatus').value.trim().toLowerCase();
             const password = document.getElementById('editUserPassword').value;
+            const statusMessages = {
+                active: 'User activated successfully',
+                inactive: 'User inactivated successfully',
+                pending: 'User marked as pending successfully'
+            };
 
             if (!name || !email || !phone) {
                 App.showToast('Name, email, and phone are required', 'warning');
+                return;
+            }
+
+            if (!statusMessages[status]) {
+                App.showToast('Please select a valid status', 'warning');
                 return;
             }
 
@@ -529,6 +539,7 @@
                 localStorage.setItem(StorageManager.KEYS.COLLECTORS, JSON.stringify(collectors));
             }
 
+            let firebaseSyncFailed = false;
             if (window.FirebaseSync?.enabled) {
                 try {
                     await FirebaseSync.syncCollectionToFirebase('users');
@@ -536,9 +547,15 @@
                         await FirebaseSync.syncCollectionToFirebase('collectors');
                     }
                 } catch (error) {
+                    firebaseSyncFailed = true;
                     console.error('Firebase user status sync failed', error);
-                    App.showToast('Updated locally, but Firebase sync failed', 'warning');
                 }
+            }
+
+            const savedUser = StorageManager.getUserById(userId);
+            if (!savedUser || savedUser.status !== status) {
+                App.showToast('Status could not be updated', 'error');
+                return;
             }
 
             closeEditUserModal();
@@ -546,7 +563,13 @@
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
-            App.showToast('User updated successfully', 'success');
+
+            if (firebaseSyncFailed) {
+                App.showToast(`${statusMessages[status]} locally, but Firebase sync failed`, 'warning');
+                return;
+            }
+
+            App.showToast(statusMessages[status], 'success');
         }
 
         function deleteUser(userId) {
