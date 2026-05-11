@@ -183,16 +183,20 @@ const App = {
      */
     getMonthCollectorNames(month, year) {
         const collectors = StorageManager.getMonthCollectors(month, year);
-        return collectors.map(c => {
-            const user = StorageManager.getUserById(c.userId);
-            return {
-                id: c.id,
-                userId: c.userId,
-                name: user ? user.name : 'Unknown',
-                email: user ? user.email : 'N/A',
-                phone: user ? user.phone : 'N/A'
-            };
-        });
+        return collectors
+            .map(c => {
+                const user = StorageManager.getUserById(c.userId);
+                if (!user || user.status !== 'active') return null;
+
+                return {
+                    id: c.id,
+                    userId: c.userId,
+                    name: user.name,
+                    email: user.email || 'N/A',
+                    phone: user.phone || 'N/A'
+                };
+            })
+            .filter(Boolean);
     },
 
     /**

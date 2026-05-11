@@ -574,6 +574,7 @@
         }
 
         function loadCollectors(month, year) {
+            removeInactiveCollectorAssignments();
             const collectors = App.getMonthCollectorNames(month, year);
             let html = '';
 
@@ -593,6 +594,23 @@
             }
 
             document.getElementById('collectorsList').innerHTML = html;
+        }
+
+        function removeInactiveCollectorAssignments() {
+            const collectors = StorageManager.getCollectors();
+            const activeCollectors = collectors.filter(collector => {
+                const user = StorageManager.getUserById(collector.userId);
+                return user && user.status === 'active';
+            });
+
+            if (activeCollectors.length === collectors.length) return;
+
+            localStorage.setItem(StorageManager.KEYS.COLLECTORS, JSON.stringify(activeCollectors));
+            if (window.FirebaseSync?.enabled) {
+                FirebaseSync.syncCollectionToFirebase('collectors').catch(error => {
+                    console.error('Firebase collectors cleanup failed', error);
+                });
+            }
         }
 
         function loadPendingPaymentMembers(month, year) {
