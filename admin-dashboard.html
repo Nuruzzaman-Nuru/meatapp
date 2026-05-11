@@ -512,7 +512,14 @@
                 return;
             }
 
-            const existingUser = StorageManager.getUserByEmail(email);
+            const currentUser = StorageManager.getUserById(userId);
+            if (!currentUser || currentUser.role === 'admin') {
+                App.showToast('User not found', 'error');
+                return;
+            }
+
+            const emailChanged = email.toLowerCase() !== String(currentUser.email || '').toLowerCase();
+            const existingUser = emailChanged ? StorageManager.getUserByEmail(email) : null;
             if (existingUser && existingUser.id !== userId) {
                 App.showToast('Email already used by another user', 'warning');
                 return;
