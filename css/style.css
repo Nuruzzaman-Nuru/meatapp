@@ -829,8 +829,9 @@ textarea {
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 1.35fr 0.85fr 1fr 1.1fr;
-    gap: 1.25rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 1.5rem;
     padding: 1.35rem 16px 1.25rem;
 }
 
@@ -858,6 +859,33 @@ textarea {
     color: #fff;
     text-decoration: underline;
     text-underline-offset: 4px;
+}
+
+.footer-contact-list {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.footer-contact-list p {
+    margin: 0;
+}
+
+.footer-contact-list span,
+.footer-contact-list strong {
+    display: block;
+}
+
+.footer-contact-list span {
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.footer-contact-list strong {
+    color: #f8fafc;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
 }
 
 .badge-grid {
