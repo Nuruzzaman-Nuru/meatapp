@@ -213,6 +213,7 @@
             <!-- Member Total Summary -->
             <div class="card">
                 <h2>💵 Member Total Amount Summary</h2>
+                <button class="btn btn-success" onclick="printMemberTotalSummary()" title="Print member total amount summary" style="margin-bottom: 1rem;">Print Summary</button>
                 <p style="color: #666; margin-bottom: 1rem;">Total contribution amount for each member (All Time)</p>
                 <div id="memberTotalSummary"></div>
             </div>
@@ -881,6 +882,136 @@
             printWindow.document.write(printContent);
             printWindow.document.close();
             
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        function printMemberTotalSummary() {
+            const users = StorageManager.getUsers();
+            const members = users.filter(u => u.role === 'member');
+            const generatedAt = new Date().toLocaleString();
+
+            let totalPaidAmount = 0;
+            let totalUnpaidAmount = 0;
+            let totalPaidCount = 0;
+            let totalUnpaidCount = 0;
+
+            let rows = '';
+            members.forEach(member => {
+                const summary = App.getUserContributionSummary(member.id);
+                const grandTotal = summary.totalPaid + summary.totalDue;
+
+                totalPaidAmount += summary.totalPaid;
+                totalUnpaidAmount += summary.totalDue;
+                totalPaidCount += summary.paidCount;
+                totalUnpaidCount += summary.unpaidCount;
+
+                rows += `
+                    <tr>
+                        <td>#${member.id}</td>
+                        <td>${escapeHtml(member.name)}</td>
+                        <td class="text-right paid">${App.formatCurrency(summary.totalPaid)}</td>
+                        <td class="text-right unpaid">${App.formatCurrency(summary.totalDue)}</td>
+                        <td class="text-right"><strong>${App.formatCurrency(grandTotal)}</strong></td>
+                        <td class="text-center">${summary.paidCount}</td>
+                        <td class="text-center">${summary.unpaidCount}</td>
+                    </tr>
+                `;
+            });
+
+            if (members.length === 0) {
+                rows = '<tr><td colspan="7" class="text-center">No members registered yet.</td></tr>';
+            }
+
+            const printContent = `
+                <html>
+                <head>
+                    <title>Member Total Amount Summary</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 16px; }
+                        .header h1 { margin: 0; font-size: 24px; }
+                        .header p { margin: 6px 0 0; font-size: 13px; color: #666; }
+                        .totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+                        .total-box { border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+                        .total-label { font-size: 12px; color: #666; font-weight: bold; }
+                        .total-value { font-size: 18px; font-weight: bold; margin-top: 6px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+                        th { background: #f0f0f0; padding: 10px; text-align: left; border-bottom: 1px solid #999; }
+                        td { padding: 8px; border-bottom: 1px solid #ddd; }
+                        tr:nth-child(even) { background: #f9f9f9; }
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .paid { color: #15803d; font-weight: bold; }
+                        .unpaid { color: #b91c1c; font-weight: bold; }
+                        .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #ddd; padding-top: 16px; }
+                        @media print { body { margin: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Member Total Amount Summary</h1>
+                        <p>All Time | Generated on ${generatedAt}</p>
+                    </div>
+
+                    <div class="totals">
+                        <div class="total-box">
+                            <div class="total-label">Members</div>
+                            <div class="total-value">${members.length}</div>
+                        </div>
+                        <div class="total-box">
+                            <div class="total-label">Total Paid</div>
+                            <div class="total-value paid">${App.formatCurrency(totalPaidAmount)}</div>
+                        </div>
+                        <div class="total-box">
+                            <div class="total-label">Total Unpaid</div>
+                            <div class="total-value unpaid">${App.formatCurrency(totalUnpaidAmount)}</div>
+                        </div>
+                        <div class="total-box">
+                            <div class="total-label">Grand Total</div>
+                            <div class="total-value">${App.formatCurrency(totalPaidAmount + totalUnpaidAmount)}</div>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Member Name</th>
+                                <th>Total Paid Amount</th>
+                                <th>Total Unpaid Amount</th>
+                                <th>Grand Total</th>
+                                <th>Paid Count</th>
+                                <th>Unpaid Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2">Total</th>
+                                <th class="text-right paid">${App.formatCurrency(totalPaidAmount)}</th>
+                                <th class="text-right unpaid">${App.formatCurrency(totalUnpaidAmount)}</th>
+                                <th class="text-right">${App.formatCurrency(totalPaidAmount + totalUnpaidAmount)}</th>
+                                <th class="text-center">${totalPaidCount}</th>
+                                <th class="text-center">${totalUnpaidCount}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class="footer">
+                        <p>This is a system-generated summary. Please verify all information before processing.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const printWindow = window.open('', 'printMemberTotalSummary', 'height=600,width=900');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+
             setTimeout(() => {
                 printWindow.print();
             }, 250);
