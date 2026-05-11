@@ -3094,3 +3094,399 @@ img[loading="lazy"] {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
 }
+
+/* Final responsive polish: overrides older conflicting mobile rules above. */
+.container {
+    display: block;
+    align-items: initial;
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: clamp(14px, 3vw, 20px);
+    padding-right: clamp(14px, 3vw, 20px);
+}
+
+.site-header-content,
+.navbar-content {
+    display: flex;
+}
+
+.auth-form {
+    display: block;
+    align-items: initial;
+    justify-content: initial;
+}
+
+.footer-grid {
+    display: grid;
+}
+
+.site-nav,
+.navbar-menu,
+.form-buttons,
+.table-actions {
+    min-width: 0;
+}
+
+.association-cover {
+    width: min(100%, 1180px);
+    max-height: 520px;
+    min-height: 0;
+    object-fit: contain;
+}
+
+.card,
+.content-block,
+.side-card,
+.contact-card,
+.member-access,
+.stat-box {
+    max-width: 100%;
+}
+
+.card > [style*="display: flex"],
+.card [style*="justify-content: space-between"] {
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+#historyTable,
+#fullHistory,
+#adminUsersTable,
+#memberDetailsContent,
+#memberTotalSummary {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    display: table;
+    min-width: 680px;
+    white-space: nowrap;
+}
+
+.table thead {
+    display: table-header-group;
+}
+
+.table tbody {
+    display: table-row-group;
+}
+
+.table tr {
+    display: table-row;
+}
+
+.table th,
+.table td {
+    display: table-cell;
+    width: auto;
+}
+
+.table td::before {
+    content: none !important;
+}
+
+.modal {
+    padding: 1rem;
+}
+
+.modal-content {
+    width: min(92vw, 560px);
+    max-height: min(88vh, 760px);
+    overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+    .home-content-grid,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .feature-list,
+    .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    html {
+        font-size: 15px;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .site-header-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        min-height: auto;
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .site-brand {
+        font-size: clamp(1.1rem, 5vw, 1.35rem);
+        line-height: 1.25;
+        text-align: center;
+    }
+
+    .site-nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.55rem;
+        width: 100%;
+    }
+
+    .site-nav a,
+    .site-nav .nav-login-btn,
+    .site-nav .nav-register-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0.55rem 0.7rem;
+        border-radius: 7px;
+        font-size: 0.9rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .site-nav a:not(.nav-login-btn):not(.nav-register-btn) {
+        background: #f3f4f6;
+        color: var(--primary-color);
+    }
+
+    .navbar {
+        padding: 0.7rem 0;
+    }
+
+    .navbar-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 0;
+    }
+
+    .navbar-brand {
+        font-size: 1.05rem;
+        line-height: 1.3;
+        text-align: center;
+    }
+
+    .navbar-menu {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .navbar-menu a,
+    .navbar-menu button,
+    .logout-btn {
+        width: 100%;
+        min-height: 42px;
+        padding: 0.5rem;
+        border-radius: 7px;
+        font-size: 0.82rem;
+        line-height: 1.2;
+        text-align: center;
+        white-space: normal;
+    }
+
+    .navbar-menu a {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    .auth-container {
+        padding: 1rem 0 2rem;
+    }
+
+    .auth-page,
+    .contact-page {
+        padding: 1.75rem 0 2.25rem;
+    }
+
+    .auth-form {
+        padding: 0;
+    }
+
+    .association-cover {
+        width: 100%;
+        max-height: 320px;
+        margin-bottom: 1.25rem;
+        border-radius: 8px;
+    }
+
+    .home-content-grid,
+    .contact-grid,
+    .feature-list,
+    .footer-grid,
+    .stats-grid,
+    [style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-container {
+        gap: 1rem;
+        margin: 1rem auto;
+    }
+
+    .content-block,
+    .side-card,
+    .contact-card,
+    .member-access,
+    .card {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+
+    .content-block h1,
+    .contact-hero h1 {
+        font-size: 1.35rem;
+        line-height: 1.3;
+    }
+
+    .section-heading h2,
+    .card h2 {
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+
+    .stat-box {
+        padding: 1rem;
+    }
+
+    .stat-label {
+        font-size: 0.78rem;
+    }
+
+    .stat-value {
+        font-size: 1.35rem;
+        overflow-wrap: anywhere;
+    }
+
+    .form-buttons {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .btn,
+    .btn-sm,
+    .btn-block,
+    button,
+    a.btn {
+        width: 100%;
+        min-height: 44px;
+        white-space: normal;
+    }
+
+    .table {
+        min-width: 620px;
+        font-size: 0.82rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.65rem 0.75rem !important;
+        text-align: left;
+    }
+
+    .table-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.45rem;
+    }
+
+    .table-actions .btn {
+        min-height: 38px;
+    }
+
+    .modal {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        padding: 0.75rem;
+        align-items: center;
+        justify-content: center;
+        transform: none;
+    }
+
+    .modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 88vh;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .footer-grid {
+        text-align: center;
+    }
+
+    .badge-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer-bottom {
+        padding: 1rem 0.75rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .site-nav {
+        gap: 0.4rem;
+    }
+
+    .site-nav a,
+    .site-nav .nav-login-btn,
+    .site-nav .nav-register-btn {
+        min-height: 40px;
+        padding: 0.45rem;
+        font-size: 0.78rem;
+    }
+
+    .navbar-menu {
+        grid-template-columns: 1fr;
+    }
+
+    .content-block,
+    .side-card,
+    .contact-card,
+    .member-access,
+    .card {
+        padding: 0.85rem;
+    }
+
+    .table {
+        min-width: 560px;
+        font-size: 0.78rem;
+    }
+}
