@@ -1336,11 +1336,12 @@ textarea {
     }
 
     .site-header .site-nav {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.45rem;
-        width: 100%;
-        margin: 0;
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+        width: min(100%, 340px) !important;
+        margin: 0 auto !important;
+        flex-direction: initial !important;
     }
 
     .site-header .site-nav a {
@@ -1400,11 +1401,61 @@ textarea {
 
 @media (max-width: 380px) {
     .site-header .site-nav {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
 
     .navbar .navbar-menu {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Header logo */
+.site-brand,
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.site-brand::before,
+.navbar-brand::before {
+    content: "ম";
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, 0.18);
+}
+
+.navbar-brand::before {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: none;
+}
+
+@media (max-width: 640px) {
+    .site-header .site-brand,
+    .navbar .navbar-brand {
+        display: inline-flex;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .site-brand::before,
+    .navbar-brand::before {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+        border-radius: 8px;
+        font-size: 0.95rem;
     }
 }
 
@@ -1425,5 +1476,74 @@ textarea {
 @media (max-width: 460px) {
     .site-footer .footer-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Real image logo from logo.png */
+.site-brand::before,
+.navbar-brand::before {
+    content: none !important;
+    display: none !important;
+}
+
+.site-brand,
+.navbar-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, 0.18);
+}
+
+.navbar .brand-logo {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: none;
+}
+
+@media (max-width: 640px) {
+    .site-header .site-brand,
+    .navbar .navbar-brand {
+        justify-content: center;
+    }
+
+    .brand-logo {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+}
+
+/* Use logo.png as the real header logo */
+.site-brand::before,
+.navbar-brand::before {
+    content: "" !important;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: inline-block !important;
+    border-radius: 50%;
+    background: #ffffff url("../logo.png") center / cover no-repeat;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, 0.18);
+}
+
+.navbar-brand::before {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: none;
+}
+
+@media (max-width: 640px) {
+    .site-brand::before,
+    .navbar-brand::before {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
     }
 }
