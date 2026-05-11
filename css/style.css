@@ -3490,3 +3490,268 @@ img[loading="lazy"] {
         font-size: 0.78rem;
     }
 }
+
+/* Header and footer refresh */
+.site-header {
+    background: rgba(255, 255, 255, 0.98);
+    border-bottom: 1px solid rgba(30, 58, 138, 0.12);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.site-header::before,
+.site-footer::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+}
+
+.site-header-content {
+    min-height: 74px;
+    gap: 1.5rem;
+}
+
+.site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: #0f2f6f;
+    font-size: 1.55rem;
+    letter-spacing: 0;
+    line-height: 1.2;
+}
+
+.site-brand::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    box-shadow: 0 10px 20px rgba(30, 58, 138, 0.18);
+}
+
+.site-nav {
+    gap: 0.6rem;
+    justify-content: flex-end;
+}
+
+.site-nav a {
+    border-radius: 8px;
+    color: #475569;
+    font-weight: 700;
+    padding: 0.7rem 0.9rem;
+}
+
+.site-nav a::after {
+    display: none;
+}
+
+.site-nav a:not(.nav-login-btn):not(.nav-register-btn):hover {
+    background: #eef2ff;
+    color: var(--primary-color);
+}
+
+.site-nav .nav-login-btn,
+.site-nav .nav-register-btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.05rem;
+}
+
+.navbar {
+    background: linear-gradient(135deg, #102a62 0%, #17427f 55%, #0f766e 100%);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+}
+
+.navbar-brand {
+    line-height: 1.25;
+}
+
+.navbar-menu {
+    gap: 0.65rem;
+}
+
+.navbar-menu a,
+.navbar-menu button {
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+}
+
+.navbar-menu a:hover,
+.navbar-menu button:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.logout-btn {
+    background: rgba(239, 68, 68, 0.22);
+}
+
+.site-footer {
+    position: relative;
+    overflow: hidden;
+    background: #0f172a;
+    color: #cbd5e1;
+    margin-top: 3.5rem;
+    border-top: 0;
+}
+
+.footer-grid {
+    grid-template-columns: 1.35fr 0.8fr 1fr 1fr;
+    gap: 1.25rem;
+    padding-top: 2.75rem;
+    padding-bottom: 2.75rem;
+}
+
+.footer-grid > div {
+    min-width: 0;
+    padding: 1.15rem;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.site-footer h3,
+.site-footer h4 {
+    margin-bottom: 0.85rem;
+    color: #f8fafc;
+    font-size: 1rem;
+    letter-spacing: 0;
+}
+
+.site-footer p,
+.site-footer a {
+    color: #cbd5e1;
+    font-size: 0.92rem;
+}
+
+.site-footer a {
+    width: fit-content;
+    margin-bottom: 0.45rem;
+    border-radius: 6px;
+}
+
+.site-footer a:hover {
+    color: #ffffff;
+    padding-left: 0;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.pay-pill {
+    justify-content: center;
+    min-height: 34px;
+    padding: 0.45rem 0.65rem;
+    border-radius: 999px;
+    border-color: rgba(148, 163, 184, 0.28);
+    background: rgba(15, 118, 110, 0.2);
+    color: #e2e8f0;
+    text-align: center;
+}
+
+.footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    background: rgba(2, 6, 23, 0.78);
+    padding: 1rem 1.25rem;
+}
+
+.footer-bottom span,
+.footer-bottom .developer-credit {
+    margin: 0;
+}
+
+.footer-bottom .developer-credit {
+    color: #bfdbfe;
+}
+
+@media (max-width: 900px) {
+    .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .site-header {
+        position: sticky;
+    }
+
+    .site-header-content {
+        gap: 0.65rem;
+        min-height: auto;
+    }
+
+    .site-brand {
+        justify-content: center;
+        font-size: 1.18rem;
+    }
+
+    .site-brand::before {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+
+    .site-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .site-nav a,
+    .site-nav .nav-login-btn,
+    .site-nav .nav-register-btn,
+    .navbar-menu a,
+    .navbar-menu button,
+    .logout-btn {
+        min-height: 42px;
+        padding: 0.55rem 0.45rem;
+        font-size: 0.84rem;
+    }
+
+    .navbar-menu {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+        text-align: left;
+    }
+
+    .footer-grid > div {
+        padding: 1rem;
+    }
+
+    .site-footer a {
+        width: 100%;
+        padding: 0.35rem 0;
+    }
+
+    .badge-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.35rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 380px) {
+    .site-nav,
+    .navbar-menu,
+    .badge-grid {
+        grid-template-columns: 1fr;
+    }
+}
