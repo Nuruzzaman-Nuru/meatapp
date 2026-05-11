@@ -749,6 +749,8 @@
                             <th>Email</th>
                             <th>Amount</th>
                             <th>Status</th>
+                            <th>Payment Method</th>
+                            <th>Paid By</th>
                             <th>Paid Date</th>
                         </tr>
                     </thead>
@@ -768,6 +770,8 @@
                         <td>${user.email}</td>
                         <td>${App.formatCurrency(c.amount)}</td>
                         <td>${statusBadge}</td>
+                        <td>${c.paymentMethod || '-'}</td>
+                        <td>${c.paidBy || '-'}</td>
                         <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
                     </tr>
                 `;
@@ -913,6 +917,8 @@
                                     <th>Member Name</th>
                                     <th>Amount</th>
                                     <th>Status</th>
+                                    <th>Payment Method</th>
+                                    <th>Paid By</th>
                                     <th>Paid Date</th>
                                 </tr>
                             </thead>
@@ -928,6 +934,8 @@
                         <td>${user.name}</td>
                         <td class="text-right">${App.formatCurrency(c.amount)}</td>
                         <td style="text-align: center;">${status}</td>
+                        <td>${c.paymentMethod || '-'}</td>
+                        <td>${c.paidBy || '-'}</td>
                         <td>${paidDate}</td>
                     </tr>
                 `;
@@ -1307,6 +1315,7 @@
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th>Payment Method</th>
+                                <th>Paid By</th>
                                 <th>Paid Date</th>
                             </tr>
                         </thead>
@@ -1314,7 +1323,7 @@
             `;
 
             if (summary.contributions.length === 0) {
-                html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
+                html += '<tr><td colspan="7" style="text-align: center; color: #999;">No contribution history</td></tr>';
             } else {
                 summary.contributions.forEach(c => {
                     const statusBadge = c.status === 'paid'
@@ -1328,6 +1337,7 @@
                             <td>${App.formatCurrency(c.amount)}</td>
                             <td>${statusBadge}</td>
                             <td>${c.paymentMethod || '-'}</td>
+                            <td>${c.paidBy || '-'}</td>
                             <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
                         </tr>
                     `;

@@ -77,17 +77,26 @@ const App = {
     /**
      * Record payment for contribution
      */
-    recordPayment(contributionId, paymentMethod = 'cash') {
+    recordPayment(contributionId, paymentMethod = 'cash', paidBy = '', paymentProof = null) {
         const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
         if (!contribution) {
             return { success: false, message: 'Contribution not found' };
         }
 
-        const updated = StorageManager.updateContribution(contributionId, {
+        const updateData = {
             status: 'paid',
             paymentMethod,
             paymentDate: new Date().toISOString()
-        });
+        };
+
+        if (paidBy) {
+            updateData.paidBy = paidBy;
+        }
+        if (paymentProof) {
+            updateData.paymentProof = paymentProof;
+        }
+
+        const updated = StorageManager.updateContribution(contributionId, updateData);
 
         return { success: true, contribution: updated };
     },
