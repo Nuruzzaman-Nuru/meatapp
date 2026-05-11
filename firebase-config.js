@@ -1,6 +1,13 @@
 // Firebase SDK Import
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getDatabase,
+  ref,
+  set,
+  get,
+  child,
+  push
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Firebase Config
 export const firebaseConfig = {
@@ -17,8 +24,15 @@ export const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 
-// Firestore Database
-export const db = getFirestore(app);
+// Realtime Database
+export const db = getDatabase(app);
 
-// Export Database
+// Global Access
 window.db = db;
+window.ref = ref;
+window.set = set;
+window.get = get;
+window.child = child;
+window.push = push;
+
+export { ref, set, get, child, push };

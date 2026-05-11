@@ -1,30 +1,32 @@
 /**
- * Firebase Cloud Sync
- * Mirrors StorageManager localStorage data to Firestore.
+ * Firebase Realtime Database Sync
+ * Mirrors StorageManager localStorage data to Realtime Database.
  */
 
 const FirebaseSync = {
     enabled: false,
     db: null,
-    collectionPaths: {
-        users: 'users',
-        contributions: 'contributions',
-        collectors: 'collectors',
-        announcements: 'announcements',
-        monthlyReports: 'monthlyReports'
-    },
+    ref: null,
+    set: null,
+    get: null,
+    child: null,
+    basePath: 'meatAppData/default',
 
     async init() {
         try {
             const configModule = await import('../firebase-config.js');
             this.db = configModule.db;
-            this.enabled = Boolean(this.db);
+            this.ref = configModule.ref;
+            this.set = configModule.set;
+            this.get = configModule.get;
+            this.child = configModule.child;
+            this.enabled = Boolean(this.db && this.ref && this.set && this.get && this.child);
 
             await this.syncFromFirebase();
             this.patchStorageManager();
             await this.syncAllToFirebase();
 
-            console.log('Firebase sync ready');
+            console.log('Firebase Realtime Database sync ready');
         } catch (error) {
             this.enabled = false;
             console.warn('Firebase sync disabled. Using localStorage only.', error);
@@ -43,27 +45,35 @@ const FirebaseSync = {
         };
     },
 
-    getDocId(item, index) {
+    getItemKey(item, index) {
         return String(item?.id ?? index + 1);
+    },
+
+    arrayToFirebaseObject(items) {
+        return items.reduce((data, item, index) => {
+            data[this.getItemKey(item, index)] = item;
+            return data;
+        }, {});
+    },
+
+    firebaseValueToArray(value) {
+        if (!value) return [];
+
+        return Object.entries(value)
+            .filter(([key]) => key !== '_meta')
+            .map(([, item]) => item);
     },
 
     async syncFromFirebase() {
         if (!this.enabled || !window.StorageManager) return;
 
-        const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const keyMap = this.getKeyMap();
 
         for (const [name, storageKey] of Object.entries(keyMap)) {
-            const snapshot = await getDocs(collection(this.db, 'meatAppData', 'default', name));
-            if (snapshot.empty) continue;
+            const snapshot = await this.get(this.child(this.ref(this.db), `${this.basePath}/${name}`));
+            if (!snapshot.exists()) continue;
 
-            const data = [];
-            snapshot.forEach(docSnap => {
-                if (docSnap.id !== '_meta') {
-                    data.push(docSnap.data());
-                }
-            });
-
+            const data = this.firebaseValueToArray(snapshot.val());
             if (data.length > 0) {
                 localStorage.setItem(storageKey, JSON.stringify(data));
             }
@@ -73,26 +83,20 @@ const FirebaseSync = {
     async syncCollectionToFirebase(name) {
         if (!this.enabled || !window.StorageManager) return;
 
-        const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         const storageKey = this.getKeyMap()[name];
         if (!storageKey) return;
 
         const rawData = localStorage.getItem(storageKey);
         const items = rawData ? JSON.parse(rawData) : [];
         const safeItems = Array.isArray(items) ? items : [];
+        const payload = this.arrayToFirebaseObject(safeItems);
 
-        await setDoc(doc(this.db, 'meatAppData', 'default', name, '_meta'), {
+        payload._meta = {
             lastSync: new Date().toISOString(),
             itemCount: safeItems.length
-        }, { merge: true });
+        };
 
-        await Promise.all(safeItems.map((item, index) => {
-            return setDoc(
-                doc(this.db, 'meatAppData', 'default', name, this.getDocId(item, index)),
-                item,
-                { merge: true }
-            );
-        }));
+        await this.set(this.ref(this.db, `${this.basePath}/${name}`), payload);
     },
 
     async syncAllToFirebase() {
@@ -101,6 +105,7 @@ const FirebaseSync = {
 
     syncSoon(name) {
         if (!this.enabled) return;
+
         setTimeout(() => {
             this.syncCollectionToFirebase(name).catch(error => {
                 console.error(`Firebase ${name} sync failed`, error);
