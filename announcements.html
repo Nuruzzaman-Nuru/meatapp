@@ -16,8 +16,7 @@
             <div class="navbar-content">
                 <div class="navbar-brand">💰 Contribution System</div>
                 <div class="navbar-menu">
-                    <a href="dashboard.html">Dashboard</a>
-                    <a href="profile.html">Profile</a>
+                    <a id="dashboardNavLink" href="dashboard.html">Dashboard</a>
                     <a href="announcements.html">Announcements</a>
                     <button class="logout-btn" onclick="handleLogout()">Logout</button>
                 </div>
@@ -85,6 +84,7 @@
 
             // Show admin section if user is admin
             if (AuthManager.isAdmin()) {
+                document.getElementById('dashboardNavLink').href = 'admin-dashboard.html';
                 document.getElementById('adminSection').style.display = 'block';
             }
 
