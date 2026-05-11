@@ -1226,3 +1226,45 @@ textarea {
     background: var(--primary-color);
     color: #fff;
 }
+
+/* Final footer layout fix */
+.site-footer .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 2rem;
+    text-align: left;
+}
+
+.site-footer .footer-grid > div {
+    min-width: 0;
+}
+
+.site-footer .footer-contact-list p {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.site-footer .footer-contact-list span,
+.site-footer .footer-contact-list strong {
+    display: block;
+}
+
+.site-footer .footer-contact-list strong {
+    word-break: keep-all;
+}
+
+@media (max-width: 700px) {
+    .site-footer .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 1.25rem;
+    }
+}
+
+@media (max-width: 430px) {
+    .site-footer .footer-grid {
+        grid-template-columns: 1fr;
+    }
+}
