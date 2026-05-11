@@ -489,7 +489,7 @@
             document.getElementById('editUserModal').classList.remove('show');
         }
 
-        function saveUserEdit() {
+        async function saveUserEdit() {
             const userId = Number(document.getElementById('editUserId').value);
             const name = document.getElementById('editUserName').value.trim();
             const email = document.getElementById('editUserEmail').value.trim();
@@ -509,6 +509,7 @@
             }
 
             const updates = { name, email, phone, status };
+            updates.updatedAt = new Date().toISOString();
             if (password) {
                 if (password.length < 6) {
                     App.showToast('Password must be at least 6 characters', 'warning');
@@ -523,8 +524,26 @@
                 return;
             }
 
+            if (status !== 'active') {
+                const collectors = StorageManager.getCollectors().filter(collector => collector.userId !== userId);
+                localStorage.setItem(StorageManager.KEYS.COLLECTORS, JSON.stringify(collectors));
+            }
+
+            if (window.FirebaseSync?.enabled) {
+                try {
+                    await FirebaseSync.syncCollectionToFirebase('users');
+                    if (status !== 'active') {
+                        await FirebaseSync.syncCollectionToFirebase('collectors');
+                    }
+                } catch (error) {
+                    console.error('Firebase user status sync failed', error);
+                    App.showToast('Updated locally, but Firebase sync failed', 'warning');
+                }
+            }
+
             closeEditUserModal();
             initializeCollectorSelects();
+            initializeEditSelects();
             loadAdminUsers();
             refreshReport();
             App.showToast('User updated successfully', 'success');
