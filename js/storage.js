@@ -247,15 +247,21 @@ const StorageManager = {
         // Remove existing collectors for this month
         collectors = collectors.filter(c => !(c.month === month && c.year === year));
         
+        // Calculate next ID once (not inside map)
+        let nextId = collectors.length > 0 ? Math.max(...collectors.map(c => c.id || 0)) + 1 : 1;
+        
         // Add new collectors
-        const newCollectors = userIds.map(userId => ({
-            id: collectors.length > 0 ? Math.max(...collectors.map(c => c.id || 0)) + 1 : 1,
-            userId,
-            month,
-            year,
-            assignedDate: new Date().toISOString(),
-            collectedAmount: 0
-        }));
+        const newCollectors = userIds.map(userId => {
+            const collector = {
+                id: nextId++,
+                userId,
+                month,
+                year,
+                assignedDate: new Date().toISOString(),
+                collectedAmount: 0
+            };
+            return collector;
+        });
         
         collectors.push(...newCollectors);
         localStorage.setItem(this.KEYS.COLLECTORS, JSON.stringify(collectors));

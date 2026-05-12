@@ -241,41 +241,21 @@
 
         function checkSelectedMonthStatus() {
             const monthYear = document.getElementById('paymentMonth').value;
-            const warningDiv = document.getElementById('monthWarning');
 
             if (!monthYear) {
-                if (warningDiv) warningDiv.remove();
                 return;
             }
 
             const [month, year] = monthYear.split('-').map(Number);
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
 
-            // Create warning container if it doesn't exist
-            let warning = document.getElementById('monthWarning');
-            if (!warning) {
-                warning = document.createElement('div');
-                warning.id = 'monthWarning';
-                const paymentCard = document.querySelector('.card:has(#paymentMonth)');
-                paymentCard.parentNode.insertBefore(warning, paymentCard);
-            }
-
             if (contribution.status === 'paid') {
-                warning.className = 'alert alert-warning';
-                warning.innerHTML = `
-                    <div style="padding: 1rem; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; color: #856404;">
-                        <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">⚠️ Payment Already Recorded</p>
-                        <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem;">
-                            You already have a payment recorded for <strong>${App.getMonthName(month)} ${year}</strong>
-                        </p>
-                        <p style="margin: 0.3rem 0 0 0; font-size: 0.9rem; color: #666;">
-                            Amount: <strong>${App.formatCurrency(contribution.amount)}</strong> | 
-                            Paid on: <strong>${App.formatDate(contribution.paymentDate)}</strong>
-                        </p>
-                    </div>
-                `;
-            } else {
-                warning.remove();
+                // Show warning at TOP of screen using toast notification
+                const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                App.showToast(warningMessage, 'warning');
+
+                // Also scroll to top to ensure user sees it
+                window.scrollTo(0, 0);
             }
         }
 

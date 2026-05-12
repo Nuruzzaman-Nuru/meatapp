@@ -655,6 +655,11 @@ textarea {
     color: #fff;
 }
 
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger-color), #dc2626);
+    color: #fff;
+}
+
 .btn-sm {
     min-height: 38px;
     padding: 0.45rem 0.8rem;
