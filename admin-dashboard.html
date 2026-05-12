@@ -198,13 +198,16 @@
             <div class="card">
                 <h2>📊 Individual Member Account Details</h2>
                 <p style="color: #666; margin-bottom: 1rem;">View detailed account information for each member</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label for="memberDetailSelect">Select Member</label>
                         <select id="memberDetailSelect"></select>
                     </div>
                     <div style="display: flex; align-items: flex-end;">
                         <button class="btn btn-primary" onclick="loadMemberDetails()" style="width: 100%;">🔍 View Details</button>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button class="btn btn-success" onclick="printMemberDetails()" style="width: 100%;" title="Print selected member account details">Print Details</button>
                     </div>
                 </div>
                 <div id="memberDetailResult"></div>
@@ -1346,6 +1349,137 @@
 
             html += '</tbody></table>';
             document.getElementById('memberDetailResult').innerHTML = html;
+        }
+
+        function printMemberDetails() {
+            const userId = document.getElementById('memberDetailSelect').value;
+
+            if (!userId) {
+                App.showToast('Please select a member', 'warning');
+                return;
+            }
+
+            const user = StorageManager.getUserById(parseInt(userId));
+            if (!user) {
+                App.showToast('Member not found', 'error');
+                return;
+            }
+
+            const summary = App.getUserContributionSummary(parseInt(userId));
+            const joinDate = new Date(user.joinDate);
+            const daysSinceJoin = Math.floor((new Date() - joinDate) / (1000 * 60 * 60 * 24));
+            const generatedAt = new Date().toLocaleString();
+
+            let rows = '';
+            if (summary.contributions.length === 0) {
+                rows = '<tr><td colspan="7" class="text-center">No contribution history</td></tr>';
+            } else {
+                summary.contributions.forEach(c => {
+                    const status = c.status === 'paid' ? 'PAID' : 'UNPAID';
+                    const statusClass = c.status === 'paid' ? 'paid' : 'unpaid';
+
+                    rows += `
+                        <tr>
+                            <td>${App.getMonthName(c.month)}</td>
+                            <td>${c.year}</td>
+                            <td class="text-right">${App.formatCurrency(c.amount)}</td>
+                            <td class="text-center ${statusClass}">${status}</td>
+                            <td>${escapeHtml(c.paymentMethod || '-')}</td>
+                            <td>${escapeHtml(c.paidBy || '-')}</td>
+                            <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const printContent = `
+                <html>
+                <head>
+                    <title>Member Account Details - ${escapeHtml(user.name)}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                        .header { text-align: center; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 16px; }
+                        .header h1 { margin: 0; font-size: 24px; }
+                        .header p { margin: 6px 0 0; font-size: 13px; color: #666; }
+                        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+                        .box { border: 1px solid #ddd; border-radius: 4px; padding: 14px; }
+                        .box h2 { margin: 0 0 12px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+                        .box p { margin: 8px 0; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+                        th { background: #f0f0f0; padding: 10px; text-align: left; border-bottom: 1px solid #999; }
+                        td { padding: 8px; border-bottom: 1px solid #ddd; }
+                        tr:nth-child(even) { background: #f9f9f9; }
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .paid { color: #15803d; font-weight: bold; }
+                        .unpaid { color: #b91c1c; font-weight: bold; }
+                        .footer { margin-top: 32px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #ddd; padding-top: 16px; }
+                        @media print {
+                            body { margin: 0; }
+                            .details { grid-template-columns: 1fr 1fr; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>Individual Member Account Details</h1>
+                        <p>#${user.id} - ${escapeHtml(user.name)} | Generated on ${generatedAt}</p>
+                    </div>
+
+                    <div class="details">
+                        <div class="box">
+                            <h2>Personal Information</h2>
+                            <p><strong>Member ID:</strong> #${user.id}</p>
+                            <p><strong>Name:</strong> ${escapeHtml(user.name)}</p>
+                            <p><strong>Email:</strong> ${escapeHtml(user.email)}</p>
+                            <p><strong>Phone:</strong> ${escapeHtml(user.phone)}</p>
+                            <p><strong>Status:</strong> ${escapeHtml(user.status).toUpperCase()}</p>
+                            <p><strong>Join Date:</strong> ${App.formatDate(user.joinDate)}</p>
+                            <p><strong>Days as Member:</strong> ${daysSinceJoin} days</p>
+                        </div>
+
+                        <div class="box">
+                            <h2>Financial Summary</h2>
+                            <p><strong>Total Contributions:</strong> ${summary.totalContributions}</p>
+                            <p><strong>Paid Count:</strong> <span class="paid">${summary.paidCount}</span></p>
+                            <p><strong>Unpaid Count:</strong> <span class="unpaid">${summary.unpaidCount}</span></p>
+                            <p><strong>Total Amount Paid:</strong> <span class="paid">${App.formatCurrency(summary.totalPaid)}</span></p>
+                            <p><strong>Total Amount Unpaid:</strong> <span class="unpaid">${App.formatCurrency(summary.totalDue)}</span></p>
+                        </div>
+                    </div>
+
+                    <h2 style="font-size: 16px;">Contribution History</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Year</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Payment Method</th>
+                                <th>Paid By</th>
+                                <th>Paid Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+
+                    <div class="footer">
+                        <p>This is a system-generated member account report. Please verify all information before processing.</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const printWindow = window.open('', 'printMemberDetails', 'height=600,width=900');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
         }
 
         // Load Member Total Amount Summary
