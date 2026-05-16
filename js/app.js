@@ -98,6 +98,24 @@ const App = {
 
         const updated = StorageManager.updateContribution(contributionId, updateData);
 
+        // Send SMS notification if SMS service is available
+        if (updated && typeof SMSService !== 'undefined') {
+            const user = StorageManager.getUserById(contribution.userId);
+            if (user && user.phone) {
+                // Send SMS asynchronously (don't block the payment flow)
+                SMSService.sendPaymentConfirmation(
+                    user.phone,
+                    user.name,
+                    contribution.month,
+                    contribution.year,
+                    contribution.amount,
+                    paymentMethod
+                ).catch(error => {
+                    console.error('SMS notification failed:', error);
+                });
+            }
+        }
+
         return { success: true, contribution: updated };
     },
 

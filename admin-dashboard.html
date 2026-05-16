@@ -151,6 +151,53 @@
                 <div id="membersTable"></div>
             </div>
 
+            <!-- SMS Configuration -->
+            <div class="card">
+                <h2>📱 SMS Notification Configuration</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Configure SMS notifications for payment confirmations</p>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="smsEnabled" onchange="updateSMSConfig()"> 
+                        <strong>Enable SMS Notifications</strong>
+                    </label>
+                    <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Members will receive SMS when payment is confirmed</p>
+                </div>
+
+                <div id="smsConfigOptions" style="display: none;">
+                    <div class="form-group">
+                        <label for="smsApiType">SMS Gateway Type</label>
+                        <select id="smsApiType" onchange="updateSMSConfig()">
+                            <option value="demo">Demo Mode (Test/Development)</option>
+                            <option value="ssh">SSH (Bangladesh)</option>
+                            <option value="twilio">Twilio (International)</option>
+                            <option value="custom">Custom API</option>
+                        </select>
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Demo mode logs SMS to console. Use real providers for production.</p>
+                    </div>
+
+                    <div id="apiKeyFields"></div>
+
+                    <div class="form-group">
+                        <label for="smsSenderName">Sender Name</label>
+                        <input type="text" id="smsSenderName" placeholder="Your business name or acronym" onchange="updateSMSConfig()" value="MEAT-APP" maxlength="11">
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Max 11 characters (appears in SMS as sender)</p>
+                    </div>
+
+                    <div style="background: #f5f5f5; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                        <h4 style="margin-top: 0;">SMS Message Preview</h4>
+                        <p id="smsPreview" style="background: white; padding: 1rem; border-radius: 4px; border-left: 4px solid #667eea; margin: 0.5rem 0; font-size: 0.9rem;"></p>
+                    </div>
+
+                    <div style="background: #e3f2fd; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+                        <button class="btn btn-primary" id="testSMSButton" onclick="testSMSNotification()" style="width: 100%;">📤 Send Test SMS to Your Phone</button>
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Test SMS will be sent to the logged-in admin's phone number</p>
+                    </div>
+                </div>
+
+                <div id="smsStatusMessage" style="margin-top: 1rem;"></div>
+            </div>
+
             <!-- Data Backup & Restore -->
             <div class="card">
                 <h2>💾 Data Backup & Restore</h2>
@@ -305,6 +352,7 @@
             </div>
         </div>
     </div>
+<script src="js/sms.js"></script>
 <script type="module" src="firebase-config.js"></script>
 <script type="module" src="js/firebase-sync.js"></script>
     <script src="js/storage.js"></script>
@@ -322,6 +370,7 @@
             initializeCollectorSelects();
             initializeEditSelects();
             loadAdminUsers();
+            initializeSMSConfiguration();
             refreshReport();
         });
 
@@ -1527,6 +1576,170 @@
 
             html += '</tbody></table>';
             document.getElementById('memberTotalSummary').innerHTML = html;
+        }
+
+        // SMS Configuration Functions
+        function initializeSMSConfiguration() {
+            if (typeof SMSService === 'undefined') return;
+
+            const config = SMSService.getConfig();
+            document.getElementById('smsEnabled').checked = config.enabled;
+            document.getElementById('smsApiType').value = config.apiType;
+            document.getElementById('smsSenderName').value = config.senderName;
+
+            updateSMSConfigDisplay();
+            updateSMSPreview();
+        }
+
+        function updateSMSConfig() {
+            if (typeof SMSService === 'undefined') return;
+
+            const enabled = document.getElementById('smsEnabled').checked;
+            const apiType = document.getElementById('smsApiType').value;
+            const senderName = document.getElementById('smsSenderName').value;
+
+            const config = {
+                enabled: enabled,
+                apiType: apiType,
+                senderName: senderName || 'MEAT-APP'
+            };
+
+            // Get API-specific fields if they exist
+            const apiKeyInput = document.getElementById('smsApiKey');
+            const apiSecretInput = document.getElementById('smsApiSecret');
+            const apiEndpointInput = document.getElementById('smsApiEndpoint');
+
+            if (apiKeyInput) config.apiKey = apiKeyInput.value;
+            if (apiSecretInput) config.apiSecret = apiSecretInput.value;
+            if (apiEndpointInput) config.apiEndpoint = apiEndpointInput.value;
+
+            SMSService.updateConfig(config);
+            updateSMSConfigDisplay();
+            updateSMSPreview();
+
+            App.showToast('SMS Configuration Updated', 'success');
+        }
+
+        function updateSMSConfigDisplay() {
+            const enabled = document.getElementById('smsEnabled').checked;
+            const apiType = document.getElementById('smsApiType').value;
+            const configOptions = document.getElementById('smsConfigOptions');
+
+            configOptions.style.display = enabled ? 'block' : 'none';
+
+            // Generate API Key Fields based on selected type
+            let apiFieldsHTML = '';
+            
+            if (apiType === 'ssh') {
+                apiFieldsHTML = `
+                    <div class="form-group">
+                        <label for="smsApiKey">SSH API Key</label>
+                        <input type="password" id="smsApiKey" placeholder="Enter your SSH API key" onchange="updateSMSConfig()">
+                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Get your API key from <a href="https://sshclick.com/" target="_blank">sshclick.com</a></p>
+                    </div>
+                `;
+            } else if (apiType === 'twilio') {
+                apiFieldsHTML = `
+                    <div class="form-group">
+                        <label for="smsApiKey">Twilio Account SID</label>
+                        <input type="password" id="smsApiKey" placeholder="Your Twilio Account SID" onchange="updateSMSConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label for="smsApiSecret">Twilio Auth Token</label>
+                        <input type="password" id="smsApiSecret" placeholder="Your Twilio Auth Token" onchange="updateSMSConfig()">
+                    </div>
+                `;
+            } else if (apiType === 'custom') {
+                apiFieldsHTML = `
+                    <div class="form-group">
+                        <label for="smsApiEndpoint">API Endpoint URL</label>
+                        <input type="url" id="smsApiEndpoint" placeholder="https://your-api.com/sms/send" onchange="updateSMSConfig()">
+                    </div>
+                    <div class="form-group">
+                        <label for="smsApiKey">API Key</label>
+                        <input type="password" id="smsApiKey" placeholder="Your API Key" onchange="updateSMSConfig()">
+                    </div>
+                `;
+            }
+
+            document.getElementById('apiKeyFields').innerHTML = apiFieldsHTML;
+
+            // Load saved values if they exist
+            if (typeof SMSService !== 'undefined') {
+                const config = SMSService.getConfig();
+                if (document.getElementById('smsApiKey')) {
+                    document.getElementById('smsApiKey').value = config.apiKey || '';
+                }
+                if (document.getElementById('smsApiSecret')) {
+                    document.getElementById('smsApiSecret').value = config.apiSecret || '';
+                }
+                if (document.getElementById('smsApiEndpoint')) {
+                    document.getElementById('smsApiEndpoint').value = config.apiEndpoint || '';
+                }
+            }
+        }
+
+        function updateSMSPreview() {
+            if (typeof SMSService === 'undefined') return;
+            if (!document.getElementById('smsEnabled').checked) {
+                document.getElementById('smsPreview').textContent = 'SMS notifications are disabled. Enable above to see preview.';
+                return;
+            }
+
+            const currentUser = StorageManager.getCurrentUser();
+            const preview = SMSService.generatePaymentMessage(
+                currentUser.name,
+                new Date().getMonth() + 1,
+                new Date().getFullYear(),
+                5000,
+                'Cash'
+            );
+
+            document.getElementById('smsPreview').textContent = preview;
+        }
+
+        function testSMSNotification() {
+            if (typeof SMSService === 'undefined') {
+                App.showToast('SMS Service not loaded', 'error');
+                return;
+            }
+
+            if (!document.getElementById('smsEnabled').checked) {
+                App.showToast('SMS notifications are disabled. Enable first.', 'warning');
+                return;
+            }
+
+            const currentUser = StorageManager.getCurrentUser();
+            if (!currentUser.phone) {
+                App.showToast('Admin phone number not set in profile', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('testSMSButton');
+            btn.disabled = true;
+
+            SMSService.sendPaymentConfirmation(
+                currentUser.phone,
+                currentUser.name,
+                new Date().getMonth() + 1,
+                new Date().getFullYear(),
+                5000,
+                'Test SMS'
+            ).then(result => {
+                if (result.success && result.sent) {
+                    App.showToast('✅ Test SMS sent successfully to ' + currentUser.phone, 'success');
+                } else if (result.success && result.isDemo) {
+                    App.showToast('✅ Test SMS logged to demo mode (check browser console)', 'success');
+                } else {
+                    App.showToast('❌ ' + result.message, 'error');
+                }
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 2000);
+            }).catch(error => {
+                App.showToast('Error sending test SMS: ' + error.message, 'error');
+                btn.disabled = false;
+            });
         }
     </script>
 </body>

@@ -327,6 +327,19 @@
                 minute: '2-digit'
             });
 
+            // Check if SMS notification was enabled and sent
+            let smsNotification = '';
+            if (typeof SMSService !== 'undefined' && SMSService.config.enabled && currentUser.phone) {
+                smsNotification = `
+                    <div style="margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
+                        <p style="margin: 0; color: #1565c0;">
+                            <strong>📱 SMS Notification:</strong><br>
+                            A confirmation SMS has been sent to <strong>${currentUser.phone}</strong>
+                        </p>
+                    </div>
+                `;
+            }
+
             let html = `
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
@@ -348,7 +361,9 @@
                         <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment has been successfully recorded in the system.</p>
                     </div>
 
-                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem;">Great! Close</button>
+                    ${smsNotification}
+
+                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">Great! Close</button>
                 </div>
             `;
 
@@ -516,6 +531,7 @@
             }
         }
     </script>
+    <script src="js/sms.js"></script>
     <script type="module" src="firebase-config.js"></script>
 <script type="module" src="js/firebase-sync.js"></script>
 </body>
