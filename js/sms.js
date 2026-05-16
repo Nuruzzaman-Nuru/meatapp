@@ -89,7 +89,12 @@ const SMSService = {
      */
     async sendViaTwilio(phoneNumber, message) {
         try {
-            const response = await fetch('https://api.twilio.com/2010-04-01/Accounts/YOUR_ACCOUNT_SID/Messages.json', {
+            if (!this.config.apiKey || !this.config.apiSecret) {
+                throw new Error('Twilio credentials not configured');
+            }
+
+            const accountSid = this.config.apiKey; // apiKey stores the Account SID
+            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Basic ' + btoa(this.config.apiKey + ':' + this.config.apiSecret),
@@ -102,7 +107,10 @@ const SMSService = {
                 })
             });
 
-            if (!response.ok) throw new Error('Twilio API error');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Twilio API error: ' + response.statusText);
+            }
             const data = await response.json();
             
             return {
@@ -122,6 +130,10 @@ const SMSService = {
      */
     async sendViaSSH(phoneNumber, message) {
         try {
+            if (!this.config.apiKey) {
+                throw new Error('SSH API Key not configured');
+            }
+
             // Ensure phone number is in proper format for SSH
             let formattedPhone = phoneNumber.replace(/\D/g, '');
             if (formattedPhone.startsWith('0')) {
@@ -153,7 +165,7 @@ const SMSService = {
                     message: 'SMS sent successfully via SSH'
                 };
             } else {
-                return { success: false, message: 'SSH API error: ' + (data.error || 'Unknown error') };
+                return { success: false, message: 'SSH API error: ' + (data.error || data.message || 'Unknown error') };
             }
         } catch (error) {
             console.error('SSH error:', error);
@@ -166,7 +178,14 @@ const SMSService = {
      */
     async sendViaCustomAPI(phoneNumber, message) {
         try {
-            const response = await fetch(this.config.apiEndpoint || '', {
+            if (!this.config.apiEndpoint) {
+                throw new Error('API Endpoint not configured');
+            }
+            if (!this.config.apiKey) {
+                throw new Error('API Key not configured');
+            }
+
+            const response = await fetch(this.config.apiEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

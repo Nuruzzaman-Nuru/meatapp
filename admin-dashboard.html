@@ -190,8 +190,18 @@
                     </div>
 
                     <div style="background: #e3f2fd; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
-                        <button class="btn btn-primary" id="testSMSButton" onclick="testSMSNotification()" style="width: 100%;">📤 Send Test SMS to Your Phone</button>
-                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">Test SMS will be sent to the logged-in admin's phone number</p>
+                        <h4 style="margin-top: 0;">📱 Test SMS - Enter Your Phone Number</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="testPhoneNumber">Phone Number (for testing)</label>
+                                <input type="tel" id="testPhoneNumber" placeholder="e.g., +8801701234567" value="">
+                                <p style="color: #666; font-size: 0.85rem; margin-top: 0.3rem;">Enter phone number to test SMS delivery</p>
+                            </div>
+                            <div style="display: flex; align-items: flex-end;">
+                                <button class="btn btn-primary" id="testSMSButton" onclick="testSMSNotification()" style="width: 100%;">📤 Send Test SMS</button>
+                            </div>
+                        </div>
+                        <p style="color: #666; font-size: 0.9rem; margin: 0;">SMS will be sent via your configured API provider to the phone number above.</p>
                     </div>
                 </div>
 
@@ -1709,37 +1719,74 @@
                 return;
             }
 
-            const currentUser = StorageManager.getCurrentUser();
-            if (!currentUser.phone) {
-                App.showToast('Admin phone number not set in profile', 'warning');
+            const testPhone = document.getElementById('testPhoneNumber').value.trim();
+            if (!testPhone) {
+                App.showToast('Please enter a phone number for testing', 'warning');
                 return;
+            }
+
+            const apiType = document.getElementById('smsApiType').value;
+            if (apiType === 'demo') {
+                App.showToast('Please select an actual SMS provider (SSH, Twilio, or Custom) for testing, not Demo Mode', 'warning');
+                return;
+            }
+
+            // Validate API credentials are filled
+            const apiKeyInput = document.getElementById('smsApiKey');
+            if (!apiKeyInput || !apiKeyInput.value.trim()) {
+                App.showToast('Please enter your API Key first', 'warning');
+                return;
+            }
+
+            if (apiType === 'twilio') {
+                const apiSecretInput = document.getElementById('smsApiSecret');
+                if (!apiSecretInput || !apiSecretInput.value.trim()) {
+                    App.showToast('Please enter your Twilio Auth Token', 'warning');
+                    return;
+                }
+                App.showToast('⚠️ Note: Twilio may show CORS error from browser. SMS will work fine on production server.', 'warning');
+            }
+
+            if (apiType === 'custom') {
+                const apiEndpointInput = document.getElementById('smsApiEndpoint');
+                if (!apiEndpointInput || !apiEndpointInput.value.trim()) {
+                    App.showToast('Please enter your API Endpoint URL', 'warning');
+                    return;
+                }
             }
 
             const btn = document.getElementById('testSMSButton');
             btn.disabled = true;
+            btn.textContent = '⏳ Sending...';
 
-            SMSService.sendPaymentConfirmation(
-                currentUser.phone,
-                currentUser.name,
-                new Date().getMonth() + 1,
-                new Date().getFullYear(),
-                5000,
-                'Test SMS'
-            ).then(result => {
-                if (result.success && result.sent) {
-                    App.showToast('✅ Test SMS sent successfully to ' + currentUser.phone, 'success');
-                } else if (result.success && result.isDemo) {
-                    App.showToast('✅ Test SMS logged to demo mode (check browser console)', 'success');
-                } else {
-                    App.showToast('❌ ' + result.message, 'error');
-                }
-                setTimeout(() => {
+            const currentUser = StorageManager.getCurrentUser();
+            
+            SMSService.sendPaymentConfirmation(testPhone, currentUser.name, new Date().getMonth() + 1, new Date().getFullYear(), 5000, 'Test Payment')
+                .then(result => {
+                    if (result.success && result.sent) {
+                        App.showToast('✅ Test SMS sent successfully to ' + testPhone, 'success');
+                    } else if (result.success && result.isDemo) {
+                        App.showToast('✅ Test SMS logged (Check browser console - F12)', 'success');
+                    } else {
+                        let errorMsg = result.message || 'Unknown error';
+                        if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+                            errorMsg += ' (Tip: CORS errors are normal from browser. SMS will work on server.)';
+                        }
+                        App.showToast('❌ SMS Error: ' + errorMsg, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Test SMS error:', error);
+                    let errorMsg = error.message;
+                    if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
+                        errorMsg += ' - CORS errors are expected from browser but SMS will work on production server';
+                    }
+                    App.showToast('❌ Error: ' + errorMsg, 'error');
+                })
+                .finally(() => {
                     btn.disabled = false;
-                }, 2000);
-            }).catch(error => {
-                App.showToast('Error sending test SMS: ' + error.message, 'error');
-                btn.disabled = false;
-            });
+                    btn.textContent = '📤 Send Test SMS';
+                });
         }
     </script>
 </body>

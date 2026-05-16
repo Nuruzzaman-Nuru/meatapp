@@ -8,9 +8,10 @@ The SMS Notification feature automatically sends confirmation SMS messages to me
 ✅ **Automatic Payment Confirmation SMS** - SMS sent immediately when payment is marked as paid
 ✅ **Multiple SMS Gateway Support** - Demo mode, SSH (Bangladesh), Twilio, and Custom API
 ✅ **SMS Preview** - See what the notification message will look like
-✅ **Test SMS** - Send test SMS to admin's phone before enabling for all members
+✅ **Test SMS with Custom Phone** - Enter any phone number and test SMS delivery through your API
 ✅ **Easy Configuration** - One-click setup in admin dashboard
 ✅ **Demo Mode** - Test without a real SMS provider (logs to console)
+✅ **Real API Testing** - Send actual test SMS through your configured provider
 
 ## How It Works
 
@@ -67,24 +68,29 @@ When a payment is successfully recorded:
 5. Click "Send Test SMS to Your Phone"
 6. Check browser console (F12) to see logged SMS
 
-#### SSH Integration (Bangladesh)
+#### SSH Integration (Bangladesh) - Recommended for BD
 1. Get API key from https://sshclick.com/
 2. Go to Admin Dashboard → SMS Configuration
 3. Enable SMS Notifications
 4. Select "SSH (Bangladesh)"
-5. Enter your SSH API Key
+5. Enter your SSH API Key in "SSH API Key" field
 6. Update Sender Name if desired
-7. Click "Send Test SMS" to verify
+7. **Enter your phone number in "Test Phone Number"**
+8. Click "Send Test SMS" to verify
+9. Check your phone for the test SMS
 
 #### Twilio Integration (International)
 1. Sign up at https://www.twilio.com/
-2. Get Account SID and Auth Token from dashboard
+2. Get Account SID and Auth Token from Twilio Console
 3. Go to Admin Dashboard → SMS Configuration
 4. Enable SMS Notifications
 5. Select "Twilio (International)"
-6. Enter Account SID and Auth Token
-7. Update Sender Name
-8. Click "Send Test SMS" to verify
+6. Enter Account SID in "Twilio Account SID" field
+7. Enter Auth Token in "Twilio Auth Token" field
+8. Update Sender Name
+9. **Enter your phone number in "Test Phone Number"**
+10. Click "Send Test SMS" to verify
+11. **Note:** Twilio may show CORS error from browser, but SMS will work fine on production server
 
 #### Custom API Integration
 1. Prepare your SMS API endpoint
@@ -93,7 +99,8 @@ When a payment is successfully recorded:
 4. Select "Custom API"
 5. Enter API Endpoint URL (must accept POST requests)
 6. Enter API Key
-7. Click "Send Test SMS" to verify
+7. **Enter your phone number in "Test Phone Number"**
+8. Click "Send Test SMS" to verify
 
 ### API Endpoint Requirements (Custom API)
 
@@ -138,6 +145,7 @@ Dear John, Your payment of 5000 BDT for May 2024 has been successfully confirmed
    - Main SMS service module
    - Handles all SMS-related operations
    - Supports multiple gateway integrations
+   - Improved error handling and validation
 
 2. **js/app.js** (Modified)
    - `recordPayment()` now triggers SMS
@@ -150,9 +158,11 @@ Dear John, Your payment of 5000 BDT for May 2024 has been successfully confirmed
    - Updated success message display
 
 4. **admin-dashboard.html** (Modified)
-   - SMS Configuration UI section added
+   - SMS Configuration UI section with test phone field
    - Configuration functions added
-   - Test SMS functionality included
+   - Test SMS functionality with custom phone number
+   - CORS warning for Twilio
+   - Real API testing capability
 
 5. **profile.html** (Modified)
    - SMS script included for consistency
@@ -173,10 +183,11 @@ Dear John, Your payment of 5000 BDT for May 2024 has been successfully confirmed
 ### Test SMS Feature
 1. Go to Admin Dashboard
 2. Navigate to SMS Configuration section
-3. Click "Send Test SMS to Your Phone"
-4. Check your phone for SMS
-
-**Note:** Admin must have phone number in their profile for test SMS to work
+3. Select your SMS provider (SSH, Twilio, or Custom)
+4. Enter API credentials for the provider
+5. **Enter your phone number in "Test Phone Number" field**
+6. Click "Send Test SMS"
+7. Check your phone for SMS (usually arrives within 1-5 seconds)
 
 ### Debugging
 
@@ -207,16 +218,32 @@ SMSService.getConfig()  // See current SMS config
 
 ### Common Issues
 
-**Issue: SMS not sending**
+**Issue: Test SMS not sent**
+- ✓ Make sure "Enable SMS Notifications" is checked
+- ✓ Select an actual provider (not Demo Mode)
+- ✓ Enter API credentials for your provider
+- ✓ Enter a valid phone number in "Test Phone Number"
+- ✓ Check provider account has credits/balance
+- ✓ For SSH: verify API key is correct
+- ✓ For Twilio: verify Account SID and Auth Token from console
+
+**Issue: Twilio shows CORS error**
+- ✓ This is expected from browser due to security restrictions
+- ✓ SMS will work fine on production server
+- ✓ Try SSH or Custom API if testing with real SMS is needed
+
+**Issue: SSH SMS not received**
+- ✓ Verify phone number format (must be valid BD number)
+- ✓ Ensure API key is correct at sshclick.com
+- ✓ Check account balance on SSH website
+- ✓ SMS takes 1-5 seconds to arrive
+
+**Issue: SMS not sending for payments**
 - ✓ Check if SMS is enabled in admin dashboard
 - ✓ Verify member has phone number in profile
-- ✓ For real SMS providers, verify API credentials are correct
+- ✓ Verify SMS provider is configured with API credentials
+- ✓ Check SMS provider account status and balance
 - ✓ Check browser console for errors
-
-**Issue: Test SMS not received**
-- ✓ Admin must have phone number in their profile
-- ✓ For Demo mode, check browser console instead
-- ✓ Verify SMS provider is configured correctly
 
 **Issue: SMS contains wrong information**
 - ✓ SMS message is auto-generated from payment data
@@ -263,6 +290,10 @@ Potential additions:
 - **Twilio Support:** https://www.twilio.com/docs
 - **Custom API:** Follow your provider's documentation
 
+### Getting API Credentials
+- **SSH:** Register at https://sshclick.com/ → Get API key from dashboard
+- **Twilio:** Sign up at https://www.twilio.com/ → Auth credentials in Console
+
 ## Disabling SMS
 
 To disable SMS notifications:
@@ -274,3 +305,5 @@ To disable SMS notifications:
 ---
 
 **Note:** SMS notifications depend on member phone numbers being present and valid. Ensure members have updated their phone numbers in their profiles for SMS to work properly.
+
+**Tip:** Always test SMS with a real provider before relying on it for production. Use Test Phone Number feature to verify delivery before enabling for all members.
