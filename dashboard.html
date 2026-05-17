@@ -285,7 +285,12 @@
                     const paymentProof = e.target.result;
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
-                        showPaymentSuccessScreen(result.contribution, method, paidBy);
+                        // Show immediate success toast notification
+                        App.showToast('✅ Payment recorded successfully!', 'success');
+                        // Show detailed success modal after a short delay
+                        setTimeout(() => {
+                            showPaymentSuccessScreen(result.contribution, method, paidBy);
+                        }, 500);
                         // Reset form
                         document.getElementById('paymentMonth').value = '';
                         document.getElementById('paymentMethod').value = 'cash';
@@ -293,7 +298,7 @@
                         document.getElementById('paymentPaidBy').value = '';
                         setTimeout(() => {
                             initializeDashboard();
-                        }, 2000);
+                        }, 4000);
                     } else {
                         App.showToast(result.message, 'error');
                     }
@@ -302,7 +307,12 @@
             } else {
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
-                    showPaymentSuccessScreen(result.contribution, method, paidBy);
+                    // Show immediate success toast notification
+                    App.showToast('✅ Payment recorded successfully!', 'success');
+                    // Show detailed success modal after a short delay
+                    setTimeout(() => {
+                        showPaymentSuccessScreen(result.contribution, method, paidBy);
+                    }, 500);
                     // Reset form
                     document.getElementById('paymentMonth').value = '';
                     document.getElementById('paymentMethod').value = 'cash';
@@ -310,7 +320,7 @@
                     document.getElementById('paymentPaidBy').value = '';
                     setTimeout(() => {
                         initializeDashboard();
-                    }, 2000);
+                    }, 4000);
                 } else {
                     App.showToast(result.message, 'error');
                 }
