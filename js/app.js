@@ -136,24 +136,6 @@ const App = {
             return { success: false, message: 'Failed to confirm payment' };
         }
 
-        // Send SMS notification if SMS service is available
-        if (typeof SMSService !== 'undefined') {
-            const user = StorageManager.getUserById(contribution.userId);
-            if (user && user.phone) {
-                // Send SMS asynchronously (don't block the payment flow)
-                SMSService.sendPaymentConfirmation(
-                    user.phone,
-                    user.name,
-                    contribution.month,
-                    contribution.year,
-                    contribution.amount,
-                    updated.paymentMethod || 'admin-confirmed'
-                ).catch(error => {
-                    console.error('SMS notification failed:', error);
-                });
-            }
-        }
-
         return { success: true, contribution: updated };
     },
 

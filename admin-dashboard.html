@@ -151,61 +151,14 @@
                 <div id="membersTable"></div>
             </div>
 
-            <!-- SMS Configuration -->
+            <!-- Firebase Web FCM Notification -->
             <div class="card">
-                <h2>📱 SMS Notification Configuration</h2>
-                <p style="color: #666; margin-bottom: 1rem;">Configure SMS notifications for payment confirmations</p>
-                
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="smsEnabled" onchange="updateSMSConfig()"> 
-                        <strong>Enable SMS Notifications</strong>
-                    </label>
-                    <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Members will receive SMS when payment is confirmed</p>
+                <h2>&#128276; Firebase Web FCM Notification</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Members enable browser notifications from their dashboard. When admin confirms payment, the member receives a popup notification.</p>
+                <div style="background: #eef6ff; border-left: 4px solid var(--primary-color); border-radius: 4px; padding: 1rem;">
+                    <p style="margin: 0 0 0.5rem;"><strong>Admin flow:</strong> Payment request -> Confirm Payment -> Status PAID -> Notification sent.</p>
+                    <p style="margin: 0;"><strong>Notification:</strong> 🔔 Meat Association - Your payment has been confirmed successfully.</p>
                 </div>
-
-                <div id="smsConfigOptions" style="display: none;">
-                    <div class="form-group">
-                        <label for="smsApiType">SMS Gateway Type</label>
-                        <select id="smsApiType" onchange="updateSMSConfig()">
-                            <option value="demo">Demo Mode (Test/Development)</option>
-                            <option value="ssh">SSH (Bangladesh)</option>
-                            <option value="twilio">Twilio (International)</option>
-                            <option value="custom">Custom API</option>
-                        </select>
-                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Demo mode logs SMS to console. Use real providers for production.</p>
-                    </div>
-
-                    <div id="apiKeyFields"></div>
-
-                    <div class="form-group">
-                        <label for="smsSenderName">Sender Name</label>
-                        <input type="text" id="smsSenderName" placeholder="Your business name or acronym" onchange="updateSMSConfig()" value="MEAT-APP" maxlength="11">
-                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Max 11 characters (appears in SMS as sender)</p>
-                    </div>
-
-                    <div style="background: #f5f5f5; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
-                        <h4 style="margin-top: 0;">SMS Message Preview</h4>
-                        <p id="smsPreview" style="background: white; padding: 1rem; border-radius: 4px; border-left: 4px solid #667eea; margin: 0.5rem 0; font-size: 0.9rem;"></p>
-                    </div>
-
-                    <div style="background: #e3f2fd; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
-                        <h4 style="margin-top: 0;">📱 Test SMS - Enter Your Phone Number</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                            <div class="form-group" style="margin: 0;">
-                                <label for="testPhoneNumber">Phone Number (for testing)</label>
-                                <input type="tel" id="testPhoneNumber" placeholder="e.g., +8801701234567" value="">
-                                <p style="color: #666; font-size: 0.85rem; margin-top: 0.3rem;">Enter phone number to test SMS delivery</p>
-                            </div>
-                            <div style="display: flex; align-items: flex-end;">
-                                <button class="btn btn-primary" id="testSMSButton" onclick="testSMSNotification()" style="width: 100%;">📤 Send Test SMS</button>
-                            </div>
-                        </div>
-                        <p style="color: #666; font-size: 0.9rem; margin: 0;">SMS will be sent via your configured API provider to the phone number above.</p>
-                    </div>
-                </div>
-
-                <div id="smsStatusMessage" style="margin-top: 1rem;"></div>
             </div>
 
             <!-- Data Backup & Restore -->
@@ -362,7 +315,6 @@
             </div>
         </div>
     </div>
-<script src="js/sms.js"></script>
 <script type="module" src="firebase-config.js"></script>
 <script type="module" src="js/firebase-sync.js"></script>
     <script src="js/storage.js"></script>
@@ -381,7 +333,6 @@
             initializeCollectorSelects();
             initializeEditSelects();
             loadAdminUsers();
-            initializeSMSConfiguration();
             refreshReport();
         });
 
@@ -1654,206 +1605,6 @@
             document.getElementById('memberTotalSummary').innerHTML = html;
         }
 
-        // SMS Configuration Functions
-        function initializeSMSConfiguration() {
-            if (typeof SMSService === 'undefined') return;
-
-            const config = SMSService.getConfig();
-            document.getElementById('smsEnabled').checked = config.enabled;
-            document.getElementById('smsApiType').value = config.apiType;
-            document.getElementById('smsSenderName').value = config.senderName;
-
-            updateSMSConfigDisplay();
-            updateSMSPreview();
-        }
-
-        function updateSMSConfig() {
-            if (typeof SMSService === 'undefined') return;
-
-            const enabled = document.getElementById('smsEnabled').checked;
-            const apiType = document.getElementById('smsApiType').value;
-            const senderName = document.getElementById('smsSenderName').value;
-
-            const config = {
-                enabled: enabled,
-                apiType: apiType,
-                senderName: senderName || 'MEAT-APP'
-            };
-
-            // Get API-specific fields if they exist
-            const apiKeyInput = document.getElementById('smsApiKey');
-            const apiSecretInput = document.getElementById('smsApiSecret');
-            const apiEndpointInput = document.getElementById('smsApiEndpoint');
-
-            if (apiKeyInput) config.apiKey = apiKeyInput.value;
-            if (apiSecretInput) config.apiSecret = apiSecretInput.value;
-            if (apiEndpointInput) config.apiEndpoint = apiEndpointInput.value;
-
-            SMSService.updateConfig(config);
-            updateSMSConfigDisplay();
-            updateSMSPreview();
-
-            App.showToast('SMS Configuration Updated', 'success');
-        }
-
-        function updateSMSConfigDisplay() {
-            const enabled = document.getElementById('smsEnabled').checked;
-            const apiType = document.getElementById('smsApiType').value;
-            const configOptions = document.getElementById('smsConfigOptions');
-
-            configOptions.style.display = enabled ? 'block' : 'none';
-
-            // Generate API Key Fields based on selected type
-            let apiFieldsHTML = '';
-            
-            if (apiType === 'ssh') {
-                apiFieldsHTML = `
-                    <div class="form-group">
-                        <label for="smsApiKey">SSH API Key</label>
-                        <input type="password" id="smsApiKey" placeholder="Enter your SSH API key" onchange="updateSMSConfig()">
-                        <p style="color: #666; font-size: 0.9rem; margin-top: 0.3rem;">Get your API key from <a href="https://sshclick.com/" target="_blank">sshclick.com</a></p>
-                    </div>
-                `;
-            } else if (apiType === 'twilio') {
-                apiFieldsHTML = `
-                    <div class="form-group">
-                        <label for="smsApiKey">Twilio Account SID</label>
-                        <input type="password" id="smsApiKey" placeholder="Your Twilio Account SID" onchange="updateSMSConfig()">
-                    </div>
-                    <div class="form-group">
-                        <label for="smsApiSecret">Twilio Auth Token</label>
-                        <input type="password" id="smsApiSecret" placeholder="Your Twilio Auth Token" onchange="updateSMSConfig()">
-                    </div>
-                `;
-            } else if (apiType === 'custom') {
-                apiFieldsHTML = `
-                    <div class="form-group">
-                        <label for="smsApiEndpoint">API Endpoint URL</label>
-                        <input type="url" id="smsApiEndpoint" placeholder="https://your-api.com/sms/send" onchange="updateSMSConfig()">
-                    </div>
-                    <div class="form-group">
-                        <label for="smsApiKey">API Key</label>
-                        <input type="password" id="smsApiKey" placeholder="Your API Key" onchange="updateSMSConfig()">
-                    </div>
-                `;
-            }
-
-            document.getElementById('apiKeyFields').innerHTML = apiFieldsHTML;
-
-            // Load saved values if they exist
-            if (typeof SMSService !== 'undefined') {
-                const config = SMSService.getConfig();
-                if (document.getElementById('smsApiKey')) {
-                    document.getElementById('smsApiKey').value = config.apiKey || '';
-                }
-                if (document.getElementById('smsApiSecret')) {
-                    document.getElementById('smsApiSecret').value = config.apiSecret || '';
-                }
-                if (document.getElementById('smsApiEndpoint')) {
-                    document.getElementById('smsApiEndpoint').value = config.apiEndpoint || '';
-                }
-            }
-        }
-
-        function updateSMSPreview() {
-            if (typeof SMSService === 'undefined') return;
-            if (!document.getElementById('smsEnabled').checked) {
-                document.getElementById('smsPreview').textContent = 'SMS notifications are disabled. Enable above to see preview.';
-                return;
-            }
-
-            const currentUser = StorageManager.getCurrentUser();
-            const preview = SMSService.generatePaymentMessage(
-                currentUser.name,
-                new Date().getMonth() + 1,
-                new Date().getFullYear(),
-                5000,
-                'Cash'
-            );
-
-            document.getElementById('smsPreview').textContent = preview;
-        }
-
-        function testSMSNotification() {
-            if (typeof SMSService === 'undefined') {
-                App.showToast('SMS Service not loaded', 'error');
-                return;
-            }
-
-            if (!document.getElementById('smsEnabled').checked) {
-                App.showToast('SMS notifications are disabled. Enable first.', 'warning');
-                return;
-            }
-
-            const testPhone = document.getElementById('testPhoneNumber').value.trim();
-            if (!testPhone) {
-                App.showToast('Please enter a phone number for testing', 'warning');
-                return;
-            }
-
-            const apiType = document.getElementById('smsApiType').value;
-            if (apiType === 'demo') {
-                App.showToast('Please select an actual SMS provider (SSH, Twilio, or Custom) for testing, not Demo Mode', 'warning');
-                return;
-            }
-
-            // Validate API credentials are filled
-            const apiKeyInput = document.getElementById('smsApiKey');
-            if (!apiKeyInput || !apiKeyInput.value.trim()) {
-                App.showToast('Please enter your API Key first', 'warning');
-                return;
-            }
-
-            if (apiType === 'twilio') {
-                const apiSecretInput = document.getElementById('smsApiSecret');
-                if (!apiSecretInput || !apiSecretInput.value.trim()) {
-                    App.showToast('Please enter your Twilio Auth Token', 'warning');
-                    return;
-                }
-                App.showToast('⚠️ Note: Twilio may show CORS error from browser. SMS will work fine on production server.', 'warning');
-            }
-
-            if (apiType === 'custom') {
-                const apiEndpointInput = document.getElementById('smsApiEndpoint');
-                if (!apiEndpointInput || !apiEndpointInput.value.trim()) {
-                    App.showToast('Please enter your API Endpoint URL', 'warning');
-                    return;
-                }
-            }
-
-            const btn = document.getElementById('testSMSButton');
-            btn.disabled = true;
-            btn.textContent = '⏳ Sending...';
-
-            const currentUser = StorageManager.getCurrentUser();
-            
-            SMSService.sendPaymentConfirmation(testPhone, currentUser.name, new Date().getMonth() + 1, new Date().getFullYear(), 5000, 'Test Payment')
-                .then(result => {
-                    if (result.success && result.sent) {
-                        App.showToast('✅ Test SMS sent successfully to ' + testPhone, 'success');
-                    } else if (result.success && result.isDemo) {
-                        App.showToast('✅ Test SMS logged (Check browser console - F12)', 'success');
-                    } else {
-                        let errorMsg = result.message || 'Unknown error';
-                        if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
-                            errorMsg += ' (Tip: CORS errors are normal from browser. SMS will work on server.)';
-                        }
-                        App.showToast('❌ SMS Error: ' + errorMsg, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Test SMS error:', error);
-                    let errorMsg = error.message;
-                    if (errorMsg.includes('CORS') || errorMsg.includes('Failed to fetch')) {
-                        errorMsg += ' - CORS errors are expected from browser but SMS will work on production server';
-                    }
-                    App.showToast('❌ Error: ' + errorMsg, 'error');
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.textContent = '📤 Send Test SMS';
-                });
-        }
     </script>
 </body>
 </html>

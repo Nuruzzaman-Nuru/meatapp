@@ -409,19 +409,6 @@
                 minute: '2-digit'
             });
 
-            // Check if SMS notification was enabled and sent
-            let smsNotification = '';
-            if (typeof SMSService !== 'undefined' && SMSService.config.enabled && currentUser.phone) {
-                smsNotification = `
-                    <div style="margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
-                        <p style="margin: 0; color: #1565c0;">
-                            <strong>📱 SMS Notification:</strong><br>
-                            Your request has been submitted successfully. A confirmation SMS will be sent by the admin shortly to <strong>${currentUser.phone}</strong>
-                        </p>
-                    </div>
-                `;
-            }
-
             let html = `
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
@@ -442,8 +429,6 @@
                     <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
                         <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment request has been submitted. Admin will confirm it shortly.</p>
                     </div>
-
-                    ${smsNotification}
 
                     <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">Great! Close</button>
                 </div>
@@ -611,7 +596,6 @@
             }
         }
     </script>
-    <script src="js/sms.js"></script>
     <script type="module" src="firebase-config.js"></script>
 <script type="module" src="js/firebase-sync.js"></script>
 </body>
