@@ -299,7 +299,8 @@
                         // Reset form
                         document.getElementById('paymentMonth').value = '';
                         document.getElementById('paymentMethod').value = 'cash';
-                        document.getElementById('paymentProof').value = '';
+                        const proofInput = document.getElementById('paymentProof');
+                        if (proofInput) proofInput.value = '';
                         document.getElementById('paymentPaidBy').value = '';
                         
                         // Show detailed success modal
@@ -332,7 +333,8 @@
                     // Reset form immediately
                     document.getElementById('paymentMonth').value = '';
                     document.getElementById('paymentMethod').value = 'cash';
-                    document.getElementById('paymentProof').value = '';
+                    const proofInputEl = document.getElementById('paymentProof');
+                    if (proofInputEl) proofInputEl.value = '';
                     document.getElementById('paymentPaidBy').value = '';
                     
                     // Show detailed success modal
