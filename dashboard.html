@@ -272,6 +272,8 @@
 
             const [month, year] = monthYear.split('-').map(Number);
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
+            
+            console.log('Current contribution:', contribution);
 
             if (contribution.status === 'paid') {
                 App.showToast('This contribution is already marked as paid', 'warning');
@@ -285,21 +287,24 @@
                     const paymentProof = e.target.result;
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
-                        // Show immediate success toast notification
                         App.showToast('✅ Payment recorded successfully!', 'success');
-                        // Show detailed success modal after a short delay
+                        console.log('Payment success:', result);
                         setTimeout(() => {
                             showPaymentSuccessScreen(result.contribution, method, paidBy);
                         }, 500);
-                        // Reset form
                         document.getElementById('paymentMonth').value = '';
                         document.getElementById('paymentMethod').value = 'cash';
                         document.getElementById('paymentProof').value = '';
                         document.getElementById('paymentPaidBy').value = '';
                         setTimeout(() => {
-                            initializeDashboard();
+                            console.log('Refreshing dashboard after file proof...');
+                            loadHistory();
+                            setTimeout(() => {
+                                initializeDashboard();
+                            }, 300);
                         }, 4000);
                     } else {
+                        console.error('Payment failed (file):', result);
                         App.showToast(result.message, 'error');
                     }
                 };
@@ -307,21 +312,24 @@
             } else {
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
-                    // Show immediate success toast notification
                     App.showToast('✅ Payment recorded successfully!', 'success');
-                    // Show detailed success modal after a short delay
+                    console.log('Payment success:', result);
                     setTimeout(() => {
                         showPaymentSuccessScreen(result.contribution, method, paidBy);
                     }, 500);
-                    // Reset form
                     document.getElementById('paymentMonth').value = '';
                     document.getElementById('paymentMethod').value = 'cash';
                     document.getElementById('paymentProof').value = '';
                     document.getElementById('paymentPaidBy').value = '';
                     setTimeout(() => {
-                        initializeDashboard();
+                        console.log('Refreshing dashboard...');
+                        loadHistory();
+                        setTimeout(() => {
+                            initializeDashboard();
+                        }, 300);
                     }, 4000);
                 } else {
+                    console.error('Payment failed (no file):', result);
                     App.showToast(result.message, 'error');
                 }
             }

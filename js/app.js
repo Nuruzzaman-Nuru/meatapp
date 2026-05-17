@@ -80,6 +80,8 @@ const App = {
     recordPayment(contributionId, paymentMethod = 'cash', paidBy = '', paymentProof = null) {
         const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
         if (!contribution) {
+            console.error('Contribution not found with ID:', contributionId);
+            console.log('Available contributions:', StorageManager.getContributions());
             return { success: false, message: 'Contribution not found' };
         }
 
@@ -96,12 +98,16 @@ const App = {
             updateData.paymentProof = paymentProof;
         }
 
+        console.log('Updating contribution:', contributionId, 'with data:', updateData);
         const updated = StorageManager.updateContribution(contributionId, updateData);
 
         // Check if update was successful
         if (!updated) {
+            console.error('Failed to update contribution:', contributionId);
             return { success: false, message: 'Failed to update payment record' };
         }
+
+        console.log('Payment recorded successfully:', updated);
 
         // Send SMS notification if SMS service is available
         if (typeof SMSService !== 'undefined') {
