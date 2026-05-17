@@ -287,22 +287,30 @@
                     const paymentProof = e.target.result;
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
+                        // Show immediate success toast
                         App.showToast('✅ Payment recorded successfully!', 'success');
                         console.log('Payment success:', result);
-                        setTimeout(() => {
-                            showPaymentSuccessScreen(result.contribution, method, paidBy);
-                        }, 500);
+                        
+                        // IMMEDIATELY refresh history
+                        console.log('Immediately refreshing history (file)...');
+                        loadHistory();
+                        
+                        // Reset form
                         document.getElementById('paymentMonth').value = '';
                         document.getElementById('paymentMethod').value = 'cash';
                         document.getElementById('paymentProof').value = '';
                         document.getElementById('paymentPaidBy').value = '';
+                        
+                        // Show detailed success modal
                         setTimeout(() => {
-                            console.log('Refreshing dashboard after file proof...');
-                            loadHistory();
-                            setTimeout(() => {
-                                initializeDashboard();
-                            }, 300);
-                        }, 4000);
+                            showPaymentSuccessScreen(result.contribution, method, paidBy);
+                        }, 100);
+                        
+                        // Full refresh after modal
+                        setTimeout(() => {
+                            console.log('Refreshing full dashboard (file)...');
+                            initializeDashboard();
+                        }, 3000);
                     } else {
                         console.error('Payment failed (file):', result);
                         App.showToast(result.message, 'error');
@@ -312,22 +320,30 @@
             } else {
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
+                    // Show immediate success toast
                     App.showToast('✅ Payment recorded successfully!', 'success');
                     console.log('Payment success:', result);
-                    setTimeout(() => {
-                        showPaymentSuccessScreen(result.contribution, method, paidBy);
-                    }, 500);
+                    
+                    // IMMEDIATELY refresh the history to show updated status
+                    console.log('Immediately refreshing history...');
+                    loadHistory();
+                    
+                    // Reset form immediately
                     document.getElementById('paymentMonth').value = '';
                     document.getElementById('paymentMethod').value = 'cash';
                     document.getElementById('paymentProof').value = '';
                     document.getElementById('paymentPaidBy').value = '';
+                    
+                    // Show detailed success modal
                     setTimeout(() => {
-                        console.log('Refreshing dashboard...');
-                        loadHistory();
-                        setTimeout(() => {
-                            initializeDashboard();
-                        }, 300);
-                    }, 4000);
+                        showPaymentSuccessScreen(result.contribution, method, paidBy);
+                    }, 100);
+                    
+                    // Refresh dashboard stats after modal
+                    setTimeout(() => {
+                        console.log('Refreshing full dashboard...');
+                        initializeDashboard();
+                    }, 3000);
                 } else {
                     console.error('Payment failed (no file):', result);
                     App.showToast(result.message, 'error');
