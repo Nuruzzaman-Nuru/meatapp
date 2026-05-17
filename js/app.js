@@ -98,8 +98,13 @@ const App = {
 
         const updated = StorageManager.updateContribution(contributionId, updateData);
 
+        // Check if update was successful
+        if (!updated) {
+            return { success: false, message: 'Failed to update payment record' };
+        }
+
         // Send SMS notification if SMS service is available
-        if (updated && typeof SMSService !== 'undefined') {
+        if (typeof SMSService !== 'undefined') {
             const user = StorageManager.getUserById(contribution.userId);
             if (user && user.phone) {
                 // Send SMS asynchronously (don't block the payment flow)
