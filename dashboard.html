@@ -262,7 +262,8 @@
         function recordCurrentPayment() {
             const monthYear = document.getElementById('paymentMonth').value;
             const method = document.getElementById('paymentMethod').value;
-            const proofFile = document.getElementById('paymentProof').files[0];
+            const proofFileInput = document.getElementById('paymentProof');
+            const proofFile = proofFileInput ? proofFileInput.files[0] : null;
             const paidBy = document.getElementById('paymentPaidBy').value.trim();
 
             if (!monthYear) {
