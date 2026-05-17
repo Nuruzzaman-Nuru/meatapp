@@ -78,6 +78,8 @@
                     </select>
                 </div>
 
+                <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
+
                 <div class="form-group">
                     <label for="paymentMethod">Payment Method</label>
                     <select id="paymentMethod">
@@ -243,6 +245,7 @@
             const monthYear = document.getElementById('paymentMonth').value;
 
             if (!monthYear) {
+                clearPaymentMonthMessage();
                 return;
             }
 
@@ -250,13 +253,24 @@
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
 
             if (contribution.status === 'paid') {
-                // Show warning at TOP of screen using toast notification
                 const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
-                App.showToast(warningMessage, 'warning');
-
-                // Also scroll to top to ensure user sees it
-                window.scrollTo(0, 0);
+                showPaymentMonthMessage(warningMessage, 'warning');
+            } else {
+                clearPaymentMonthMessage();
             }
+        }
+
+        function showPaymentMonthMessage(message, type = 'info') {
+            const messageBox = document.getElementById('paymentMonthMessage');
+            messageBox.textContent = message;
+            messageBox.className = `alert alert-${type}`;
+            messageBox.style.display = 'block';
+        }
+
+        function clearPaymentMonthMessage() {
+            const messageBox = document.getElementById('paymentMonthMessage');
+            messageBox.textContent = '';
+            messageBox.style.display = 'none';
         }
 
         function recordCurrentPayment() {
@@ -268,6 +282,7 @@
 
             if (!monthYear) {
                 App.showToast('Please select a month', 'warning');
+                clearPaymentMonthMessage();
                 return;
             }
 
@@ -277,7 +292,8 @@
             console.log('Current contribution:', contribution);
 
             if (contribution.status === 'paid') {
-                App.showToast('This contribution is already marked as paid', 'warning');
+                const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                showPaymentMonthMessage(warningMessage, 'warning');
                 return;
             }
 
@@ -298,6 +314,7 @@
                         
                         // Reset form
                         document.getElementById('paymentMonth').value = '';
+                        clearPaymentMonthMessage();
                         document.getElementById('paymentMethod').value = 'cash';
                         const proofInput = document.getElementById('paymentProof');
                         if (proofInput) proofInput.value = '';
@@ -332,6 +349,7 @@
                     
                     // Reset form immediately
                     document.getElementById('paymentMonth').value = '';
+                    clearPaymentMonthMessage();
                     document.getElementById('paymentMethod').value = 'cash';
                     const proofInputEl = document.getElementById('paymentProof');
                     if (proofInputEl) proofInputEl.value = '';
