@@ -75,7 +75,7 @@ const App = {
     },
 
     /**
-     * Record payment for contribution
+     * Submit a member payment request for admin confirmation.
      */
     recordPayment(contributionId, paymentMethod = 'cash', paidBy = '', paymentProof = null) {
         const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
@@ -86,9 +86,9 @@ const App = {
         }
 
         const updateData = {
-            status: 'paid',
+            status: 'pending',
             paymentMethod,
-            paymentDate: new Date().toISOString()
+            paymentRequestedAt: new Date().toISOString()
         };
 
         if (paidBy) {
@@ -98,16 +98,43 @@ const App = {
             updateData.paymentProof = paymentProof;
         }
 
-        console.log('Updating contribution:', contributionId, 'with data:', updateData);
+        console.log('Submitting payment request:', contributionId, 'with data:', updateData);
         const updated = StorageManager.updateContribution(contributionId, updateData);
 
         // Check if update was successful
         if (!updated) {
             console.error('Failed to update contribution:', contributionId);
-            return { success: false, message: 'Failed to update payment record' };
+            return { success: false, message: 'Failed to submit payment request' };
         }
 
-        console.log('Payment recorded successfully:', updated);
+        console.log('Payment request submitted successfully:', updated);
+
+        return { success: true, contribution: updated };
+    },
+
+    /**
+     * Confirm a payment request from the admin dashboard.
+     */
+    confirmPayment(contributionId, confirmedBy = 'Admin') {
+        const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
+        if (!contribution) {
+            return { success: false, message: 'Contribution not found' };
+        }
+
+        const updateData = {
+            status: 'paid',
+            paymentDate: new Date().toISOString(),
+            confirmedBy
+        };
+
+        if (!contribution.paymentMethod) {
+            updateData.paymentMethod = 'admin-confirmed';
+        }
+
+        const updated = StorageManager.updateContribution(contributionId, updateData);
+        if (!updated) {
+            return { success: false, message: 'Failed to confirm payment' };
+        }
 
         // Send SMS notification if SMS service is available
         if (typeof SMSService !== 'undefined') {
@@ -120,7 +147,7 @@ const App = {
                     contribution.month,
                     contribution.year,
                     contribution.amount,
-                    paymentMethod
+                    updated.paymentMethod || 'admin-confirmed'
                 ).catch(error => {
                     console.error('SMS notification failed:', error);
                 });
@@ -139,9 +166,9 @@ const App = {
         return {
             totalContributions: contributions.length,
             paidCount: contributions.filter(c => c.status === 'paid').length,
-            unpaidCount: contributions.filter(c => c.status === 'unpaid').length,
+            unpaidCount: contributions.filter(c => c.status !== 'paid').length,
             totalPaid: contributions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0),
-            totalDue: contributions.filter(c => c.status === 'unpaid').reduce((sum, c) => sum + c.amount, 0),
+            totalDue: contributions.filter(c => c.status !== 'paid').reduce((sum, c) => sum + c.amount, 0),
             contributions
         };
     },

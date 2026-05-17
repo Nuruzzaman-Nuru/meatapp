@@ -34,6 +34,12 @@
         <!-- Alerts -->
         <div id="toast-notification" class="alert"></div>
 
+        <div class="card">
+            <h2>&#128276; Firebase Notification</h2>
+            <p id="notificationStatus" class="alert" style="display: none;"></p>
+            <button id="notificationEnableBtn" class="btn btn-primary" type="button">Enable Notifications</button>
+        </div>
+
         <!-- Dashboard Grid -->
         <div class="dashboard-container">
             <!-- Stats Section -->
@@ -128,6 +134,7 @@
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    <script type="module" src="js/notifications.js"></script>
     <script>
         let currentUser = null;
 
@@ -168,9 +175,7 @@
 
             let html = '';
             if (userContribution) {
-                const statusBadge = userContribution.status === 'paid' 
-                    ? `<span class="table-badge badge-success">✓ PAID</span>`
-                    : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+                const statusBadge = getContributionStatusBadge(userContribution.status);
 
                 html = `
                     <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
@@ -178,6 +183,7 @@
                         <p><strong>Amount:</strong> ${App.formatCurrency(userContribution.amount)}</p>
                         <p><strong>Status:</strong> ${statusBadge}</p>
                         ${userContribution.paymentDate ? `<p><strong>Paid on:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
+                        ${userContribution.paymentRequestedAt && userContribution.status === 'pending' ? `<p><strong>Requested on:</strong> ${App.formatDate(userContribution.paymentRequestedAt)}</p>` : ''}
                     </div>
                 `;
             } else {
@@ -193,6 +199,18 @@
             }
 
             document.getElementById('currentMonthContent').innerHTML = html;
+        }
+
+        function getContributionStatusBadge(status) {
+            if (status === 'paid') {
+                return '<span class="table-badge badge-success">PAID</span>';
+            }
+
+            if (status === 'pending') {
+                return '<span class="table-badge badge-warning">WAITING FOR ADMIN CONFIRMATION</span>';
+            }
+
+            return '<span class="table-badge badge-danger">UNPAID</span>';
         }
 
         function loadCollectorInfo() {
@@ -255,6 +273,9 @@
             if (contribution.status === 'paid') {
                 const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                 showPaymentMonthMessage(warningMessage, 'warning');
+            } else if (contribution.status === 'pending') {
+                const warningMessage = `Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                showPaymentMonthMessage(warningMessage, 'warning');
             } else {
                 clearPaymentMonthMessage();
             }
@@ -297,6 +318,12 @@
                 return;
             }
 
+            if (contribution.status === 'pending') {
+                const warningMessage = `Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                showPaymentMonthMessage(warningMessage, 'warning');
+                return;
+            }
+
             // If proof file exists, convert to base64
             if (proofFile) {
                 const reader = new FileReader();
@@ -305,7 +332,7 @@
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
                         // Show immediate success toast
-                        App.showToast('✅ Payment recorded successfully!', 'success');
+                        App.showToast('Payment request submitted successfully!', 'success');
                         console.log('Payment success:', result);
                         
                         // IMMEDIATELY refresh history
@@ -340,7 +367,7 @@
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
                     // Show immediate success toast
-                    App.showToast('✅ Payment recorded successfully!', 'success');
+                    App.showToast('Payment request submitted successfully!', 'success');
                     console.log('Payment success:', result);
                     
                     // IMMEDIATELY refresh the history to show updated status
@@ -399,7 +426,7 @@
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
                     
-                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Recorded Successfully!</h2>
+                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Request Submitted!</h2>
                     
                     <div style="background: #d5f4e6; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; text-align: left;">
                         <p style="margin: 0.5rem 0;"><strong>Member:</strong> ${currentUser.name}</p>
@@ -408,12 +435,12 @@
                         <p style="margin: 0.5rem 0;"><strong>Payment Method:</strong> ${method.charAt(0).toUpperCase() + method.slice(1)}</p>
                         ${paidBy ? `<p style="margin: 0.5rem 0;"><strong>Paid By:</strong> ${paidBy}</p>` : ''}
                         ${contribution.paymentProof ? `<p style="margin: 0.5rem 0;"><strong>Receipt:</strong> <span style="color: #27ae60; font-weight: bold;">✓ Uploaded</span></p>` : ''}
-                        <p style="margin: 0.5rem 0;"><strong>Date & Time:</strong> ${paidDate}</p>
-                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #27ae60; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">✓ PAID</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Request Time:</strong> ${paidDate}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">WAITING FOR ADMIN CONFIRMATION</span></p>
                     </div>
 
                     <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                        <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment has been successfully recorded in the system.</p>
+                        <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment request has been submitted. Admin will confirm it shortly.</p>
                     </div>
 
                     ${smsNotification}
@@ -453,9 +480,7 @@
                 html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
             } else {
                 contributions.forEach(c => {
-                    const statusBadge = c.status === 'paid'
-                        ? `<span class="table-badge badge-success">✓ PAID</span>`
-                        : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+                    const statusBadge = getContributionStatusBadge(c.status);
 
                     html += `
                         <tr>
@@ -556,7 +581,7 @@
                                     <tr>
                                         <td>${App.getMonthName(c.month)} ${c.year}</td>
                                         <td>${App.formatCurrency(c.amount)}</td>
-                                        <td>${c.status === 'paid' ? 'PAID' : 'UNPAID'}</td>
+                                        <td>${c.status === 'paid' ? 'PAID' : c.status === 'pending' ? 'PENDING ADMIN CONFIRMATION' : 'UNPAID'}</td>
                                         <td>${c.paymentMethod || '-'}</td>
                                         <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
                                     </tr>

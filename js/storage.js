@@ -314,14 +314,15 @@ const StorageManager = {
         const contributions = this.getMonthContributions(month, year);
         const totalExpected = contributions.length * 200;
         const totalPaid = contributions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
-        const totalDue = contributions.filter(c => c.status === 'unpaid').reduce((sum, c) => sum + c.amount, 0);
+        const totalDue = contributions.filter(c => c.status !== 'paid').reduce((sum, c) => sum + c.amount, 0);
         
         return {
             month,
             year,
             totalMembers: contributions.length,
             paidCount: contributions.filter(c => c.status === 'paid').length,
-            unpaidCount: contributions.filter(c => c.status === 'unpaid').length,
+            unpaidCount: contributions.filter(c => c.status !== 'paid').length,
+            pendingCount: contributions.filter(c => c.status === 'pending').length,
             totalExpected,
             totalPaid,
             totalDue,

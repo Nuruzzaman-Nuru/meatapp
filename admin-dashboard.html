@@ -368,6 +368,7 @@
     <script src="js/storage.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    <script type="module" src="js/notifications.js"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             if (!AuthManager.requireAdmin()) return;
@@ -449,6 +450,24 @@
             }
 
             return '<span class="table-badge badge-danger">INACTIVE</span>';
+        }
+
+        function getContributionStatusBadge(status) {
+            if (status === 'paid') {
+                return '<span class="table-badge badge-success">PAID</span>';
+            }
+
+            if (status === 'pending') {
+                return '<span class="table-badge badge-warning">PAYMENT REQUESTED</span>';
+            }
+
+            return '<span class="table-badge badge-danger">UNPAID</span>';
+        }
+
+        function getContributionStatusText(status) {
+            if (status === 'paid') return 'PAID';
+            if (status === 'pending') return 'PAYMENT REQUESTED';
+            return 'UNPAID';
         }
 
         function loadAdminUsers() {
@@ -709,8 +728,8 @@
             const stats = StorageManager.getMonthlyStats(month, year);
             const contributions = stats.contributions;
             
-            // Filter only unpaid contributions
-            const unpaidContributions = contributions.filter(c => c.status === 'unpaid');
+            // Filter unpaid contributions and member-submitted payment requests.
+            const unpaidContributions = contributions.filter(c => c.status !== 'paid');
 
             if (unpaidContributions.length === 0) {
                 document.getElementById('pendingPaymentTable').innerHTML = '<div style="text-align: center; padding: 2rem; background: #d4edda; border-radius: 4px; color: #155724;"><strong>✓ All members have paid this month!</strong></div>';
@@ -725,6 +744,7 @@
                             <th>Member Name</th>
                             <th>Amount Due</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -732,19 +752,69 @@
 
             unpaidContributions.forEach(c => {
                 const user = StorageManager.getUserById(c.userId);
+                const statusBadge = c.status === 'pending'
+                    ? '<span class="table-badge badge-warning">PAYMENT REQUESTED</span>'
+                    : '<span class="table-badge badge-danger">UNPAID</span>';
                 
                 html += `
                     <tr>
                         <td><strong>#${user.id}</strong></td>
                         <td><strong>${escapeHtml(user.name)}</strong></td>
                         <td><span style="color: red; font-weight: bold;">${App.formatCurrency(c.amount)}</span></td>
-                        <td><span class="table-badge badge-danger">✗ UNPAID</span></td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" type="button" onclick="confirmMemberPayment(${c.id})">Confirm Payment</button>
+                        </td>
                     </tr>
                 `;
             });
 
             html += '</tbody></table>';
             document.getElementById('pendingPaymentTable').innerHTML = html;
+        }
+
+        async function confirmMemberPayment(contributionId) {
+            const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
+            if (!contribution) {
+                App.showToast('Contribution not found', 'error');
+                return;
+            }
+
+            const user = StorageManager.getUserById(contribution.userId);
+            if (!user) {
+                App.showToast('Member not found', 'error');
+                return;
+            }
+
+            if (!confirm(`Confirm payment for ${user.name}?`)) {
+                return;
+            }
+
+            const result = App.confirmPayment(contributionId, 'Admin');
+            if (!result.success) {
+                App.showToast(result.message || 'Payment could not be confirmed', 'error');
+                return;
+            }
+
+            refreshReport();
+            App.showToast('Payment confirmed successfully', 'success');
+
+            if (!window.NotificationManager) {
+                App.showToast('Payment confirmed, but notification module is not ready', 'warning');
+                return;
+            }
+
+            try {
+                const notificationResult = await NotificationManager.notifyPaymentConfirmed(user, result.contribution);
+                if (notificationResult.success) {
+                    App.showToast('Payment confirmed and notification sent', 'success');
+                } else {
+                    App.showToast(`Payment confirmed, notification not sent: ${notificationResult.message}`, 'warning');
+                }
+            } catch (error) {
+                console.error('Payment notification failed', error);
+                App.showToast(`Payment confirmed, notification failed: ${error.message}`, 'warning');
+            }
         }
 
         function openEditChargeModal(memberId, memberName, monthlyCharge, totalMonths) {
@@ -821,9 +891,7 @@
 
             contributions.forEach(c => {
                 const user = StorageManager.getUserById(c.userId);
-                const statusBadge = c.status === 'paid'
-                    ? `<span class="table-badge badge-success">✓ PAID</span>`
-                    : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+                const statusBadge = getContributionStatusBadge(c.status);
 
                 html += `
                     <tr>
@@ -989,7 +1057,7 @@
 
             stats.contributions.forEach(c => {
                 const user = StorageManager.getUserById(c.userId);
-                const status = c.status === 'paid' ? '✓ PAID' : '✗ UNPAID';
+                const status = getContributionStatusText(c.status);
                 const paidDate = c.paymentDate ? App.formatDate(c.paymentDate) : '-';
                 printContent += `
                     <tr>
@@ -1388,9 +1456,7 @@
                 html += '<tr><td colspan="7" style="text-align: center; color: #999;">No contribution history</td></tr>';
             } else {
                 summary.contributions.forEach(c => {
-                    const statusBadge = c.status === 'paid'
-                        ? `<span class="table-badge badge-success">✓ PAID</span>`
-                        : `<span class="table-badge badge-danger">✗ UNPAID</span>`;
+                    const statusBadge = getContributionStatusBadge(c.status);
 
                     html += `
                         <tr>
@@ -1434,7 +1500,7 @@
                 rows = '<tr><td colspan="7" class="text-center">No contribution history</td></tr>';
             } else {
                 summary.contributions.forEach(c => {
-                    const status = c.status === 'paid' ? 'PAID' : 'UNPAID';
+                    const status = getContributionStatusText(c.status);
                     const statusClass = c.status === 'paid' ? 'paid' : 'unpaid';
 
                     rows += `
