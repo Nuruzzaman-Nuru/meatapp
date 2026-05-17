@@ -27,9 +27,13 @@
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+    min-height: 100%;
 }
 
 body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     min-width: 320px;
     background: #f4f7f2;
     color: var(--dark-text);
@@ -39,6 +43,13 @@ body {
     -webkit-font-smoothing: antialiased;
     text-size-adjust: 100%;
     -webkit-touch-callout: none;
+}
+
+body > .container,
+body > .auth-container,
+body > .auth-page,
+body > .contact-page {
+    flex: 1 0 auto;
 }
 
 img,
@@ -944,7 +955,7 @@ textarea {
 
 /* Rebuilt footer */
 .site-footer {
-    margin-top: 2rem;
+    margin-top: auto;
     background: #111827;
     color: #cbd5e1;
     border-top: 4px solid var(--primary-color);
@@ -1039,10 +1050,10 @@ textarea {
 
 .footer-bottom {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
-    flex-wrap: wrap;
+    gap: 0.25rem;
     background: #0b1220;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     color: #cbd5e1;
