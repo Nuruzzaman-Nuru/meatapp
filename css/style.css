@@ -1,4 +1,5 @@
 /* Monthly Contribution Management System */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css");
 
 :root {
     --primary-color: #1e3a8a;
@@ -708,6 +709,227 @@ textarea {
     font-weight: 600;
 }
 
+.about-page {
+    background: #f6faf7;
+}
+
+.about-hero {
+    background:
+        linear-gradient(135deg, rgba(17, 43, 32, 0.88), rgba(30, 64, 175, 0.78)),
+        url("../home page.png") center / cover no-repeat;
+    color: #fff;
+}
+
+.about-hero-inner {
+    min-height: 320px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 2rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.about-hero h1 {
+    max-width: 720px;
+    font-size: clamp(1.8rem, 4vw, 3.1rem);
+    line-height: 1.15;
+    margin: 0.45rem 0 1rem;
+}
+
+.about-hero p {
+    max-width: 620px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.05rem;
+}
+
+.about-hero .section-kicker {
+    color: #bfdbfe;
+}
+
+.about-hero img {
+    width: min(180px, 28vw);
+    aspect-ratio: 1;
+    object-fit: cover;
+    border: 6px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    box-shadow: 0 22px 42px rgba(15, 23, 42, 0.28);
+}
+
+.about-content {
+    display: grid;
+    gap: 1.25rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+}
+
+.about-panel,
+.about-info-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+}
+
+.about-panel {
+    padding: 1.5rem;
+}
+
+.about-panel h2,
+.about-info-card h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.85rem;
+}
+
+.about-panel p {
+    color: var(--gray-text);
+    font-size: 1.02rem;
+    line-height: 1.8;
+    margin-bottom: 0.75rem;
+}
+
+.about-panel p strong {
+    color: var(--primary-color);
+    font-weight: 900;
+}
+
+.about-motto {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #047857 !important;
+    font-size: 0.95rem !important;
+    font-weight: 900;
+    letter-spacing: 0;
+    padding: 0.42rem 0.9rem;
+}
+
+.about-steps,
+.about-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.about-steps > div {
+    border-left: 4px solid var(--primary-color);
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.about-steps span {
+    display: inline-flex;
+    color: var(--primary-color);
+    font-size: 0.82rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+}
+
+.about-steps strong,
+.about-info-card strong {
+    display: block;
+    color: var(--dark-text);
+    font-size: 1.1rem;
+    margin-bottom: 0.45rem;
+}
+
+.about-info-card {
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-summary-grid .about-info-card {
+    border-top: 4px solid var(--secondary-color);
+}
+
+.about-summary-grid .about-info-card:nth-child(2) {
+    border-top-color: var(--primary-light);
+}
+
+.about-summary-grid .about-info-card:nth-child(3) {
+    border-top-color: var(--accent-color);
+}
+
+.about-info-card p {
+    color: var(--gray-text);
+    margin: 0;
+}
+
+.about-goals-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.about-goals-panel .section-kicker {
+    color: var(--secondary-color);
+    margin-bottom: 0.45rem;
+}
+
+.about-goals-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.about-goals-list > div {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    border: 1px solid rgba(16, 185, 129, 0.16);
+    border-radius: 8px;
+    background: #f8fffc;
+    padding: 0.72rem 0.85rem;
+}
+
+.about-goals-list span {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #dcfce7;
+    color: #047857;
+    font-size: 1.2rem;
+}
+
+.about-goals-list p {
+    color: var(--dark-text);
+    font-weight: 750;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.about-closing-card {
+    display: grid;
+    gap: 0.6rem;
+    border-radius: 8px;
+    background:
+        linear-gradient(135deg, rgba(30, 58, 138, 0.94), rgba(4, 120, 87, 0.9)),
+        url("../home page.png") center / cover no-repeat;
+    color: #fff;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.about-closing-card strong {
+    color: #fff;
+    font-size: clamp(1.25rem, 3vw, 2rem);
+    line-height: 1.35;
+}
+
+.about-closing-card p {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
+}
+
 .section-heading {
     margin-bottom: 1.35rem;
     text-align: center;
@@ -1206,6 +1428,59 @@ textarea {
     padding: 0.34rem 0.72rem;
 }
 
+.footer-social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.site-footer .footer-social-links a {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f8fafc;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.site-footer .footer-social-links a:hover {
+    transform: translateY(-2px);
+    border-color: currentColor;
+    text-decoration: none;
+}
+
+.site-footer .footer-social-links .instagram:hover {
+    color: #f472b6;
+    background: rgba(244, 114, 182, 0.14);
+}
+
+.site-footer .footer-social-links .linkedin:hover {
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.14);
+}
+
+.site-footer .footer-social-links .github:hover {
+    color: #e5e7eb;
+    background: rgba(229, 231, 235, 0.12);
+}
+
+.site-footer .footer-social-links .youtube:hover {
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.14);
+}
+
+.site-footer .footer-social-links .facebook:hover {
+    color: #93c5fd;
+    background: rgba(147, 197, 253, 0.14);
+}
+
 .footer-bottom {
     display: flex;
     flex-direction: column;
@@ -1490,6 +1765,24 @@ textarea {
         width: 58px;
         height: 58px;
         font-size: 1.45rem;
+    }
+
+    .about-hero-inner {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        text-align: left;
+    }
+
+    .about-hero img {
+        width: 110px;
+    }
+
+    .about-steps,
+    .about-info-grid,
+    .about-goals-panel {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -2879,8 +3172,77 @@ textarea {
 }
 
 .contact-map-page .contact-message-form {
+    max-width: none;
+    margin: 0;
+}
+
+.contact-map-page .contact-form-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    gap: 1.4rem;
     max-width: 1180px;
     margin: 0 auto;
+}
+
+.contact-map-page .contact-side-card {
+    display: grid;
+    align-content: start;
+    gap: 0.85rem;
+    background: #0f74bd;
+    color: #fff;
+    padding: 1.4rem;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+}
+
+.contact-map-page .contact-side-card h2 {
+    color: #fff;
+    font-size: 1.25rem;
+    margin: 0 0 0.2rem;
+}
+
+.contact-map-page .contact-side-item {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    align-items: center;
+    gap: 0.8rem;
+    color: #fff;
+    text-decoration: none;
+}
+
+.contact-map-page .contact-side-item span {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fff;
+    color: #245da7;
+    font-size: 1.3rem;
+}
+
+.contact-map-page .contact-side-item small,
+.contact-map-page .contact-side-item strong {
+    display: block;
+    color: #fff;
+    line-height: 1.35;
+}
+
+.contact-map-page .contact-side-item small {
+    font-size: 0.8rem;
+    font-weight: 800;
+    opacity: 0.82;
+}
+
+.contact-map-page .contact-side-item strong {
+    overflow-wrap: anywhere;
+    font-size: 0.94rem;
+    font-weight: 800;
+}
+
+.contact-map-page a.contact-side-item:hover strong {
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
 .contact-map-page .contact-form-fields {
@@ -2937,6 +3299,7 @@ textarea {
 }
 
 .contact-map-page .contact-info-band {
+    display: none;
     background:
         linear-gradient(135deg, rgba(122, 191, 234, 0.96), rgba(111, 170, 219, 0.96)),
         radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.16), transparent 28%),
@@ -2986,6 +3349,7 @@ textarea {
         padding-bottom: 1.4rem;
     }
 
+    .contact-map-page .contact-form-layout,
     .contact-map-page .contact-form-fields,
     .contact-map-page .contact-form-footer,
     .contact-map-page .contact-info-grid {

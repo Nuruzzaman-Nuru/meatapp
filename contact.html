@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Contact - Monthly Contribution Management System</title>
-    <link rel="stylesheet" href="css/style.css?v=contact-location-2">
+    <link rel="stylesheet" href="css/style.css?v=contact-side-info-1">
 </head>
 <body>
     <header class="site-header">
@@ -15,6 +15,7 @@
             <a class="site-brand" href="index.html">মাংসের সমিতি</a>
             <nav class="site-nav" aria-label="Main navigation">
                 <a href="index.html">Home</a>
+                <a href="about.html">About</a>
                 <a href="contact.html">Contact</a>
                 <a class="nav-login-btn" href="login.html">Login</a>
                 <a class="nav-register-btn" href="register.html">Register</a>
@@ -26,20 +27,54 @@
         <section class="contact-map-form">
             <div class="contact-map-bg" aria-hidden="true"></div>
             <div class="container contact-form-wrap">
-                <form class="contact-message-form" action="mailto:meatassociation@gmail.com" method="post" enctype="text/plain">
-                    <div class="contact-form-fields">
-                        <div class="contact-form-left">
-                            <input type="text" name="name" placeholder="Your Name *" required>
-                            <input type="email" name="email" placeholder="Your Email *" required>
-                            <input type="tel" name="phone" placeholder="Your Phone">
+                <div class="contact-form-layout">
+                    <form class="contact-message-form" action="mailto:meatassociation@gmail.com" method="post" enctype="text/plain">
+                        <div class="contact-form-fields">
+                            <div class="contact-form-left">
+                                <input type="text" name="name" placeholder="Your Name *" required>
+                                <input type="email" name="email" placeholder="Your Email *" required>
+                                <input type="tel" name="phone" placeholder="Your Phone">
+                            </div>
+                            <textarea name="message" placeholder="Message *" required></textarea>
                         </div>
-                        <textarea name="message" placeholder="Message *" required></textarea>
-                    </div>
-                    <div class="contact-form-footer">
-                        <p>We will contact you as soon as possible.</p>
-                        <button class="contact-send-btn" type="submit">Send Message</button>
-                    </div>
-                </form>
+                        <div class="contact-form-footer">
+                            <p>We will contact you as soon as possible.</p>
+                            <button class="contact-send-btn" type="submit">Send Message</button>
+                        </div>
+                    </form>
+
+                    <aside class="contact-side-card" aria-label="Contact information">
+                        <h2>Contact Info</h2>
+                        <a href="tel:01307347646" class="contact-side-item">
+                            <span><i class="bi bi-telephone-fill"></i></span>
+                            <div>
+                                <small>Call Us</small>
+                                <strong>01307347646</strong>
+                            </div>
+                        </a>
+                        <a href="https://wa.me/8801307347646" target="_blank" rel="noopener" class="contact-side-item">
+                            <span><i class="bi bi-whatsapp"></i></span>
+                            <div>
+                                <small>WhatsApp</small>
+                                <strong>01307347646</strong>
+                            </div>
+                        </a>
+                        <a href="mailto:meatassociation@gmail.com" class="contact-side-item">
+                            <span><i class="bi bi-envelope-fill"></i></span>
+                            <div>
+                                <small>Email</small>
+                                <strong>meatassociation@gmail.com</strong>
+                            </div>
+                        </a>
+                        <div class="contact-side-item">
+                            <span><i class="bi bi-geo-alt-fill"></i></span>
+                            <div>
+                                <small>Office</small>
+                                <strong>দৌলা (সরদারপাড়া) এবং কাকদুয়ার ভাই ব্রাদার্স</strong>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
             </div>
         </section>
 
