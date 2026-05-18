@@ -2938,7 +2938,7 @@ textarea {
 
 .contact-map-page .contact-info-band {
     background:
-        linear-gradient(135deg, rgba(0, 129, 210, 0.96), rgba(0, 105, 190, 0.96)),
+        linear-gradient(135deg, rgba(122, 191, 234, 0.96), rgba(111, 170, 219, 0.96)),
         radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.16), transparent 28%),
         radial-gradient(circle at 80% 100%, rgba(255, 255, 255, 0.12), transparent 30%);
     color: #fff;
