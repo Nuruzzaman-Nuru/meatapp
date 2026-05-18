@@ -1,23 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Monthly Contribution Management System</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>মাংসের সমিতি - Monthly Contribution Management</title>
+    <link rel="stylesheet" href="css/style.css?v=home-professional-1">
 </head>
 <body>
     <header class="site-header">
         <div class="container site-header-content">
-            <a class="site-brand" href="index.html">
-                মাংসের সমিতি
-            </a>
+            <a class="site-brand" href="index.html">মাংসের সমিতি</a>
             <nav class="site-nav" aria-label="Main navigation">
                 <a href="index.html">Home</a>
-                <a href="about.html">About</a>
+                <a href="about.html">About Us</a>
                 <a href="contact.html">Contact</a>
                 <a class="nav-login-btn" href="login.html">Login</a>
                 <a class="nav-register-btn" href="register.html">Register</a>
@@ -25,206 +23,107 @@
         </div>
     </header>
 
-    <div class="auth-container">
-        <div class="auth-form">
-            <img class="association-cover" src="home page.png" alt="মাংসের সমিতি cover photo">
-
-            <section id="overview" class="home-content-grid">
-                <div class="content-block">
-                    <p class="section-kicker">About The Association</p>
-                    <h1>Organized monthly contribution management for all members</h1>
-                    <p>Every active member contributes 200 BDT each month. To keep the responsibility balanced, two active members are assigned each month to collect contributions from everyone.</p>
+    <main class="home-page">
+        <section class="home-hero">
+            <div class="container home-hero-grid">
+                <div class="home-hero-copy">
+                    <p class="section-kicker">ভাই ব্রাদার্স সমিতি</p>
+                    <h1>মাংসের সমিতির চাঁদা, কালেক্টর ও হিসাব এখন এক জায়গায়</h1>
+                    <p>মাসিক ২০০ টাকা চাঁদা, দায়িত্বপ্রাপ্ত কালেক্টর, সদস্য অনুমোদন এবং পেমেন্ট হিসাব সহজভাবে পরিচালনার জন্য একটি ডিজিটাল ম্যানেজমেন্ট সিস্টেম।</p>
+                    <div class="home-hero-actions">
+                        <a class="btn btn-primary" href="register.html">Membership Request</a>
+                        <a class="btn btn-secondary" href="login.html">Member Login</a>
+                    </div>
                 </div>
-
-                <aside class="side-card">
-                    <h2>Association Rules</h2>
-                    <ul>
-                        <li>Contribution amount: 200 BDT</li>
-                        <li>Two collectors are assigned every month</li>
-                        <li>New members need admin approval</li>
-                        <li>Admin can manage members and payment status</li>
-                    </ul>
-                </aside>
-            </section>
-
-            <section id="member-access" class="member-access">
-                <div class="section-heading">
-                    <p class="section-kicker">Member Area</p>
-                    <h2>Login or request membership</h2>
-                </div>
-
-            <!-- Login Form -->
-            <div id="loginForm">
-                <h1>🔐 Login</h1>
-                <div id="loginAlert" class="alert"></div>
-                
-                <div class="form-group">
-                    <label for="loginPhone">Phone Number</label>
-                    <input type="tel" id="loginPhone" placeholder="Enter your phone number">
-                </div>
-
-                <div class="form-group">
-                    <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter your password">
-                </div>
-
-                <div class="form-buttons">
-                    <button class="btn btn-primary btn-block" onclick="handleLogin()">Login</button>
-                </div>
-
-                <div class="switch-form">
-                    Don't have an account? <a onclick="switchToRegister()">Register here</a>
+                <div class="home-hero-media">
+                    <img src="home page.png" alt="মাংসের সমিতি cover photo">
                 </div>
             </div>
+        </section>
 
-            <!-- Register Form (Hidden) -->
-            <div id="registerForm" style="display: none;">
-                <h1>📝 Register</h1>
-                <div id="registerAlert" class="alert"></div>
-                
-                <div class="form-group">
-                    <label for="registerName">Full Name</label>
-                    <input type="text" id="registerName" placeholder="Enter your full name">
+        <section class="container home-stats-grid" aria-label="Association summary">
+            <div>
+                <span>মাসিক চাঁদা</span>
+                <strong>২০০ টাকা</strong>
+            </div>
+            <div>
+                <span>মাসিক কালেক্টর</span>
+                <strong>২ জন</strong>
+            </div>
+            <div>
+                <span>সহযোগিতা</span>
+                <strong>সদস্যদের পাশে</strong>
+            </div>
+        </section>
+
+        <section id="overview" class="container home-section">
+            <div class="section-heading">
+                <p class="section-kicker">Overview</p>
+                <h2>সমিতি পরিচালনার জন্য প্রয়োজনীয় সব সুবিধা</h2>
+            </div>
+            <div class="home-feature-grid">
+                <div>
+                    <span><i class="bi bi-people-fill"></i></span>
+                    <h3>সদস্য ব্যবস্থাপনা</h3>
+                    <p>নতুন সদস্যের আবেদন, অনুমোদন এবং সক্রিয় সদস্যের তথ্য সহজে দেখা যায়।</p>
                 </div>
-
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" placeholder="Enter your email">
+                <div>
+                    <span><i class="bi bi-cash-coin"></i></span>
+                    <h3>চাঁদা হিসাব</h3>
+                    <p>মাসিক চাঁদা জমা, পেমেন্ট স্ট্যাটাস এবং মোট হিসাব পরিষ্কারভাবে পরিচালনা করা যায়।</p>
                 </div>
-
-                <div class="form-group">
-                    <label for="registerPhone">Phone Number</label>
-                    <input type="tel" id="registerPhone" placeholder="Enter your phone number">
-                </div>
-
-                <div class="form-group">
-                    <label for="registerPassword">Password</label>
-                    <input type="password" id="registerPassword" placeholder="At least 6 characters">
-                </div>
-
-                <div class="form-group">
-                    <label for="registerConfirm">Confirm Password</label>
-                    <input type="password" id="registerConfirm" placeholder="Confirm your password">
-                </div>
-
-                <div class="form-buttons">
-                    <button class="btn btn-primary" onclick="handleRegister()">Register</button>
-                    <button class="btn btn-secondary" onclick="switchToLogin()">Back to Login</button>
-                </div>
-
-                <div class="switch-form">
-                    Already have an account? <a onclick="switchToLogin()">Login here</a>
+                <div>
+                    <span><i class="bi bi-person-check-fill"></i></span>
+                    <h3>কালেক্টর দায়িত্ব</h3>
+                    <p>প্রতি মাসে দুইজন সদস্যকে কালেক্টর হিসেবে দায়িত্ব দিয়ে কাজ ভাগ করা যায়।</p>
                 </div>
             </div>
-            </section>
-        </div>
-    </div>
+        </section>
+
+        <section class="home-process-band">
+            <div class="container home-process-grid">
+                <div class="home-process-copy">
+                    <p class="section-kicker">How It Works</p>
+                    <h2>সহজ, স্বচ্ছ ও নিয়মিত প্রক্রিয়া</h2>
+                    <p>সদস্যরা আবেদন করবেন, অ্যাডমিন অনুমোদন দেবেন, এরপর মাসিক চাঁদা ও কালেক্টর কার্যক্রম সিস্টেমের মাধ্যমে ট্র্যাক করা যাবে।</p>
+                </div>
+                <div class="home-process-list">
+                    <div>
+                        <span>01</span>
+                        <strong>সদস্য আবেদন</strong>
+                        <p>নতুন সদস্য রেজিস্ট্রেশন করে অনুমোদনের জন্য অপেক্ষা করবেন।</p>
+                    </div>
+                    <div>
+                        <span>02</span>
+                        <strong>মাসিক চাঁদা</strong>
+                        <p>সক্রিয় সদস্যরা প্রতি মাসের চাঁদা জমা দেওয়ার তথ্য প্রদান করবেন।</p>
+                    </div>
+                    <div>
+                        <span>03</span>
+                        <strong>অ্যাডমিন কনফার্মেশন</strong>
+                        <p>অ্যাডমিন পেমেন্ট, সদস্য এবং রিপোর্ট যাচাই করে আপডেট করবেন।</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="container home-cta">
+            <div>
+                <p class="section-kicker">Get Started</p>
+                <h2>সমিতির সদস্য হলে এখনই অ্যাকাউন্টে প্রবেশ করুন</h2>
+                <p>নতুন সদস্য হলে রেজিস্ট্রেশন করুন। আগে থেকেই অনুমোদিত সদস্য হলে লগইন করে নিজের তথ্য দেখুন।</p>
+            </div>
+            <div class="home-cta-actions">
+                <a class="btn btn-primary" href="login.html">Login</a>
+                <a class="btn btn-secondary" href="contact.html">Contact Us</a>
+            </div>
+        </section>
+    </main>
 
     <div data-include="footer"></div>
 
     <script src="js/components.js"></script>
-
-    <script src="js/storage.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-        // Check if already logged in
-        window.addEventListener('DOMContentLoaded', () => {
-            AuthManager.blockIfLoggedIn();
-
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('form') === 'register' || window.location.hash === '#register') {
-                switchToRegister();
-                document.getElementById('member-access').scrollIntoView();
-            }
-        });
-
-        function switchToRegister() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('registerForm').style.display = 'block';
-        }
-
-        function switchToLogin() {
-            document.getElementById('loginForm').style.display = 'block';
-            document.getElementById('registerForm').style.display = 'none';
-        }
-
-        async function handleLogin() {
-            const phone = document.getElementById('loginPhone').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            const result = await AuthManager.login(phone, password);
-            const alert = document.getElementById('loginAlert');
-            
-            if (result.success) {
-                alert.className = 'alert alert-success';
-                alert.textContent = result.message;
-                alert.style.display = 'block';
-                
-                setTimeout(() => {
-                    const user = AuthManager.getCurrentUser();
-                    if (user.role === 'admin') {
-                        window.location.href = 'admin-dashboard.html';
-                    } else {
-                        window.location.href = 'dashboard.html';
-                    }
-                }, 1000);
-            } else {
-                alert.className = 'alert alert-error';
-                alert.textContent = result.message;
-                alert.style.display = 'block';
-            }
-        }
-
-        async function handleRegister() {
-            const formData = {
-                name: document.getElementById('registerName').value,
-                email: document.getElementById('registerEmail').value,
-                phone: document.getElementById('registerPhone').value,
-                password: document.getElementById('registerPassword').value,
-                confirmPassword: document.getElementById('registerConfirm').value
-            };
-            
-            const result = await AuthManager.register(formData);
-            const alert = document.getElementById('registerAlert');
-            
-            if (result.success) {
-                alert.className = 'alert alert-success';
-                alert.textContent = result.message;
-                alert.style.display = 'block';
-                
-                // Clear form
-                document.getElementById('registerName').value = '';
-                document.getElementById('registerEmail').value = '';
-                document.getElementById('registerPhone').value = '';
-                document.getElementById('registerPassword').value = '';
-                document.getElementById('registerConfirm').value = '';
-                
-                setTimeout(() => {
-                    switchToLogin();
-                }, 2000);
-            } else {
-                alert.className = 'alert alert-error';
-                alert.textContent = result.message;
-                alert.style.display = 'block';
-            }
-        }
-
-        // Allow Enter key to submit
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const loginForm = document.getElementById('loginForm');
-                const registerForm = document.getElementById('registerForm');
-                
-                if (loginForm.style.display !== 'none') {
-                    handleLogin();
-                } else if (registerForm.style.display !== 'none') {
-                    handleRegister();
-                }
-            }
-        });
-    </script>
     <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js"></script>
+    <script type="module" src="js/firebase-sync.js"></script>
 </body>
 </html>
