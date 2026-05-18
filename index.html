@@ -148,11 +148,11 @@
             document.getElementById('registerForm').style.display = 'none';
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             const phone = document.getElementById('loginPhone').value;
             const password = document.getElementById('loginPassword').value;
             
-            const result = AuthManager.login(phone, password);
+            const result = await AuthManager.login(phone, password);
             const alert = document.getElementById('loginAlert');
             
             if (result.success) {
@@ -175,7 +175,7 @@
             }
         }
 
-        function handleRegister() {
+        async function handleRegister() {
             const formData = {
                 name: document.getElementById('registerName').value,
                 email: document.getElementById('registerEmail').value,
@@ -184,7 +184,7 @@
                 confirmPassword: document.getElementById('registerConfirm').value
             };
             
-            const result = AuthManager.register(formData);
+            const result = await AuthManager.register(formData);
             const alert = document.getElementById('registerAlert');
             
             if (result.success) {

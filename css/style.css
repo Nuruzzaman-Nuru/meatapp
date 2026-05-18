@@ -1695,6 +1695,497 @@ textarea {
     }
 }
 
+/* Admin Dashboard Mobile Optimization - Extra Responsive Rules for Cards */
+@media (max-width: 768px) {
+    /* Better card spacing on tablets */
+    .dashboard-container {
+        gap: 1.25rem;
+    }
+
+    .card {
+        padding: 1.25rem;
+        border-radius: 8px;
+    }
+
+    .card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 0.85rem;
+    }
+
+    /* Responsive stat boxes */
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 0.8rem;
+    }
+
+    .stat-box {
+        padding: 1rem;
+        min-height: 100px;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        line-height: 1.1;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+        margin-top: 0.4rem;
+    }
+
+    /* Better table responsiveness */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Admin Dashboard Mobile Optimization - Extra Responsive Rules for Cards */
+@media (max-width: 768px) {
+    /* Better card spacing on tablets */
+    .dashboard-container {
+        gap: 1.25rem;
+    }
+
+    .card {
+        padding: 1.25rem;
+        border-radius: 8px;
+    }
+
+    .card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .card h3 {
+        font-size: 1rem;
+    }
+
+    /* Responsive stat boxes */
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 0.8rem;
+    }
+
+    .stat-box {
+        padding: 1rem;
+        min-height: 100px;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        line-height: 1.1;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+        margin-top: 0.4rem;
+    }
+
+    /* Better table responsiveness */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+
+    /* Info boxes responsive */
+    [style*="background: #eef6ff"] {
+        padding: 0.9rem !important;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Buttons responsive */
+    .btn[style*="width: 100%"] {
+        width: 100% !important;
+        font-size: 0.95rem;
+    }
+
+    /* Form grid responsive */
+    .form-auto-grid[style*="margin-bottom: 1rem"] {
+        margin-bottom: 0.75rem !important;
+    }
+}
+
+/* Welcome and hero section styling */
+.admin-welcome,
+.page-hero {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+}
+
+.admin-welcome h1,
+.page-hero h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admin-welcome p,
+.page-hero p {
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+    .admin-welcome,
+    .page-hero {
+        margin: 1.25rem 0;
+        padding: 1.25rem;
+    }
+
+    .admin-welcome h1,
+    .page-hero h1 {
+        font-size: 1.35rem;
+    }
+
+    .admin-welcome p,
+    .page-hero p {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-welcome,
+    .page-hero {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+
+    .admin-welcome h1,
+    .page-hero h1 {
+        font-size: 1.15rem;
+    }
+
+    .admin-welcome p,
+    .page-hero p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Better card padding for small phones */
+    .card,
+    .content-block,
+    .side-card,
+    .member-access,
+    .contact-card {
+        padding: 1rem !important;
+        border-radius: 8px;
+        margin-bottom: 0.85rem;
+    }
+
+    .card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.65rem;
+    }
+
+    /* More compact stat boxes */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem;
+    }
+
+    .stat-box {
+        padding: 0.85rem;
+        min-height: 85px;
+        border-radius: 8px;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin-top: 0.35rem;
+    }
+
+    /* Compact forms */
+    .month-grid,
+    .form-grid,
+    .backup-grid,
+    .form-3col-grid,
+    .form-2col-grid,
+    .form-auto-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 0.85rem;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+        font-weight: 700;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px;
+        padding: 0.65rem;
+        min-height: 40px;
+        border-radius: 6px;
+    }
+
+    /* Better button sizing */
+    .btn {
+        min-height: 40px;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    .form-button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        width: 100%;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+    }
+
+    /* Responsive table */
+    .table {
+        font-size: 0.75rem;
+        min-width: 100%;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem 0.35rem;
+    }
+
+    .table-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .table-actions .btn {
+        width: 100%;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.6rem;
+        min-height: 34px;
+    }
+
+    /* Modal optimization */
+    .modal-content {
+        width: 95vw;
+        padding: 1rem;
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+
+    /* Info boxes responsive */
+    [style*="background: #eef6ff"] {
+        padding: 0.85rem !important;
+        margin-bottom: 0.75rem;
+        border-radius: 4px;
+    }
+
+    /* Responsive text sizing */
+    p[style*="color: #666"] {
+        font-size: 0.9rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    h3[style*="font-size: 1rem"] {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    /* Buttons responsive */
+    .btn[style*="width: 100%"] {
+        width: 100% !important;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Better card padding for small phones */
+    .card,
+    .content-block,
+    .side-card,
+    .member-access,
+    .contact-card {
+        padding: 1rem !important;
+        border-radius: 8px;
+        margin-bottom: 0.85rem;
+    }
+
+    .card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .card h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.65rem;
+    }
+
+    /* More compact stat boxes */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem;
+    }
+
+    .stat-box {
+        padding: 0.85rem;
+        min-height: 85px;
+        border-radius: 8px;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin-top: 0.35rem;
+    }
+
+    /* Compact forms */
+    .month-grid,
+    .form-grid,
+    .backup-grid,
+    .form-3col-grid,
+    .form-2col-grid,
+    .form-auto-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 0.85rem;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+        font-weight: 700;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px;
+        padding: 0.65rem;
+        min-height: 40px;
+        border-radius: 6px;
+    }
+
+    /* Better button sizing */
+    .btn {
+        min-height: 40px;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    .form-button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        width: 100%;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+    }
+
+    /* Responsive table */
+    .table {
+        font-size: 0.75rem;
+        min-width: 100%;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem 0.35rem;
+    }
+
+    .table-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .table-actions .btn {
+        width: 100%;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.6rem;
+        min-height: 34px;
+    }
+
+    /* Modal optimization */
+    .modal-content {
+        width: 95vw;
+        padding: 1rem;
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;

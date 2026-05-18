@@ -3,6 +3,31 @@
  * This module provides a unified interface for storing and retrieving data
  */
 
+/**
+ * Simple Password Utilities for Hashing
+ */
+const PasswordUtils = {
+    /**
+     * Simple hash function using SHA-256 simulation
+     * Note: For production, use proper bcryptjs library
+     */
+    hash: async function(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    },
+
+    /**
+     * Verify password against hash
+     */
+    verify: async function(password, hash) {
+        const passwordHash = await this.hash(password);
+        return passwordHash === hash;
+    }
+};
+
 const StorageManager = {
     // Key constants
     KEYS: {
@@ -24,7 +49,9 @@ const StorageManager = {
                 name: 'Admin User',
                 email: 'admin@meatsystem.com',
                 phone: '01737075894',
-                password: 'adminnuru123', // In production, this should be hashed
+                // Demo Password: adminnuru1234
+                // For production: use bcryptjs or similar library for proper hashing
+                password: 'adminnuru1234',
                 role: 'admin',
                 joinDate: new Date().toISOString(),
                 status: 'active'
@@ -82,9 +109,49 @@ const StorageManager = {
     },
 
     /**
-     * Add new user
+     * Verify user password
+     * @param {Object} user - User object
+     * @param {string} passwordToCheck - Plain password to verify
+     * @returns {Promise<boolean>}
      */
-    addUser(userData) {
+    async verifyPassword(user, passwordToCheck) {
+        if (!user || !user.passwordHash) {
+            return false;
+        }
+        // For backward compatibility with old records that have plain password
+        if (user.password && user.password === passwordToCheck) {
+            return true;
+        }
+        // Verify against hash
+        return await PasswordUtils.verify(passwordToCheck, user.passwordHash);
+    },
+
+    /**
+     * Add new user with hashed password
+     */
+    async addUserWithPassword(userData, plainPassword) {
+        const users = this.getUsers();
+        const passwordHash = await PasswordUtils.hash(plainPassword);
+        
+        const newUser = {
+            id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+            status: 'active',
+            ...userData,
+            passwordHash,
+            joinDate: new Date().toISOString()
+        };
+        users.push(newUser);
+        localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
+        return newUser;
+    },
+
+    /**
+     * Update user password
+     */
+    async updatePassword(userId, newPassword) {
+        const passwordHash = await PasswordUtils.hash(newPassword);
+        return this.updateUser(userId, { passwordHash, password: undefined });
+    },
         const users = this.getUsers();
         const newUser = {
             id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,

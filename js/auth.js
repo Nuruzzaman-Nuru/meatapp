@@ -5,9 +5,9 @@
 
 const AuthManager = {
     /**
-     * Register a new user
+     * Register a new user with password hashing
      */
-    register(formData) {
+    async register(formData) {
         // Validate input
         if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
             return { success: false, message: 'All fields are required' };
@@ -27,15 +27,14 @@ const AuthManager = {
             return { success: false, message: 'Phone number already registered' };
         }
 
-        // Create user
-        const newUser = StorageManager.addUser({
+        // Create user with hashed password
+        const newUser = await StorageManager.addUserWithPassword({
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
-            password: formData.password, // In production, hash this
             role: 'member',
             status: 'pending'
-        });
+        }, formData.password);
 
         return { 
             success: true, 
@@ -45,9 +44,9 @@ const AuthManager = {
     },
 
     /**
-     * Login user
+     * Login user with password verification
      */
-    login(phone, password) {
+    async login(phone, password) {
         // Validate input
         if (!phone || !password) {
             return { success: false, message: 'Phone number and password are required' };
@@ -59,8 +58,9 @@ const AuthManager = {
             return { success: false, message: 'Invalid phone number or password' };
         }
 
-        // Verify password (in production, compare hashes)
-        if (user.password !== password) {
+        // Verify password
+        const passwordValid = await StorageManager.verifyPassword(user, password);
+        if (!passwordValid) {
             return { success: false, message: 'Invalid phone number or password' };
         }
 
@@ -68,7 +68,7 @@ const AuthManager = {
             return { success: false, message: 'Your account is waiting for admin approval' };
         }
 
-        // Store current user
+        // Store current user (without password/hash)
         const sessionUser = {
             id: user.id,
             name: user.name,

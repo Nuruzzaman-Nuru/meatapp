@@ -81,7 +81,7 @@
             AuthManager.blockIfLoggedIn();
         });
 
-        function handleRegister() {
+        async function handleRegister() {
             const formData = {
                 name: document.getElementById('registerName').value,
                 email: document.getElementById('registerEmail').value,
@@ -90,7 +90,7 @@
                 confirmPassword: document.getElementById('registerConfirm').value
             };
 
-            const result = AuthManager.register(formData);
+            const result = await AuthManager.register(formData);
             const alert = document.getElementById('registerAlert');
 
             if (result.success) {

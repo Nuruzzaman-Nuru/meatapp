@@ -65,10 +65,10 @@
             AuthManager.blockIfLoggedIn();
         });
 
-        function handleLogin() {
+        async function handleLogin() {
             const phone = document.getElementById('loginPhone').value;
             const password = document.getElementById('loginPassword').value;
-            const result = AuthManager.login(phone, password);
+            const result = await AuthManager.login(phone, password);
             const alert = document.getElementById('loginAlert');
 
             if (result.success) {
