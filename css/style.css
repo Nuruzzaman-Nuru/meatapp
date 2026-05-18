@@ -2598,3 +2598,56 @@ textarea {
         flex-basis: 34px;
     }
 }
+
+/* Admin dashboard final mobile guard */
+@media (max-width: 768px) {
+    html,
+    body.admin-dashboard-page {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .admin-dashboard-page .container,
+    .admin-dashboard-page .navbar,
+    .admin-dashboard-page .navbar-content,
+    .admin-dashboard-page .dashboard-welcome,
+    .admin-dashboard-page .dashboard-container,
+    .admin-dashboard-page .card,
+    .admin-dashboard-page .stat-box {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .admin-dashboard-page .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .admin-dashboard-page .dashboard-container,
+    .admin-dashboard-page .stats-grid,
+    .admin-dashboard-page .compact-stats,
+    .admin-dashboard-page .month-grid,
+    .admin-dashboard-page .form-2col-grid,
+    .admin-dashboard-page .form-3col-grid,
+    .admin-dashboard-page .form-auto-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .admin-dashboard-page .stats-grid,
+    .admin-dashboard-page .compact-stats {
+        gap: 0.75rem;
+    }
+
+    .admin-dashboard-page #adminUsersTable,
+    .admin-dashboard-page #pendingPaymentTable,
+    .admin-dashboard-page #membersTable,
+    .admin-dashboard-page #memberDetailResult,
+    .admin-dashboard-page #memberTotalSummary {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
