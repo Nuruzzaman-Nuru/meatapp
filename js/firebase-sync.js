@@ -122,12 +122,21 @@ const FirebaseSync = {
 
             StorageManager[methodName] = function patchedStorageMethod(...args) {
                 const result = original.apply(this, args);
+
+                if (result && typeof result.then === 'function') {
+                    return result.then(value => {
+                        collections.forEach(collectionName => FirebaseSync.syncSoon(collectionName));
+                        return value;
+                    });
+                }
+
                 collections.forEach(collectionName => FirebaseSync.syncSoon(collectionName));
                 return result;
             };
         };
 
         patch('addUser', ['users']);
+        patch('addUserWithPassword', ['users']);
         patch('updateUser', ['users']);
         patch('deleteUser', ['users', 'contributions', 'collectors']);
         patch('addContribution', ['contributions']);

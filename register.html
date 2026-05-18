@@ -91,8 +91,18 @@
                 confirmPassword: document.getElementById('registerConfirm').value
             };
 
-            const result = await AuthManager.register(formData);
             const alert = document.getElementById('registerAlert');
+            let result;
+
+            try {
+                result = await AuthManager.register(formData);
+            } catch (error) {
+                console.error('Registration failed', error);
+                result = {
+                    success: false,
+                    message: 'Registration failed. Please try again.'
+                };
+            }
 
             if (result.success) {
                 alert.className = 'alert alert-success';
