@@ -23,8 +23,8 @@ const StorageManager = {
                 id: 1,
                 name: 'Admin User',
                 email: 'admin@meatsystem.com',
-                phone: '01700000000',
-                password: 'admin123', // In production, this should be hashed
+                phone: '01737075894',
+                password: 'adminnuru123', // In production, this should be hashed
                 role: 'admin',
                 joinDate: new Date().toISOString(),
                 status: 'active'

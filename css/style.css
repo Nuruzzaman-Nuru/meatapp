@@ -1183,6 +1183,15 @@ textarea {
     align-items: flex-end;
 }
 
+.profile-info-box,
+.summary-box,
+.info-box {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
     .home-content-grid,
