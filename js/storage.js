@@ -152,17 +152,7 @@ const StorageManager = {
         const passwordHash = await PasswordUtils.hash(newPassword);
         return this.updateUser(userId, { passwordHash, password: undefined });
     },
-        const users = this.getUsers();
-        const newUser = {
-            id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-            status: 'active',
-            ...userData,
-            joinDate: new Date().toISOString()
-        };
-        users.push(newUser);
-        localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
-        return newUser;
-    },
+    
 
     /**
      * Update user
@@ -266,20 +256,55 @@ const StorageManager = {
      * Get contributions by user
      */
     getUserContributions(userId) {
-        return this.getContributions().filter(c => c.userId === userId);
+        // Return contributions only from the month the user joined onwards
+        const contributions = this.getContributions().filter(c => c.userId === userId);
+        return contributions.filter(c => this.isValidContributionMonth(userId, c.month, c.year));
     },
 
     /**
-     * Get contributions by month
+     * Check if a contribution month is valid for a user
+     * Contributions only valid from the month user joined onwards
+     */
+    isValidContributionMonth(userId, month, year) {
+        const user = this.getUserById(userId);
+        if (!user || !user.joinDate) {
+            return false;
+        }
+
+        const joinDate = new Date(user.joinDate);
+        const joinMonth = joinDate.getMonth(); // 0-11
+        const joinYear = joinDate.getFullYear();
+
+        // Create date for first of the month being checked
+        const checkDate = new Date(year, month, 1);
+        const joinMonthStart = new Date(joinYear, joinMonth, 1);
+
+        // Contribution is valid if it's from the month the user joined onwards
+        return checkDate >= joinMonthStart;
+    },
+
+    /**
+     * Get contributions by month (filtered by valid contribution period)
      */
     getMonthContributions(month, year) {
-        return this.getContributions().filter(c => c.month === month && c.year === year);
+        const contributions = this.getContributions().filter(c => c.month === month && c.year === year);
+        
+        // Filter to only include users who joined in this month or before
+        return contributions.filter(c => {
+            return this.isValidContributionMonth(c.userId, month, year);
+        });
     },
 
     /**
      * Get or create contribution for user in month
+     * Only creates if user's joinDate is in this month or before
      */
     getOrCreateContribution(userId, month, year) {
+        // Check if this is a valid contribution month for this user
+        if (!this.isValidContributionMonth(userId, month, year)) {
+            return null; // Don't create contribution before user joined
+        }
+
         const contributions = this.getContributions();
         let contrib = contributions.find(c => c.userId === userId && c.month === month && c.year === year);
         

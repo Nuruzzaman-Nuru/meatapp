@@ -187,15 +187,24 @@
                     </div>
                 `;
             } else {
-                // Generate if not exists
+                // Try to generate if not exists (will be null if user joined after this month)
                 const generated = StorageManager.getOrCreateContribution(currentUser.id, month, year);
-                html = `
-                    <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                        <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
-                        <p><strong>Amount:</strong> ${App.formatCurrency(200)}</p>
-                        <p><strong>Status:</strong> <span class="table-badge badge-danger">✗ UNPAID</span></p>
-                    </div>
-                `;
+                if (generated) {
+                    html = `
+                        <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+                            <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p><strong>Amount:</strong> ${App.formatCurrency(200)}</p>
+                            <p><strong>Status:</strong> <span class="table-badge badge-danger">✗ UNPAID</span></p>
+                        </div>
+                    `;
+                } else {
+                    html = `
+                        <div style="padding: 1rem; background: #fff6f6; border-radius: 4px;">
+                            <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p style="color:#555;">You did not have an account in this month.</p>
+                        </div>
+                    `;
+                }
             }
 
             document.getElementById('currentMonthContent').innerHTML = html;
@@ -270,6 +279,11 @@
             const [month, year] = monthYear.split('-').map(Number);
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
 
+            if (!contribution) {
+                showPaymentMonthMessage('You did not have an account in the selected month.', 'warning');
+                return;
+            }
+
             if (contribution.status === 'paid') {
                 const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                 showPaymentMonthMessage(warningMessage, 'warning');
@@ -311,6 +325,11 @@
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
             
             console.log('Current contribution:', contribution);
+
+            if (!contribution) {
+                App.showToast('You did not have an account for the selected month.', 'warning');
+                return;
+            }
 
             if (contribution.status === 'paid') {
                 const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
