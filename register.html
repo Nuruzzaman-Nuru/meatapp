@@ -76,7 +76,7 @@
     <script src="js/components.js?v=mobile-menu-6"></script>
 
     <script src="js/storage.js"></script>
-    <script src="js/auth.js"></script>
+    <script src="js/auth.js?v=registration-direct-1"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             AuthManager.blockIfLoggedIn();
@@ -96,13 +96,6 @@
 
             try {
                 result = await AuthManager.register(formData);
-
-                if (result.success && window.FirebaseSync?.ready) {
-                    await FirebaseSync.ready;
-                    if (FirebaseSync.enabled) {
-                        await FirebaseSync.syncCollectionToFirebase('users');
-                    }
-                }
             } catch (error) {
                 console.error('Registration failed', error);
                 result = {

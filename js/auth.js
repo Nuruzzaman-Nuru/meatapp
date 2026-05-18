@@ -4,6 +4,9 @@
  */
 
 const AuthManager = {
+    firebaseDatabaseURL: 'https://meatapp-eafe7-default-rtdb.asia-southeast1.firebasedatabase.app',
+    firebaseUsersPath: 'meatAppData/default/users',
+
     /**
      * Register a new user with password hashing
      */
@@ -28,11 +31,9 @@ const AuthManager = {
             return { success: false, message: 'Password must be at least 6 characters' };
         }
 
-        if (window.FirebaseSync?.ready) {
-            await FirebaseSync.ready;
-            if (FirebaseSync.enabled) {
-                await FirebaseSync.syncFromFirebase();
-            }
+        const firebaseUsers = await this.getFirebaseUsers();
+        if (firebaseUsers.length > 0) {
+            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(firebaseUsers));
         }
 
         // Check if phone already exists
@@ -50,8 +51,20 @@ const AuthManager = {
             status: 'pending'
         }, formData.password);
 
+        const savedToFirebase = await this.saveRegisteredUserToFirebase(newUser);
+        if (!savedToFirebase) {
+            const users = StorageManager.getUsers().filter(user => user.id !== newUser.id);
+            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(users));
+            return {
+                success: false,
+                message: 'Registration could not be sent to admin. Please try again.'
+            };
+        }
+
         if (window.FirebaseSync?.enabled) {
-            await FirebaseSync.syncCollectionToFirebase('users');
+            FirebaseSync.syncCollectionToFirebase('users').catch(error => {
+                console.warn('Background Firebase sync failed after registration', error);
+            });
         }
 
         return { 
@@ -59,6 +72,63 @@ const AuthManager = {
             message: 'Registration submitted. Please wait for admin approval.', 
             user: newUser 
         };
+    },
+
+    async getFirebaseUsers() {
+        try {
+            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
+                cache: 'no-store'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Firebase users read failed: ${response.status}`);
+            }
+
+            const value = await response.json();
+            if (!value) return StorageManager.getUsers();
+
+            return Object.entries(value)
+                .filter(([key]) => key !== '_meta')
+                .map(([, user]) => user);
+        } catch (error) {
+            console.error('Firebase users read failed', error);
+            return StorageManager.getUsers();
+        }
+    },
+
+    async saveRegisteredUserToFirebase(newUser) {
+        try {
+            const users = await this.getFirebaseUsers();
+            const exists = users.some(user => {
+                return String(user.phone || '').trim() === String(newUser.phone || '').trim();
+            });
+            const nextUsers = exists ? users : [...users, newUser];
+            const payload = nextUsers.reduce((data, user) => {
+                data[String(user.id)] = user;
+                return data;
+            }, {});
+
+            payload._meta = {
+                lastSync: new Date().toISOString(),
+                itemCount: nextUsers.length
+            };
+
+            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Firebase users write failed: ${response.status}`);
+            }
+
+            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(nextUsers));
+            return true;
+        } catch (error) {
+            console.error('Firebase users write failed', error);
+            return false;
+        }
     },
 
     /**
