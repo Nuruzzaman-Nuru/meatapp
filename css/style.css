@@ -99,19 +99,19 @@ textarea {
 }
 
 .site-header-content {
-    min-height: 68px;
+    min-height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.25rem;
-    padding-top: 0.6rem;
-    padding-bottom: 0.6rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
     flex-wrap: wrap;
 }
 
 .site-brand {
     color: var(--primary-color);
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     font-weight: 850;
     line-height: 1.15;
     text-decoration: none;
@@ -133,7 +133,7 @@ textarea {
 }
 
 .site-nav a {
-    min-height: 44px;
+    min-height: 40px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -141,7 +141,7 @@ textarea {
     color: #475569;
     font-size: 0.94rem;
     font-weight: 750;
-    padding: 0.52rem 0.9rem;
+    padding: 0.48rem 0.85rem;
     text-decoration: none;
     transition: var(--transition);
     touch-action: manipulation;
@@ -155,8 +155,8 @@ textarea {
 .site-nav .nav-login-btn,
 .site-nav .nav-register-btn {
     color: #fff;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.95rem;
+    padding-right: 0.95rem;
 }
 
 .site-nav .nav-login-btn {
@@ -510,23 +510,23 @@ textarea {
 
 .home-hero {
     background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 64, 175, 0.86)),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 64, 175, 0.82)),
         url("../home page.png") center / cover no-repeat;
     color: #fff;
 }
 
 .home-hero-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 440px);
+    grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.75fr);
     align-items: center;
-    gap: 2rem;
-    min-height: 520px;
-    padding-top: 3rem;
-    padding-bottom: 3rem;
+    gap: clamp(2rem, 4vw, 4rem);
+    min-height: 500px;
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
 }
 
 .home-hero-copy {
-    max-width: 720px;
+    max-width: 680px;
 }
 
 .home-hero .section-kicker {
@@ -535,16 +535,17 @@ textarea {
 
 .home-hero h1 {
     color: #fff;
-    font-size: clamp(2rem, 4.6vw, 4rem);
+    font-size: clamp(2.35rem, 3.4vw, 3.8rem);
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.08;
     margin-bottom: 1rem;
 }
 
 .home-hero p {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 1.08rem;
-    line-height: 1.75;
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 620px;
 }
 
 .home-hero-actions,
@@ -556,25 +557,27 @@ textarea {
 }
 
 .home-hero-media {
-    align-self: stretch;
+    align-self: center;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
 }
 
 .home-hero-media img {
     width: 100%;
-    aspect-ratio: 4 / 3;
+    max-width: 520px;
+    aspect-ratio: 16 / 11;
     object-fit: cover;
-    border: 8px solid rgba(255, 255, 255, 0.18);
+    border: 6px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 24px 55px rgba(0, 0, 0, 0.24);
 }
 
 .home-stats-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
-    margin-top: -2.2rem;
+    margin-top: -2rem;
     position: relative;
     z-index: 2;
 }
@@ -584,7 +587,7 @@ textarea {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: var(--card-shadow);
-    padding: 1.2rem;
+    padding: 1.05rem 1.2rem;
 }
 
 .home-stats-grid span,
