@@ -1180,6 +1180,14 @@ textarea {
     .show-on-tablet { display: block !important; }
 }
 
+@media (max-width: 768px) {
+    .stats-grid,
+    .feature-list,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 640px) {
     .container {
         padding-left: 14px;
@@ -1240,6 +1248,7 @@ textarea {
     .card {
         padding: 1rem;
         border-radius: 8px;
+        width: 100%;
     }
 
     .content-block h1,
@@ -1250,17 +1259,22 @@ textarea {
     .feature-list,
     .stats-grid,
     .footer-grid,
-    .grid-auto {
-        grid-template-columns: 1fr;
+    .grid-auto,
+    .contact-grid,
+    .home-content-grid {
+        grid-template-columns: 1fr !important;
     }
 
     .dashboard-container {
         gap: 1rem;
         margin: 1rem auto;
+        grid-template-columns: 1fr;
     }
 
     .stat-box {
         padding: 1rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
     }
 
     .stat-value {
@@ -1299,11 +1313,58 @@ textarea {
         gap: 0.85rem;
         padding-top: 1rem;
         padding-bottom: 1rem;
+        grid-template-columns: 1fr;
     }
 
     .footer-bottom {
         flex-direction: column;
         gap: 0.35rem;
+    }
+}
+
+/* Extra small devices - Mobile phones */
+@media (max-width: 480px) {
+    .stats-grid,
+    .feature-list,
+    .contact-grid,
+    .dashboard-container,
+    .card,
+    .stat-box {
+        display: grid;
+        grid-template-columns: 1fr !important;
+    }
+
+    .stat-box {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.9rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .card,
+    .content-block {
+        margin-bottom: 1rem;
+    }
+
+    .form-buttons {
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .table {
+        min-width: 480px;
+        font-size: 0.75rem;
     }
 }
 
