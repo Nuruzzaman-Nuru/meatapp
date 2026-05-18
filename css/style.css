@@ -525,6 +525,13 @@ textarea {
     padding-bottom: 4rem;
 }
 
+.home-hero-image-only {
+    display: block;
+    min-height: auto;
+    padding-top: 2rem;
+    padding-bottom: 3.5rem;
+}
+
 .home-hero-copy {
     max-width: 680px;
 }
@@ -563,6 +570,10 @@ textarea {
     justify-content: flex-end;
 }
 
+.home-hero-image-only .home-hero-media {
+    justify-content: center;
+}
+
 .home-hero-media img {
     width: 100%;
     max-width: 520px;
@@ -571,6 +582,13 @@ textarea {
     border: 6px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     box-shadow: 0 24px 55px rgba(0, 0, 0, 0.24);
+}
+
+.home-hero-image-only .home-hero-media img {
+    max-width: min(1120px, 100%);
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center;
 }
 
 .home-stats-grid {
@@ -1886,6 +1904,15 @@ textarea {
         min-height: auto;
         padding-top: 2rem;
         padding-bottom: 2.5rem;
+    }
+
+    .home-hero-image-only {
+        padding-top: 1.25rem;
+        padding-bottom: 2rem;
+    }
+
+    .home-hero-image-only .home-hero-media img {
+        aspect-ratio: 4 / 3;
     }
 
     .home-stats-grid,
