@@ -111,9 +111,9 @@
 
             <!-- Contribution History -->
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="flex-between" style="margin-bottom: 1rem;">
                     <h2>📊 Contribution History</h2>
-                    <button class="btn btn-primary" onclick="handlePrintReport()" style="margin: 0;">🖨️ Print Report</button>
+                    <button class="btn btn-primary" onclick="handlePrintReport()" style="margin: 0;white-space: nowrap;">🖨️ Print Report</button>
                 </div>
                 <div id="historyTable"></div>
             </div>
@@ -512,6 +512,13 @@
                         .summary-label { font-size: 0.9rem; color: #666; }
                         .summary-value { font-size: 1.5rem; font-weight: bold; color: #333; }
                         .footer { margin-top: 30px; text-align: center; color: #999; font-size: 0.9rem; border-top: 1px solid #ddd; padding-top: 10px; }
+                        @media (max-width: 768px) {
+                            .summary { grid-template-columns: 1fr; }
+                        }
+                        @media (max-width: 480px) {
+                            .summary { grid-template-columns: 1fr; }
+                            .summary-box { padding: 12px; }
+                        }
                         @media print { body { margin: 0; } }
                     </style>
                 </head>
