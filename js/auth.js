@@ -182,3 +182,5 @@ const AuthManager = {
         return true;
     }
 };
+
+window.AuthManager = AuthManager;

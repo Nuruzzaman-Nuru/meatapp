@@ -67,6 +67,38 @@ const FirebaseSync = {
             .map(([, item]) => item);
     },
 
+    getLocalItems(storageKey) {
+        const rawItems = localStorage.getItem(storageKey);
+        const items = rawItems ? JSON.parse(rawItems) : [];
+        return Array.isArray(items) ? items : [];
+    },
+
+    mergeUsers(firebaseUsers, localUsers) {
+        const merged = [...firebaseUsers];
+        const userKeys = new Set();
+        let maxId = merged.reduce((max, user) => Math.max(max, Number(user.id) || 0), 0);
+
+        merged.forEach(user => {
+            if (user.phone) userKeys.add(`phone:${String(user.phone).trim()}`);
+            if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
+        });
+
+        localUsers.forEach(user => {
+            const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
+            const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
+            if ((phoneKey && userKeys.has(phoneKey)) || (emailKey && userKeys.has(emailKey))) {
+                return;
+            }
+
+            maxId += 1;
+            merged.push({ ...user, id: maxId });
+            if (phoneKey) userKeys.add(phoneKey);
+            if (emailKey) userKeys.add(emailKey);
+        });
+
+        return merged;
+    },
+
     async syncFromFirebase() {
         if (!this.enabled || !window.StorageManager) return;
 
@@ -78,7 +110,9 @@ const FirebaseSync = {
 
             const data = this.firebaseValueToArray(snapshot.val());
             if (data.length > 0) {
-                localStorage.setItem(storageKey, JSON.stringify(data));
+                const localItems = this.getLocalItems(storageKey);
+                const mergedData = name === 'users' ? this.mergeUsers(data, localItems) : data;
+                localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }
         }
     },
@@ -89,9 +123,7 @@ const FirebaseSync = {
         const storageKey = this.getKeyMap()[name];
         if (!storageKey) return;
 
-        const rawData = localStorage.getItem(storageKey);
-        const items = rawData ? JSON.parse(rawData) : [];
-        const safeItems = Array.isArray(items) ? items : [];
+        const safeItems = this.getLocalItems(storageKey);
         const payload = this.arrayToFirebaseObject(safeItems);
 
         payload._meta = {

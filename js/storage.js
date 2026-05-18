@@ -443,6 +443,8 @@ const StorageManager = {
     }
 };
 
+window.StorageManager = StorageManager;
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     StorageManager.init();
