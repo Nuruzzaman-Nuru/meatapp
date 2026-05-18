@@ -3711,27 +3711,31 @@ textarea {
     display: none;
     width: 42px;
     height: 42px;
-    border: 1px solid #dbe3ef;
-    border-radius: 8px;
-    background: #ffffff;
-    color: var(--primary-color);
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #ffffff;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     cursor: pointer;
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .site-menu-toggle span {
-    width: 4px;
-    height: 4px;
+    width: 22px;
+    height: 2px;
     display: block;
-    border-radius: 50%;
+    border-radius: 999px;
     background: currentColor;
 }
 
 @media (max-width: 768px) {
+    .site-header {
+        background: #14001f;
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+    }
+
     .site-header .site-header-content {
         position: relative;
         display: flex;
@@ -3744,6 +3748,7 @@ textarea {
     }
 
     .site-header .site-brand {
+        color: #ffffff;
         flex: 1 1 auto;
         min-width: 0;
         order: 1;
