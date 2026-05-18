@@ -673,13 +673,13 @@ textarea {
 .home-process-band {
     background: #0f172a;
     color: #fff;
-    padding: 3rem 0;
+    padding: 3.5rem 0;
 }
 
 .home-process-grid {
     display: grid;
-    grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.25fr);
-    gap: 2rem;
+    grid-template-columns: minmax(280px, 0.8fr) minmax(520px, 1.2fr);
+    gap: clamp(2rem, 5vw, 4rem);
     align-items: start;
 }
 
@@ -693,7 +693,7 @@ textarea {
 }
 
 .home-process-copy h2 {
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-size: clamp(1.85rem, 3vw, 2.65rem);
     line-height: 1.2;
     margin-bottom: 0.85rem;
 }
@@ -705,32 +705,41 @@ textarea {
 
 .home-process-list {
     display: grid;
-    gap: 0.85rem;
+    gap: 1rem;
 }
 
 .home-process-list > div {
     display: grid;
+    grid-template-areas:
+        "number title"
+        "number text";
     grid-template-columns: 52px minmax(0, 1fr);
-    gap: 0.9rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    column-gap: 1rem;
+    row-gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.075);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1.15rem 1.2rem;
 }
 
 .home-process-list span {
+    grid-area: number;
     color: #86efac;
     font-size: 0.9rem;
     font-weight: 900;
+    line-height: 1.4;
 }
 
 .home-process-list strong {
+    grid-area: title;
     display: block;
     color: #fff;
-    margin-bottom: 0.3rem;
+    font-size: 1.05rem;
+    line-height: 1.35;
 }
 
 .home-process-list p {
+    grid-area: text;
     color: rgba(255, 255, 255, 0.76);
     line-height: 1.6;
     margin: 0;
@@ -1946,7 +1955,10 @@ textarea {
     }
 
     .home-process-list > div {
-        grid-template-columns: 1fr;
+        grid-template-areas:
+            "number title"
+            "text text";
+        grid-template-columns: 44px minmax(0, 1fr);
     }
 
     .navbar-content {
