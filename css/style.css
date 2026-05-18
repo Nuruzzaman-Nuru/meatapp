@@ -815,6 +815,9 @@ textarea {
 #historyTable,
 #fullHistory,
 #adminUsersTable,
+#pendingPaymentTable,
+#membersTable,
+#memberDetailResult,
 #memberDetailsContent,
 #memberTotalSummary {
     width: 100%;
@@ -1807,15 +1810,18 @@ textarea {
 }
 
 /* Welcome and hero section styling */
+.dashboard-welcome,
 .admin-welcome,
 .page-hero {
-    margin: 1.5rem 0;
-    padding: 1.5rem;
+    margin: 2rem 0;
+    padding: 2rem;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 8px;
+    overflow-wrap: anywhere;
 }
 
+.dashboard-welcome h1,
 .admin-welcome h1,
 .page-hero h1 {
     font-size: 1.75rem;
@@ -1823,6 +1829,7 @@ textarea {
     margin-bottom: 0.5rem;
 }
 
+.dashboard-welcome p,
 .admin-welcome p,
 .page-hero p {
     font-size: 1rem;
@@ -1831,17 +1838,20 @@ textarea {
 }
 
 @media (max-width: 768px) {
+    .dashboard-welcome,
     .admin-welcome,
     .page-hero {
         margin: 1.25rem 0;
         padding: 1.25rem;
     }
 
+    .dashboard-welcome h1,
     .admin-welcome h1,
     .page-hero h1 {
         font-size: 1.35rem;
     }
 
+    .dashboard-welcome p,
     .admin-welcome p,
     .page-hero p {
         font-size: 0.95rem;
@@ -1849,17 +1859,20 @@ textarea {
 }
 
 @media (max-width: 600px) {
+    .dashboard-welcome,
     .admin-welcome,
     .page-hero {
         margin: 1rem 0;
         padding: 1rem;
     }
 
+    .dashboard-welcome h1,
     .admin-welcome h1,
     .page-hero h1 {
         font-size: 1.15rem;
     }
 
+    .dashboard-welcome p,
     .admin-welcome p,
     .page-hero p {
         font-size: 0.9rem;
@@ -1971,7 +1984,15 @@ textarea {
     /* Responsive table */
     .table {
         font-size: 0.75rem;
-        min-width: 100%;
+        min-width: 560px;
+    }
+
+    #adminUsersTable .table,
+    #pendingPaymentTable .table,
+    #membersTable .table,
+    #memberDetailResult .table,
+    #memberTotalSummary .table {
+        min-width: 680px;
     }
 
     .table th,
@@ -2143,7 +2164,15 @@ textarea {
     /* Responsive table */
     .table {
         font-size: 0.75rem;
-        min-width: 100%;
+        min-width: 560px;
+    }
+
+    #adminUsersTable .table,
+    #pendingPaymentTable .table,
+    #membersTable .table,
+    #memberDetailResult .table,
+    #memberTotalSummary .table {
+        min-width: 680px;
     }
 
     .table th,
