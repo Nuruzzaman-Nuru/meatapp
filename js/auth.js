@@ -28,6 +28,13 @@ const AuthManager = {
             return { success: false, message: 'Password must be at least 6 characters' };
         }
 
+        if (window.FirebaseSync?.ready) {
+            await FirebaseSync.ready;
+            if (FirebaseSync.enabled) {
+                await FirebaseSync.syncFromFirebase();
+            }
+        }
+
         // Check if phone already exists
         const existingUser = StorageManager.getUserByPhone(formData.phone);
         if (existingUser) {
@@ -42,6 +49,10 @@ const AuthManager = {
             role: 'member',
             status: 'pending'
         }, formData.password);
+
+        if (window.FirebaseSync?.enabled) {
+            await FirebaseSync.syncCollectionToFirebase('users');
+        }
 
         return { 
             success: true, 

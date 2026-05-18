@@ -11,6 +11,7 @@ const FirebaseSync = {
     get: null,
     child: null,
     basePath: 'meatAppData/default',
+    databaseURL: '',
     ready: null,
 
     async init() {
@@ -21,7 +22,8 @@ const FirebaseSync = {
             this.set = configModule.set;
             this.get = configModule.get;
             this.child = configModule.child;
-            this.enabled = Boolean(this.db && this.ref && this.set && this.get && this.child);
+            this.databaseURL = configModule.firebaseConfig?.databaseURL || '';
+            this.enabled = Boolean(this.databaseURL || this.hasSdk());
 
             await this.syncFromFirebase();
             this.patchStorageManager();
@@ -46,6 +48,10 @@ const FirebaseSync = {
             announcements: StorageManager.KEYS.ANNOUNCEMENTS,
             monthlyReports: StorageManager.KEYS.MONTHLY_REPORTS
         };
+    },
+
+    hasSdk() {
+        return Boolean(this.db && this.ref && this.set && this.get && this.child);
     },
 
     getItemKey(item, index) {
@@ -105,16 +111,39 @@ const FirebaseSync = {
         const keyMap = this.getKeyMap();
 
         for (const [name, storageKey] of Object.entries(keyMap)) {
-            const snapshot = await this.get(this.child(this.ref(this.db), `${this.basePath}/${name}`));
-            if (!snapshot.exists()) continue;
+            let data = [];
 
-            const data = this.firebaseValueToArray(snapshot.val());
+            try {
+                if (this.hasSdk()) {
+                    const snapshot = await this.get(this.child(this.ref(this.db), `${this.basePath}/${name}`));
+                    if (snapshot.exists()) {
+                        data = this.firebaseValueToArray(snapshot.val());
+                    }
+                } else {
+                    data = await this.getCollectionFromFirebaseRest(name);
+                }
+            } catch (error) {
+                console.warn(`Firebase SDK ${name} read failed. Trying REST fallback.`, error);
+                data = await this.getCollectionFromFirebaseRest(name);
+            }
+
             if (data.length > 0) {
                 const localItems = this.getLocalItems(storageKey);
                 const mergedData = name === 'users' ? this.mergeUsers(data, localItems) : data;
                 localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }
         }
+    },
+
+    async getCollectionFromFirebaseRest(name) {
+        if (!this.databaseURL) return [];
+
+        const response = await fetch(`${this.databaseURL}/${this.basePath}/${name}.json`);
+        if (!response.ok) {
+            throw new Error(`Firebase REST ${name} read failed with status ${response.status}`);
+        }
+
+        return this.firebaseValueToArray(await response.json());
     },
 
     async syncCollectionToFirebase(name) {
@@ -131,7 +160,37 @@ const FirebaseSync = {
             itemCount: safeItems.length
         };
 
+        if (this.databaseURL) {
+            await this.syncCollectionToFirebaseRest(name, payload);
+            return;
+        }
+
         await this.set(this.ref(this.db, `${this.basePath}/${name}`), payload);
+    },
+
+    async syncCollectionToFirebaseRest(name, payload = null) {
+        if (!this.databaseURL || !window.StorageManager) return;
+
+        const storageKey = this.getKeyMap()[name];
+        if (!storageKey) return;
+
+        const data = payload || {
+            ...this.arrayToFirebaseObject(this.getLocalItems(storageKey)),
+            _meta: {
+                lastSync: new Date().toISOString(),
+                itemCount: this.getLocalItems(storageKey).length
+            }
+        };
+
+        const response = await fetch(`${this.databaseURL}/${this.basePath}/${name}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Firebase REST ${name} sync failed with status ${response.status}`);
+        }
     },
 
     async syncAllToFirebase() {
@@ -186,6 +245,4 @@ const FirebaseSync = {
 
 window.FirebaseSync = FirebaseSync;
 
-window.addEventListener('load', () => {
-    FirebaseSync.ready = FirebaseSync.init();
-});
+FirebaseSync.ready = FirebaseSync.init();
