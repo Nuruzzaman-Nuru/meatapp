@@ -96,6 +96,13 @@
 
             try {
                 result = await AuthManager.register(formData);
+
+                if (result.success && window.FirebaseSync?.ready) {
+                    await FirebaseSync.ready;
+                    if (FirebaseSync.enabled) {
+                        await FirebaseSync.syncCollectionToFirebase('users');
+                    }
+                }
             } catch (error) {
                 console.error('Registration failed', error);
                 result = {

@@ -11,6 +11,7 @@ const FirebaseSync = {
     get: null,
     child: null,
     basePath: 'meatAppData/default',
+    ready: null,
 
     async init() {
         try {
@@ -27,9 +28,11 @@ const FirebaseSync = {
             await this.syncAllToFirebase();
 
             console.log('Firebase Realtime Database sync ready');
+            window.dispatchEvent(new CustomEvent('firebase-sync-ready'));
         } catch (error) {
             this.enabled = false;
             console.warn('Firebase sync disabled. Using localStorage only.', error);
+            window.dispatchEvent(new CustomEvent('firebase-sync-ready'));
         }
     },
 
@@ -152,5 +155,5 @@ const FirebaseSync = {
 window.FirebaseSync = FirebaseSync;
 
 window.addEventListener('load', () => {
-    FirebaseSync.init();
+    FirebaseSync.ready = FirebaseSync.init();
 });

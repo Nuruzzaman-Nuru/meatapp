@@ -310,6 +310,15 @@
             refreshReport();
         });
 
+        window.addEventListener('firebase-sync-ready', () => {
+            if (!AuthManager.isAdmin()) return;
+
+            initializeCollectorSelects();
+            initializeEditSelects();
+            loadAdminUsers();
+            refreshReport();
+        });
+
         function getCurrentMonthYear() {
             const month = parseInt(document.getElementById('adminMonth').value) + 1;
             const year = parseInt(document.getElementById('adminYear').value);
