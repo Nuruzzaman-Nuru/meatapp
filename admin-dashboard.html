@@ -37,7 +37,7 @@
         <!-- Month Selector -->
         <div class="card" style="margin-bottom: 2rem;">
             <h3>Select Month</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
+            <div class="month-grid">
                 <div>
                     <label for="adminMonth">Month</label>
                     <select id="adminMonth">
@@ -126,7 +126,7 @@
                     <select id="collector2"></select>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-2col-grid">
                     <button class="btn btn-success" onclick="assignCollectors()">✓ Assign</button>
                     <button class="btn btn-primary" onclick="autoRotateCollectors()">🔄 Auto-Rotate</button>
                 </div>
@@ -166,7 +166,7 @@
                 <h2>💾 Data Backup & Restore</h2>
                 <p style="color: #666; margin-bottom: 1rem;">Backup all your data and use on another device</p>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-2col-grid">
                     <div>
                         <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">📥 Export Data</h3>
                         <p style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">Download all data as JSON file</p>
@@ -188,7 +188,7 @@
             <div class="card">
                 <h2>🔧 Edit User ID</h2>
                 <p style="color: #666; margin-bottom: 1rem;">Update member's ID number</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-3col-grid">
                     <div>
                         <label for="editUserSelect">Select Member</label>
                         <select id="editUserSelect"></select>
@@ -208,7 +208,7 @@
             <div class="card">
                 <h2>📊 Individual Member Account Details</h2>
                 <p style="color: #666; margin-bottom: 1rem;">View detailed account information for each member</p>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-auto-grid" style="margin-bottom: 1rem;">
                     <div>
                         <label for="memberDetailSelect">Select Member</label>
                         <select id="memberDetailSelect"></select>
@@ -1364,7 +1364,7 @@
 
             let html = `
                 <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 4px;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="form-2col-grid" style="margin-bottom: 2rem;">
                         <div>
                             <h3 style="margin-top: 0;">Personal Information</h3>
                             <p><strong>Member ID:</strong> #${user.id}</p>

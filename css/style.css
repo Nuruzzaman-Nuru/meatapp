@@ -1128,6 +1128,33 @@ textarea {
     gap: 1rem;
 }
 
+/* Admin Dashboard Responsive Grids */
+.month-grid,
+.form-grid,
+.backup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-3col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-2col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-auto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
     .home-content-grid,
@@ -1169,7 +1196,13 @@ textarea {
     .stats-grid,
     .feature-list,
     .contact-grid,
-    .home-content-grid {
+    .home-content-grid,
+    .month-grid,
+    .form-grid,
+    .backup-grid,
+    .form-3col-grid,
+    .form-2col-grid,
+    .form-auto-grid {
         grid-template-columns: 1fr;
         width: 100%;
     }
