@@ -57,8 +57,8 @@ Simply open `index.html` in any modern web browser. That's it!
 
 ### 3. Login with Demo Credentials
 ```
-Email:    admin@meatsystem.com
-Password: admin123
+Phone:    01737075894
+Password: adminnuru1234
 ```
 
 ---
@@ -94,8 +94,8 @@ Password: admin123
 
 ## 🔑 Default Admin Credentials
 
-**Email:** `admin@meatsystem.com`  
-**Password:** `admin123`
+**Phone:** `01737075894`  
+**Password:** `adminnuru1234`
 
 ⚠️ Change these credentials after first login for security!
 
@@ -271,8 +271,8 @@ Edit `css/style.css` - Modify CSS variables at top
 - Clear browser cache
 
 ### Issue: Can't login
-- Verify email address spelling
-- Use demo account first: `admin@meatsystem.com`
+- Verify phone number spelling
+- Use demo account first: `01737075894`
 - Register new user if needed
 
 ### Issue: Contributions not showing

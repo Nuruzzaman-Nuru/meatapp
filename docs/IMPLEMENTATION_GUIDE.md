@@ -10,10 +10,10 @@ This is a **frontend-only** web application built with vanilla HTML, CSS, and Ja
 
 ### 1. **User Authentication**
 - Registration system with password confirmation
-- Login system with email validation
+- Login system with phone number validation
 - Logout functionality
 - Session persistence using localStorage
-- Demo credentials: `admin@meatsystem.com` / `admin123`
+- Demo credentials: `01737075894` / `adminnuru1234`
 
 ### 2. **User Profile Management**
 - View personal profile information
@@ -98,8 +98,8 @@ frontend-system/
 3. You can login with demo credentials or register new users
 
 ### Step 3: Default Admin Credentials
-- **Email:** admin@meatsystem.com
-- **Password:** admin123
+- **Phone:** 01737075894
+- **Password:** adminnuru1234
 
 ---
 
@@ -244,7 +244,7 @@ Handles all localStorage operations:
 ### 2. **auth.js** - Authentication
 Handles user login/registration:
 - `AuthManager.register(formData)` - Register new user
-- `AuthManager.login(email, password)` - Login user
+- `AuthManager.login(phone, password)` - Login user
 - `AuthManager.logout()` - Logout user
 - `AuthManager.isAdmin()` - Check if admin
 - `AuthManager.requireAuth()` - Redirect if not logged in
@@ -297,8 +297,8 @@ Edit CSS variables in `css/style.css`:
 Edit in `storage.js` initialization:
 ```javascript
 const adminUser = {
-    email: 'admin@meatsystem.com',
-    password: 'admin123'
+    phone: '01737075894',
+    password: 'adminnuru1234'
 };
 ```
 
@@ -333,8 +333,8 @@ Security issues:
 ### Issue: Cannot login
 **Solution:** 
 - Make sure email is registered first (register if new user)
-- Check email spelling carefully
-- Use demo: `admin@meatsystem.com` / `admin123`
+- Check phone number spelling carefully
+- Use demo: `01737075894` / `adminnuru1234`
 
 ### Issue: Monthly contributions not showing
 **Solution:** 

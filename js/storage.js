@@ -115,12 +115,15 @@ const StorageManager = {
      * @returns {Promise<boolean>}
      */
     async verifyPassword(user, passwordToCheck) {
-        if (!user || !user.passwordHash) {
+        if (!user) {
             return false;
         }
         // For backward compatibility with old records that have plain password
         if (user.password && user.password === passwordToCheck) {
             return true;
+        }
+        if (!user.passwordHash) {
+            return false;
         }
         // Verify against hash
         return await PasswordUtils.verify(passwordToCheck, user.passwordHash);

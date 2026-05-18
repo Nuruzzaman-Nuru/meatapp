@@ -8,6 +8,13 @@ const AuthManager = {
      * Register a new user with password hashing
      */
     async register(formData) {
+        formData = {
+            ...formData,
+            name: formData.name?.trim(),
+            email: formData.email?.trim(),
+            phone: formData.phone?.trim()
+        };
+
         // Validate input
         if (!formData.name || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword) {
             return { success: false, message: 'All fields are required' };
@@ -47,6 +54,8 @@ const AuthManager = {
      * Login user with password verification
      */
     async login(phone, password) {
+        phone = phone?.trim();
+
         // Validate input
         if (!phone || !password) {
             return { success: false, message: 'Phone number and password are required' };

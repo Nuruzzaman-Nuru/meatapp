@@ -4,8 +4,8 @@
 
 ### Admin Account (Pre-created)
 ```
-Email:    admin@meatsystem.com
-Password: admin123
+Phone:    01737075894
+Password: adminnuru1234
 ```
 
 ---
@@ -66,7 +66,7 @@ your-folder/
 ## 🧪 Test Users
 
 Create test accounts:
-1. Use email: `member1@test.com`, `member2@test.com`, etc.
+1. Use unique phone numbers for each test member.
 2. Use same password for all: `password123`
 3. Use any name and phone
 
