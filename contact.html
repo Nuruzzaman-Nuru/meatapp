@@ -22,38 +22,54 @@
         </div>
     </header>
 
-    <main class="contact-page">
-        <div class="container">
-            <section class="contact-hero">
-                <p class="section-kicker">Contact</p>
-                <h1>Contact the association admin</h1>
-                <p>For membership approval, monthly contribution questions, collector assignment, or account support, contact the admin directly.</p>
-            </section>
+    <main class="contact-page contact-map-page">
+        <section class="contact-map-form">
+            <div class="contact-map-bg" aria-hidden="true"></div>
+            <div class="container contact-form-wrap">
+                <form class="contact-message-form" action="mailto:admin@meatsystem.com" method="post" enctype="text/plain">
+                    <div class="contact-form-fields">
+                        <div class="contact-form-left">
+                            <input type="text" name="name" placeholder="Your Name *" required>
+                            <input type="email" name="email" placeholder="Your Email *" required>
+                            <input type="tel" name="phone" placeholder="Your Phone">
+                        </div>
+                        <textarea name="message" placeholder="Message *" required></textarea>
+                    </div>
+                    <div class="contact-form-footer">
+                        <p>We will contact you as soon as possible.</p>
+                        <button class="contact-send-btn" type="submit">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </section>
 
-            <section class="contact-grid">
-                <div class="contact-card">
-                    <h2>Admin Contact</h2>
-                    <div class="contact-detail">
-                        <span>Email</span>
-                        <strong>admin@meatsystem.com</strong>
-                    </div>
-                    <div class="contact-detail">
-                        <span>Phone</span>
-                        <strong>01307347646</strong>
-                    </div>
-                     <div class="contact-detail">
-                        <span>WhatsApp</span>
+        <section class="contact-info-band">
+            <div class="container contact-info-grid">
+                <div class="contact-info-item">
+                    <div class="contact-info-icon">☎</div>
+                    <div>
+                        <p>Phone:</p>
                         <strong>01307347646</strong>
                     </div>
                 </div>
 
-                <div class="contact-card">
-                    <h2>Office Help</h2>
-                    <p>New members should register first. After registration, admin approval is required before member dashboard access is allowed.</p>
-                    <a class="btn btn-primary" href="login.html">Go to Login</a>
+                <div class="contact-info-item">
+                    <div class="contact-info-icon">⌖</div>
+                    <div>
+                        <p>Office Help</p>
+                        <strong>New members should register first. Admin approval is required before dashboard access.</strong>
+                    </div>
                 </div>
-            </section>
-        </div>
+
+                <div class="contact-info-item">
+                    <div class="contact-info-icon">✉</div>
+                    <div>
+                        <p>E-mail: admin@meatsystem.com</p>
+                        <strong>WhatsApp: 01307347646</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div data-include="footer"></div>
