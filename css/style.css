@@ -2224,6 +2224,14 @@ textarea {
     }
 }
 
+@media (max-width: 768px) {
+    .admin-dashboard-page .dashboard-container,
+    .admin-dashboard-page .stats-grid,
+    .admin-dashboard-page .compact-stats {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 @media print {
     body {
         background: #fff;
