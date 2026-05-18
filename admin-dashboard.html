@@ -59,12 +59,9 @@
                     <label for="adminYear">Year</label>
                     <input type="number" id="adminYear" min="2020" />
                 </div>
-                <div style="display: flex; align-items: flex-end; gap: 0.5rem;">
+                <div class="form-button-group">
                     <button class="btn btn-primary" onclick="refreshReport()">📊 Load Report</button>
                     <button class="btn btn-success" onclick="printReport()" title="Print the monthly report">🖨️ Print</button>
-                </div>
-            </div>
-        </div>
                 </div>
             </div>
         </div>
@@ -197,7 +194,7 @@
                         <label for="newUserId">New ID</label>
                         <input type="number" id="newUserId" placeholder="Enter new ID" />
                     </div>
-                    <div style="display: flex; align-items: flex-end;">
+                    <div class="form-action-btn">
                         <button class="btn btn-primary" onclick="updateUserId()" style="width: 100%;">💾 Update ID</button>
                     </div>
                 </div>
@@ -213,10 +210,10 @@
                         <label for="memberDetailSelect">Select Member</label>
                         <select id="memberDetailSelect"></select>
                     </div>
-                    <div style="display: flex; align-items: flex-end;">
+                    <div class="form-action-btn">
                         <button class="btn btn-primary" onclick="loadMemberDetails()" style="width: 100%;">🔍 View Details</button>
                     </div>
-                    <div style="display: flex; align-items: flex-end;">
+                    <div class="form-action-btn">
                         <button class="btn btn-success" onclick="printMemberDetails()" style="width: 100%;" title="Print selected member account details">Print Details</button>
                     </div>
                 </div>

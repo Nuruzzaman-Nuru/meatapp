@@ -1172,6 +1172,17 @@ textarea {
     gap: 1rem;
 }
 
+.form-button-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.form-action-btn {
+    display: flex;
+    align-items: flex-end;
+}
+
 /* Responsive */
 @media (max-width: 991px) {
     .home-content-grid,
@@ -1226,6 +1237,23 @@ textarea {
     .form-2col-grid,
     .form-auto-grid {
         grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .form-button-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+    }
+
+    .form-action-btn {
+        width: 100%;
+    }
+
+    .form-action-btn .btn {
         width: 100%;
     }
 
@@ -1358,6 +1386,23 @@ textarea {
         width: 100%;
     }
 
+    .form-button-group {
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+    }
+
+    .form-action-btn {
+        width: 100%;
+    }
+
+    .form-action-btn .btn {
+        width: 100%;
+    }
+
     .feature-list > div,
     .stat-box {
         width: 100%;
@@ -1485,6 +1530,26 @@ textarea {
     .form-auto-grid {
         display: grid;
         grid-template-columns: 1fr !important;
+        width: 100%;
+    }
+
+    .form-button-group {
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .form-button-group .btn {
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .form-action-btn {
+        width: 100%;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .form-action-btn .btn {
         width: 100%;
     }
 
