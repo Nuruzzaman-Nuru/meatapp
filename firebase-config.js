@@ -21,11 +21,19 @@ export const firebaseConfig = {
   measurementId: "G-CQ86FFH952"
 };
 
-// Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+// Initialize Firebase with error handling
+let app, db;
 
-// Realtime Database
-export const db = getDatabase(app);
+try {
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+  console.log('✅ Firebase initialized successfully');
+  window.dispatchEvent(new CustomEvent('firebase-ready'));
+} catch (error) {
+  console.error('❌ Firebase init error:', error.message);
+  console.warn('⚠️ Using localStorage only (offline mode)');
+  window.dispatchEvent(new CustomEvent('firebase-failed'));
+}
 
 // Global Access
 window.db = db;
@@ -35,4 +43,4 @@ window.get = get;
 window.child = child;
 window.push = push;
 
-export { ref, set, get, child, push };
+export { app, db, ref, set, get, child, push };
