@@ -31,10 +31,7 @@ const AuthManager = {
             return { success: false, message: 'Password must be at least 6 characters' };
         }
 
-        const firebaseUsers = await this.getFirebaseUsers();
-        if (firebaseUsers.length > 0) {
-            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(firebaseUsers));
-        }
+        await this.refreshUsersBeforeAuth();
 
         // Check if phone already exists
         const existingUser = StorageManager.getUserByPhone(formData.phone);
@@ -98,37 +95,36 @@ const AuthManager = {
 
     async saveRegisteredUserToFirebase(newUser) {
         try {
-            const users = await this.getFirebaseUsers();
-            const exists = users.some(user => {
-                return String(user.phone || '').trim() === String(newUser.phone || '').trim();
-            });
-            const nextUsers = exists ? users : [...users, newUser];
-            const payload = nextUsers.reduce((data, user) => {
-                data[String(user.id)] = user;
-                return data;
-            }, {});
-
-            payload._meta = {
-                lastSync: new Date().toISOString(),
-                itemCount: nextUsers.length
-            };
-
-            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
+            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/${newUser.id}.json`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(newUser)
             });
 
             if (!response.ok) {
                 throw new Error(`Firebase users write failed: ${response.status}`);
             }
 
-            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(nextUsers));
+            await this.updateUsersMetaInFirebase();
             return true;
         } catch (error) {
             console.error('Firebase users write failed', error);
             return false;
         }
+    },
+
+    async updateUsersMetaInFirebase() {
+        const users = StorageManager.getUsers();
+        await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/_meta.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                lastSync: new Date().toISOString(),
+                itemCount: users.length
+            })
+        }).catch(error => {
+            console.warn('Firebase users meta update failed', error);
+        });
     },
 
     /**
