@@ -3709,7 +3709,7 @@ textarea {
 /* Mobile header dropdown */
 .site-menu-toggle {
     display: none;
-    width: 42px;
+    min-width: 42px;
     height: 42px;
     border: 0;
     border-radius: 6px;
@@ -3717,12 +3717,26 @@ textarea {
     color: #ffffff;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row;
+    gap: 8px;
     cursor: pointer;
+    padding: 0 0.2rem;
 }
 
-.site-menu-toggle span {
+.site-menu-text {
+    color: currentColor;
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.site-menu-bars {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.site-menu-bars span {
     width: 22px;
     height: 2px;
     display: block;
@@ -3758,7 +3772,7 @@ textarea {
 
     .site-menu-toggle {
         display: inline-flex;
-        flex: 0 0 42px;
+        flex: 0 0 auto;
         order: 2;
     }
 

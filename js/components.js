@@ -36,7 +36,7 @@ function initMobileHeaderMenu() {
     toggle.type = 'button';
     toggle.setAttribute('aria-label', 'Open menu');
     toggle.setAttribute('aria-expanded', 'false');
-    toggle.innerHTML = '<span></span><span></span><span></span>';
+    toggle.innerHTML = '<span class="site-menu-text">Menu</span><span class="site-menu-bars" aria-hidden="true"><span></span><span></span><span></span></span>';
 
     headerContent.insertBefore(toggle, nav);
 
