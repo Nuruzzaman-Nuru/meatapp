@@ -1403,6 +1403,10 @@ textarea {
     font-weight: 650;
 }
 
+.registration-success-login {
+    margin-top: 1rem;
+}
+
 /* Dashboard */
 .dashboard-container {
     display: grid;
