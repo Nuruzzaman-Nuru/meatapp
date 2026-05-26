@@ -102,9 +102,15 @@
                 </div> -->
 
                 <div class="form-group">
-                    <label for="paymentPaidBy">Paid By (Name/Reference)</label>
-                    <input type="text" id="paymentPaidBy" placeholder="e.g., Nuru and TrxID ID" required />
-                </div>
+    <label for="paymentPaidBy">Transaction ID / Paid To</label>
+    
+    <input 
+        type="text" 
+        id="paymentPaidBy" 
+        placeholder="e.g., TrxID: 8HG72K or Nuru"
+        required
+    />
+</div>
 
                 <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">Mark as Paid</button>
             </div>
