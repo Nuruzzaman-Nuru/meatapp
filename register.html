@@ -106,7 +106,7 @@
 
             if (result.success) {
                 alert.className = 'alert alert-success';
-                alert.textContent = result.message;
+                alert.textContent = 'Registration successful. Please wait for admin approval.';
                 alert.style.display = 'block';
 
                 document.getElementById('registerName').value = '';
@@ -115,9 +115,6 @@
                 document.getElementById('registerPassword').value = '';
                 document.getElementById('registerConfirm').value = '';
 
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
             } else {
                 alert.className = 'alert alert-error';
                 alert.textContent = result.message;
