@@ -142,6 +142,8 @@ const AuthManager = {
             return { success: false, message: 'Phone number and password are required' };
         }
 
+        await this.refreshUsersBeforeAuth();
+
         // Find user
         const user = StorageManager.getUserByPhone(phone);
         if (!user) {
@@ -175,6 +177,45 @@ const AuthManager = {
             message: 'Login successful',
             user: sessionUser 
         };
+    },
+
+    async refreshUsersBeforeAuth() {
+        try {
+            if (window.FirebaseSync?.ready) {
+                await window.FirebaseSync.ready;
+            }
+
+            const firebaseUsers = await this.getFirebaseUsers();
+            if (firebaseUsers.length > 0) {
+                const mergedUsers = this.mergeUsersForAuth(firebaseUsers, StorageManager.getUsers());
+                localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
+            }
+        } catch (error) {
+            console.warn('Unable to refresh users before login. Using local data.', error);
+        }
+    },
+
+    mergeUsersForAuth(firebaseUsers, localUsers) {
+        const merged = [...firebaseUsers];
+        const userKeys = new Set();
+
+        merged.forEach(user => {
+            if (user.phone) userKeys.add(`phone:${String(user.phone).trim()}`);
+            if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
+        });
+
+        localUsers.forEach(user => {
+            const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
+            const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
+
+            if ((phoneKey && userKeys.has(phoneKey)) || (emailKey && userKeys.has(emailKey))) {
+                return;
+            }
+
+            merged.push(user);
+        });
+
+        return merged;
     },
 
     /**
