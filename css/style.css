@@ -1298,6 +1298,12 @@ textarea {
     transform: translateY(-1px);
 }
 
+.btn:disabled {
+    cursor: wait;
+    opacity: 0.72;
+    transform: none;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
     color: #fff;

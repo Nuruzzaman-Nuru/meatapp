@@ -66,7 +66,7 @@
                     </div>
 
                     <div class="form-buttons">
-                        <button class="btn btn-primary" onclick="handleRegister()">Register</button>
+                        <button id="registerSubmitBtn" class="btn btn-primary" onclick="handleRegister()">Register</button>
                         <a class="btn btn-secondary" href="login.html">Back to Login</a>
                     </div>
 
@@ -90,6 +90,11 @@
         });
 
         async function handleRegister() {
+            const submitButton = document.getElementById('registerSubmitBtn');
+            if (submitButton.disabled) {
+                return;
+            }
+
             const formData = {
                 name: document.getElementById('registerName').value,
                 email: document.getElementById('registerEmail').value,
@@ -100,6 +105,10 @@
 
             const alert = document.getElementById('registerAlert');
             let result;
+
+            alert.style.display = 'none';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Registering...';
 
             try {
                 result = await AuthManager.register(formData);
@@ -126,6 +135,8 @@
                 alert.className = 'alert alert-error';
                 alert.textContent = result.message;
                 alert.style.display = 'block';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Register';
             }
         }
 
@@ -136,6 +147,5 @@
         });
     </script>
     <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js"></script>
 </body>
 </html>

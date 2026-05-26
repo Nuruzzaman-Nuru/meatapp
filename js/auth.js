@@ -31,7 +31,11 @@ const AuthManager = {
             return { success: false, message: 'Password must be at least 6 characters' };
         }
 
-        await this.refreshUsersBeforeAuth();
+        const firebaseUsers = await this.getFirebaseUsers();
+        if (firebaseUsers.length > 0) {
+            const mergedUsers = this.mergeUsersForAuth(firebaseUsers, StorageManager.getUsers());
+            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
+        }
 
         // Check if phone already exists
         const existingUser = StorageManager.getUserByPhone(formData.phone);
@@ -73,9 +77,9 @@ const AuthManager = {
 
     async getFirebaseUsers() {
         try {
-            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
+            const response = await this.fetchWithTimeout(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
                 cache: 'no-store'
-            });
+            }, 4000);
 
             if (!response.ok) {
                 throw new Error(`Firebase users read failed: ${response.status}`);
@@ -93,13 +97,27 @@ const AuthManager = {
         }
     },
 
+    async fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            return await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+    },
+
     async saveRegisteredUserToFirebase(newUser) {
         try {
-            const response = await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/${newUser.id}.json`, {
+            const response = await this.fetchWithTimeout(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/${newUser.id}.json`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newUser)
-            });
+            }, 6000);
 
             if (!response.ok) {
                 throw new Error(`Firebase users write failed: ${response.status}`);
