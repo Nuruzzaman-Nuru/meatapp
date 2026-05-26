@@ -252,12 +252,12 @@ Edit `css/style.css` - Modify CSS variables at top
     id: 1,
     userId: 1,
     month: 5,
-    year: 2026,
-    amount: 200,
+    yeount: 200,
     status: "unpaid", // or "paid"
     paymentMethod: "cash",
     paymentDate: "2026-05-15T14:30:00.000Z",
-    notes: ""
+    notes: ""ar: 2026,
+    am
 }
 ```
 
