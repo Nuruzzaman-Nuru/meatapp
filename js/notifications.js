@@ -6,7 +6,7 @@ import {
     onMessage
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
 
-const FCM_VAPID_KEY = 'PASTE_YOUR_FIREBASE_WEB_PUSH_VAPID_KEY_HERE';
+const FCM_VAPID_KEY = 'BCmKXYTR9I3M5Xx3sSgqCY3XqCMxzKC_36rmZh1pr-B--OU2FZGC6DYBQ7DBWyr_q-Wiq5wz84KsaBMLM7IebRE';
 const FIREBASE_BASE_PATH = 'meatAppData/default';
 
 const NotificationManager = {
