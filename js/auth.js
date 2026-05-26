@@ -23,6 +23,14 @@ const AuthManager = {
             return { success: false, message: 'All fields are required' };
         }
 
+        if (!this.isValidGmailAddress(formData.email)) {
+            return { success: false, message: 'Please enter a valid Gmail address ending with @gmail.com' };
+        }
+
+        if (!this.isValidPhoneNumber(formData.phone)) {
+            return { success: false, message: 'Phone number must be exactly 11 digits' };
+        }
+
         if (formData.password !== formData.confirmPassword) {
             return { success: false, message: 'Passwords do not match' };
         }
@@ -75,6 +83,14 @@ const AuthManager = {
         };
     },
 
+    isValidGmailAddress(email) {
+        return /^[^\s@]+@gmail\.com$/i.test(String(email || '').trim());
+    },
+
+    isValidPhoneNumber(phone) {
+        return /^\d{11}$/.test(String(phone || '').trim());
+    },
+
     async getFirebaseUsers() {
         try {
             const response = await this.fetchWithTimeout(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
@@ -90,11 +106,22 @@ const AuthManager = {
 
             return Object.entries(value)
                 .filter(([key]) => key !== '_meta')
-                .map(([, user]) => user);
+                .map(([, user]) => user)
+                .filter(user => this.isValidAppUser(user));
         } catch (error) {
             console.error('Firebase users read failed', error);
             return StorageManager.getUsers();
         }
+    },
+
+    isValidAppUser(user) {
+        if (!user || typeof user !== 'object') {
+            return false;
+        }
+
+        const validRole = user.role === 'admin' || user.role === 'member';
+        const hasAuthIdentity = Boolean(user.phone || user.email);
+        return validRole && hasAuthIdentity;
     },
 
     async fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
@@ -218,7 +245,7 @@ const AuthManager = {
             if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
         });
 
-        localUsers.forEach(user => {
+        localUsers.filter(user => this.isValidAppUser(user)).forEach(user => {
             const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
             const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
 
