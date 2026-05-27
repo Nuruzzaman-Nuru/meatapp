@@ -103,10 +103,14 @@ const AuthManager = {
 
             const value = await response.json();
             if (!value) return StorageManager.getUsers();
+            const deletedUserIds = new Set(
+                StorageManager.getDeletedUserIds ? StorageManager.getDeletedUserIds() : []
+            );
 
             return Object.entries(value)
                 .filter(([key]) => key !== '_meta')
                 .map(([, user]) => user)
+                .filter(user => !deletedUserIds.has(Number(user.id)))
                 .filter(user => this.isValidAppUser(user));
         } catch (error) {
             console.error('Firebase users read failed', error);
@@ -266,7 +270,10 @@ const AuthManager = {
     },
 
     mergeUsersForAuth(firebaseUsers, localUsers) {
-        const merged = [...firebaseUsers];
+        const deletedUserIds = new Set(
+            StorageManager.getDeletedUserIds ? StorageManager.getDeletedUserIds() : []
+        );
+        const merged = firebaseUsers.filter(user => !deletedUserIds.has(Number(user.id)));
         const userKeys = new Set();
 
         merged.forEach(user => {
@@ -274,7 +281,9 @@ const AuthManager = {
             if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
         });
 
-        localUsers.filter(user => this.isValidAppUser(user)).forEach(user => {
+        localUsers
+            .filter(user => this.isValidAppUser(user) && !deletedUserIds.has(Number(user.id)))
+            .forEach(user => {
             const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
             const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
 

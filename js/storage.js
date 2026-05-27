@@ -42,6 +42,7 @@ const StorageManager = {
     KEYS: {
         USERS: 'users',
         CURRENT_USER: 'currentUser',
+        DELETED_USER_IDS: 'deletedUserIds',
         CONTRIBUTIONS: 'contributions',
         COLLECTORS: 'collectors',
         ANNOUNCEMENTS: 'announcements',
@@ -117,6 +118,22 @@ const StorageManager = {
         return users.find(u => u.id === id);
     },
 
+    getDeletedUserIds() {
+        const deletedIds = localStorage.getItem(this.KEYS.DELETED_USER_IDS);
+        const parsedIds = deletedIds ? JSON.parse(deletedIds) : [];
+        return Array.isArray(parsedIds) ? parsedIds.map(id => Number(id)) : [];
+    },
+
+    rememberDeletedUser(userId) {
+        const deletedIds = new Set(this.getDeletedUserIds());
+        deletedIds.add(Number(userId));
+        localStorage.setItem(this.KEYS.DELETED_USER_IDS, JSON.stringify([...deletedIds]));
+    },
+
+    isDeletedUser(userId) {
+        return this.getDeletedUserIds().includes(Number(userId));
+    },
+
     /**
      * Verify user password
      * @param {Object} user - User object
@@ -188,6 +205,8 @@ const StorageManager = {
         if (!user || user.role === 'admin') {
             return false;
         }
+
+        this.rememberDeletedUser(userId);
 
         const users = this.getUsers().filter(u => u.id !== userId);
         const contributions = this.getContributions().filter(c => c.userId !== userId);

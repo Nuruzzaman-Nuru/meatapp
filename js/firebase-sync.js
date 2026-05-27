@@ -83,7 +83,10 @@ const FirebaseSync = {
     },
 
     mergeUsers(firebaseUsers, localUsers) {
-        const merged = [...firebaseUsers];
+        const deletedUserIds = new Set(
+            window.StorageManager?.getDeletedUserIds ? StorageManager.getDeletedUserIds() : []
+        );
+        const merged = firebaseUsers.filter(user => !deletedUserIds.has(Number(user.id)));
         const userKeys = new Set();
         let maxId = merged.reduce((max, user) => Math.max(max, Number(user.id) || 0), 0);
 
@@ -92,7 +95,7 @@ const FirebaseSync = {
             if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
         });
 
-        localUsers.forEach(user => {
+        localUsers.filter(user => !deletedUserIds.has(Number(user.id))).forEach(user => {
             const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
             const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
             if ((phoneKey && userKeys.has(phoneKey)) || (emailKey && userKeys.has(emailKey))) {

@@ -459,7 +459,7 @@
                             <div class="table-actions">
                                 ${approveButton}
                                 <button class="btn btn-primary btn-sm" onclick="openEditUserModal(${user.id})">Edit</button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">Delete</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id}, this)">Delete</button>
                             </div>
                         </td>
                     </tr>
@@ -594,7 +594,7 @@
             App.showToast(statusMessages[status], 'success');
         }
 
-        function deleteUser(userId) {
+        async function deleteUser(userId, button = null) {
             const user = StorageManager.getUserById(userId);
             if (!user || user.role === 'admin') {
                 App.showToast('User not found', 'error');
@@ -605,16 +605,43 @@
                 return;
             }
 
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Deleting...';
+            }
+
             const deleted = StorageManager.deleteUser(userId);
             if (!deleted) {
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Delete';
+                }
                 App.showToast('User could not be deleted', 'error');
                 return;
+            }
+
+            let firebaseSyncFailed = false;
+            if (window.FirebaseSync?.enabled) {
+                try {
+                    await FirebaseSync.syncCollectionToFirebase('users');
+                    await FirebaseSync.syncCollectionToFirebase('contributions');
+                    await FirebaseSync.syncCollectionToFirebase('collectors');
+                } catch (error) {
+                    firebaseSyncFailed = true;
+                    console.error('Firebase user delete sync failed', error);
+                }
             }
 
             initializeCollectorSelects();
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
+
+            if (firebaseSyncFailed) {
+                App.showToast('User deleted locally, but Firebase sync failed. Refresh may bring it back.', 'warning');
+                return;
+            }
+
             App.showToast('User deleted successfully', 'success');
         }
 
