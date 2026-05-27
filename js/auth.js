@@ -183,23 +183,18 @@ const AuthManager = {
             return { success: false, message: 'Phone number and password are required' };
         }
 
-        await this.refreshUsersBeforeAuth();
+        let authResult = await this.getAuthenticatedLocalUser(phone, password);
 
-        // Find user
-        const user = StorageManager.getUserByPhone(phone);
-        if (!user) {
-            return { success: false, message: 'Invalid phone number or password' };
+        if (!authResult.user && authResult.canRefresh) {
+            await this.refreshUsersBeforeAuth();
+            authResult = await this.getAuthenticatedLocalUser(phone, password);
         }
 
-        // Verify password
-        const passwordValid = await StorageManager.verifyPassword(user, password);
-        if (!passwordValid) {
-            return { success: false, message: 'Invalid phone number or password' };
+        if (!authResult.user) {
+            return { success: false, message: authResult.message };
         }
 
-        if (user.role !== 'admin' && user.status !== 'active') {
-            return { success: false, message: 'Your account is waiting for admin approval' };
-        }
+        const user = authResult.user;
 
         // Store current user (without password/hash)
         const sessionUser = {
@@ -217,6 +212,40 @@ const AuthManager = {
             success: true, 
             message: 'Login successful',
             user: sessionUser 
+        };
+    },
+
+    async getAuthenticatedLocalUser(phone, password) {
+        const user = StorageManager.getUserByPhone(phone);
+        if (!user) {
+            return {
+                user: null,
+                canRefresh: true,
+                message: 'Invalid phone number or password'
+            };
+        }
+
+        const passwordValid = await StorageManager.verifyPassword(user, password);
+        if (!passwordValid) {
+            return {
+                user: null,
+                canRefresh: false,
+                message: 'Invalid phone number or password'
+            };
+        }
+
+        if (user.role !== 'admin' && user.status !== 'active') {
+            return {
+                user: null,
+                canRefresh: true,
+                message: 'Your account is waiting for admin approval'
+            };
+        }
+
+        return {
+            user,
+            canRefresh: false,
+            message: 'Login successful'
         };
     },
 

@@ -27,10 +27,13 @@ const FirebaseSync = {
 
             await this.syncFromFirebase();
             this.patchStorageManager();
-            await this.syncAllToFirebase();
 
             console.log('Firebase Realtime Database sync ready');
             window.dispatchEvent(new CustomEvent('firebase-sync-ready'));
+
+            this.syncAllToFirebase().catch(error => {
+                console.warn('Firebase background sync failed', error);
+            });
         } catch (error) {
             this.enabled = false;
             console.warn('Firebase sync disabled. Using localStorage only.', error);
@@ -110,7 +113,7 @@ const FirebaseSync = {
 
         const keyMap = this.getKeyMap();
 
-        for (const [name, storageKey] of Object.entries(keyMap)) {
+        await Promise.all(Object.entries(keyMap).map(async ([name, storageKey]) => {
             let data = [];
 
             try {
@@ -132,7 +135,7 @@ const FirebaseSync = {
                 const mergedData = name === 'users' ? this.mergeUsers(data, localItems) : data;
                 localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }
-        }
+        }));
     },
 
     async getCollectionFromFirebaseRest(name) {

@@ -77,10 +77,8 @@
                 alert.textContent = result.message;
                 alert.style.display = 'block';
 
-                setTimeout(() => {
-                    const user = AuthManager.getCurrentUser();
-                    window.location.href = user.role === 'admin' ? 'admin-dashboard.html' : 'dashboard.html';
-                }, 1000);
+                const user = AuthManager.getCurrentUser();
+                window.location.href = user.role === 'admin' ? 'admin-dashboard.html' : 'dashboard.html';
             } else {
                 alert.className = 'alert alert-error';
                 alert.textContent = result.message;
