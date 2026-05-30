@@ -134,6 +134,11 @@ const StorageManager = {
         return this.getDeletedUserIds().includes(Number(userId));
     },
 
+    isAccountableMember(userId) {
+        const user = this.getUserById(Number(userId));
+        return Boolean(user && user.role === 'member');
+    },
+
     /**
      * Verify user password
      * @param {Object} user - User object
@@ -287,8 +292,12 @@ const StorageManager = {
      * Get contributions by user
      */
     getUserContributions(userId) {
+        if (!this.isAccountableMember(userId)) {
+            return [];
+        }
+
         // Return contributions only from the month the user joined onwards
-        const contributions = this.getContributions().filter(c => c.userId === userId);
+        const contributions = this.getContributions().filter(c => Number(c.userId) === Number(userId));
         return contributions.filter(c => this.isValidContributionMonth(userId, c.month, c.year));
     },
 
@@ -298,7 +307,7 @@ const StorageManager = {
      */
     isValidContributionMonth(userId, month, year) {
         const user = this.getUserById(userId);
-        if (!user || !user.joinDate) {
+        if (!user || user.role !== 'member' || !user.joinDate) {
             return false;
         }
 
@@ -322,7 +331,7 @@ const StorageManager = {
         
         // Filter to only include users who joined in this month or before
         return contributions.filter(c => {
-            return this.isValidContributionMonth(c.userId, month, year);
+            return this.isAccountableMember(c.userId) && this.isValidContributionMonth(c.userId, month, year);
         });
     },
 
@@ -331,6 +340,10 @@ const StorageManager = {
      * Only creates if user's joinDate is in this month or before
      */
     getOrCreateContribution(userId, month, year) {
+        if (!this.isAccountableMember(userId)) {
+            return null;
+        }
+
         // Check if this is a valid contribution month for this user
         if (!this.isValidContributionMonth(userId, month, year)) {
             return null; // Don't create contribution before user joined
@@ -435,7 +448,7 @@ const StorageManager = {
      */
     getMonthlyStats(month, year) {
         const contributions = this.getMonthContributions(month, year);
-        const totalExpected = contributions.length * 200;
+        const totalExpected = contributions.reduce((sum, c) => sum + c.amount, 0);
         const totalPaid = contributions.filter(c => c.status === 'paid').reduce((sum, c) => sum + c.amount, 0);
         const totalDue = contributions.filter(c => c.status !== 'paid').reduce((sum, c) => sum + c.amount, 0);
         
