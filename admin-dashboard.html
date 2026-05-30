@@ -624,6 +624,7 @@
             if (window.FirebaseSync?.enabled) {
                 try {
                     await FirebaseSync.syncCollectionToFirebase('users');
+                    await FirebaseSync.syncCollectionToFirebase('deletedUserIds');
                     await FirebaseSync.syncCollectionToFirebase('contributions');
                     await FirebaseSync.syncCollectionToFirebase('collectors');
                 } catch (error) {
@@ -919,8 +920,7 @@
 
         function printReport() {
             const { month, year } = getCurrentMonthYear();
-            const monthName = ['January', 'February', 'March', 'April', 'May', 'June', 
-                             'July', 'August', 'September', 'October', 'November', 'December'][month];
+            const monthName = App.getMonthName(month);
             
             const stats = StorageManager.getMonthlyStats(month, year);
             const collectors = App.getMonthCollectorNames(month, year);

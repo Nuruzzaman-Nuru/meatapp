@@ -91,7 +91,11 @@ const StorageManager = {
      */
     getUsers() {
         const users = localStorage.getItem(this.KEYS.USERS);
-        return users ? JSON.parse(users) : [];
+        const parsedUsers = users ? JSON.parse(users) : [];
+        const deletedIds = new Set(this.getDeletedUserIds());
+        return Array.isArray(parsedUsers)
+            ? parsedUsers.filter(user => !deletedIds.has(Number(user.id)))
+            : [];
     },
 
     /**
@@ -99,7 +103,8 @@ const StorageManager = {
      */
     getUserByEmail(email) {
         const users = this.getUsers();
-        return users.find(u => u.email === email);
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        return users.find(u => String(u.email || '').trim().toLowerCase() === normalizedEmail);
     },
 
     /**
@@ -107,7 +112,8 @@ const StorageManager = {
      */
     getUserByPhone(phone) {
         const users = this.getUsers();
-        return users.find(u => u.phone === phone);
+        const normalizedPhone = String(phone || '').trim();
+        return users.find(u => String(u.phone || '').trim() === normalizedPhone);
     },
 
     /**

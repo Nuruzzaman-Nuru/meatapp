@@ -51,6 +51,11 @@ const AuthManager = {
             return { success: false, message: 'Phone number already registered' };
         }
 
+        const existingEmailUser = StorageManager.getUserByEmail(formData.email);
+        if (existingEmailUser) {
+            return { success: false, message: 'Email already registered' };
+        }
+
         // Create user with hashed password
         const newUser = await StorageManager.addUserWithPassword({
             name: formData.name,

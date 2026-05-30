@@ -46,6 +46,7 @@ const FirebaseSync = {
 
         return {
             users: StorageManager.KEYS.USERS,
+            deletedUserIds: StorageManager.KEYS.DELETED_USER_IDS,
             contributions: StorageManager.KEYS.CONTRIBUTIONS,
             collectors: StorageManager.KEYS.COLLECTORS,
             announcements: StorageManager.KEYS.ANNOUNCEMENTS,
@@ -115,19 +116,21 @@ const FirebaseSync = {
         if (!this.enabled || !window.StorageManager) return;
 
         const keyMap = this.getKeyMap();
+        if (keyMap.deletedUserIds) {
+            const deletedIds = await this.readCollectionFromFirebase('deletedUserIds');
+            if (deletedIds.length > 0) {
+                const localDeletedIds = this.getLocalItems(keyMap.deletedUserIds);
+                const mergedDeletedIds = [...new Set([...localDeletedIds, ...deletedIds].map(id => Number(id)))];
+                localStorage.setItem(keyMap.deletedUserIds, JSON.stringify(mergedDeletedIds));
+            }
+        }
 
         await Promise.all(Object.entries(keyMap).map(async ([name, storageKey]) => {
+            if (name === 'deletedUserIds') return;
             let data = [];
 
             try {
-                if (this.hasSdk()) {
-                    const snapshot = await this.get(this.child(this.ref(this.db), `${this.basePath}/${name}`));
-                    if (snapshot.exists()) {
-                        data = this.firebaseValueToArray(snapshot.val());
-                    }
-                } else {
-                    data = await this.getCollectionFromFirebaseRest(name);
-                }
+                data = await this.readCollectionFromFirebase(name);
             } catch (error) {
                 console.warn(`Firebase SDK ${name} read failed. Trying REST fallback.`, error);
                 data = await this.getCollectionFromFirebaseRest(name);
@@ -139,6 +142,15 @@ const FirebaseSync = {
                 localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }
         }));
+    },
+
+    async readCollectionFromFirebase(name) {
+        if (this.hasSdk()) {
+            const snapshot = await this.get(this.child(this.ref(this.db), `${this.basePath}/${name}`));
+            return snapshot.exists() ? this.firebaseValueToArray(snapshot.val()) : [];
+        }
+
+        return await this.getCollectionFromFirebaseRest(name);
     },
 
     async getCollectionFromFirebaseRest(name) {
@@ -238,7 +250,7 @@ const FirebaseSync = {
         patch('addUser', ['users']);
         patch('addUserWithPassword', ['users']);
         patch('updateUser', ['users']);
-        patch('deleteUser', ['users', 'contributions', 'collectors']);
+        patch('deleteUser', ['users', 'deletedUserIds', 'contributions', 'collectors']);
         patch('addContribution', ['contributions']);
         patch('updateContribution', ['contributions']);
         patch('setCollectors', ['collectors']);
