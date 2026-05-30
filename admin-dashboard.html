@@ -135,10 +135,10 @@
                 <div id="collectorsList"></div>
             </div>
 
-            <!-- Members Pending Payment This Month -->
+            <!-- User Payment Requests This Month -->
             <div class="card">
-                <h2>⚠️ Members Pending Payment This Month</h2>
-                <p style="color: #666; margin-bottom: 1rem;">Members who have not paid yet this month</p>
+                <h2>⚠️ User Payment Requests This Month</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Members who submitted a payment request for this month</p>
                 <div id="pendingPaymentTable"></div>
             </div>
 
@@ -437,7 +437,7 @@
             }
 
             if (status === 'pending') {
-                return '<span class="table-badge badge-warning">PAYMENT REQUESTED</span>';
+                return '<span class="table-badge badge-warning">REQUEST</span>';
             }
 
             return '<span class="table-badge badge-danger">UNPAID</span>';
@@ -445,7 +445,7 @@
 
         function getContributionStatusText(status) {
             if (status === 'paid') return 'PAID';
-            if (status === 'pending') return 'PAYMENT REQUESTED';
+            if (status === 'pending') return 'REQUEST';
             return 'UNPAID';
         }
 
@@ -735,11 +735,11 @@
             const stats = StorageManager.getMonthlyStats(month, year);
             const contributions = stats.contributions;
             
-            // Filter unpaid contributions and member-submitted payment requests.
-            const unpaidContributions = contributions.filter(c => c.status !== 'paid');
+            // Only show member-submitted payment requests here.
+            const paymentRequests = contributions.filter(c => c.status === 'pending');
 
-            if (unpaidContributions.length === 0) {
-                document.getElementById('pendingPaymentTable').innerHTML = '<div style="text-align: center; padding: 2rem; background: #d4edda; border-radius: 4px; color: #155724;"><strong>✓ All members have paid this month!</strong></div>';
+            if (paymentRequests.length === 0) {
+                document.getElementById('pendingPaymentTable').innerHTML = '<div style="text-align: center; padding: 2rem; background: #eef6ff; border-radius: 4px; color: #1e3a8a;"><strong>No payment requests yet.</strong></div>';
                 return;
             }
 
@@ -749,7 +749,7 @@
                         <tr>
                             <th>Member ID</th>
                             <th>Member Name</th>
-                            <th>Amount Due</th>
+                            <th>Request Amount</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -757,17 +757,16 @@
                     <tbody>
             `;
 
-            unpaidContributions.forEach(c => {
+            paymentRequests.forEach(c => {
                 const user = StorageManager.getUserById(c.userId);
-                const statusBadge = c.status === 'pending'
-                    ? '<span class="table-badge badge-warning">PAYMENT REQUESTED</span>'
-                    : '<span class="table-badge badge-danger">UNPAID</span>';
+                if (!user) return;
+                const statusBadge = '<span class="table-badge badge-warning">REQUEST</span>';
                 
                 html += `
                     <tr>
                         <td><strong>#${user.id}</strong></td>
                         <td><strong>${escapeHtml(user.name)}</strong></td>
-                        <td><span style="color: red; font-weight: bold;">${App.formatCurrency(c.amount)}</span></td>
+                        <td><span style="color: #b45309; font-weight: bold;">${App.formatCurrency(c.amount)}</span></td>
                         <td>${statusBadge}</td>
                         <td>
                             <button class="btn btn-success btn-sm" type="button" onclick="confirmMemberPayment(${c.id})">Confirm Payment</button>
