@@ -296,6 +296,9 @@
     <script src="js/app.js"></script>
     <script type="module" src="js/notifications.js"></script>
     <script>
+        let adminContributionRefreshTimer = null;
+        let adminContributionRefreshInProgress = false;
+
         window.addEventListener('DOMContentLoaded', () => {
             if (!AuthManager.requireAdmin()) return;
 
@@ -308,6 +311,7 @@
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
+            startAdminContributionAutoRefresh();
         });
 
         window.addEventListener('firebase-sync-ready', () => {
@@ -317,6 +321,20 @@
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
+            refreshReportFromFirebase();
+            startAdminContributionAutoRefresh();
+        });
+
+        window.addEventListener('focus', () => {
+            if (AuthManager.isAdmin()) {
+                refreshReportFromFirebase();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && AuthManager.isAdmin()) {
+                refreshReportFromFirebase();
+            }
         });
 
         function getCurrentMonthYear() {
@@ -362,6 +380,33 @@
 
             // Load member total amount summary
             loadMemberTotalAmountSummary();
+        }
+
+        function startAdminContributionAutoRefresh() {
+            if (adminContributionRefreshTimer) return;
+
+            adminContributionRefreshTimer = setInterval(() => {
+                if (!document.hidden && AuthManager.isAdmin()) {
+                    refreshReportFromFirebase();
+                }
+            }, 5000);
+        }
+
+        async function refreshReportFromFirebase() {
+            if (!window.FirebaseSync?.enabled || adminContributionRefreshInProgress) return;
+
+            adminContributionRefreshInProgress = true;
+            try {
+                await FirebaseSync.syncFromFirebase();
+                initializeCollectorSelects();
+                initializeEditSelects();
+                loadAdminUsers();
+                refreshReport();
+            } catch (error) {
+                console.error('Admin report Firebase refresh failed', error);
+            } finally {
+                adminContributionRefreshInProgress = false;
+            }
         }
 
         function escapeHtml(value) {

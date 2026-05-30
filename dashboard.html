@@ -314,7 +314,7 @@
             messageBox.style.display = 'none';
         }
 
-        function recordCurrentPayment() {
+        async function recordCurrentPayment() {
             const monthYear = document.getElementById('paymentMonth').value;
             const method = document.getElementById('paymentMethod').value;
             const proofFileInput = document.getElementById('paymentProof');
@@ -352,10 +352,11 @@
             // If proof file exists, convert to base64
             if (proofFile) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = async (e) => {
                     const paymentProof = e.target.result;
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
+                        await syncPaymentRequestToFirebase();
                         // Show immediate success toast
                         App.showToast('Payment request submitted successfully!', 'success');
                         console.log('Payment success:', result);
@@ -391,6 +392,7 @@
             } else {
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
+                    await syncPaymentRequestToFirebase();
                     // Show immediate success toast
                     App.showToast('Payment request submitted successfully!', 'success');
                     console.log('Payment success:', result);
@@ -421,6 +423,17 @@
                     console.error('Payment failed (no file):', result);
                     App.showToast(result.message, 'error');
                 }
+            }
+        }
+
+        async function syncPaymentRequestToFirebase() {
+            if (!window.FirebaseSync?.enabled) return;
+
+            try {
+                await FirebaseSync.syncCollectionToFirebase('contributions');
+            } catch (error) {
+                console.error('Payment request Firebase sync failed', error);
+                App.showToast('Payment request saved locally, but admin sync may be delayed', 'warning');
             }
         }
 
