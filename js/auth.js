@@ -278,28 +278,63 @@ const AuthManager = {
         const deletedUserIds = new Set(
             StorageManager.getDeletedUserIds ? StorageManager.getDeletedUserIds() : []
         );
-        const merged = firebaseUsers.filter(user => !deletedUserIds.has(Number(user.id)));
-        const userKeys = new Set();
+        const mergedByKey = new Map();
+        const usersWithoutIdentity = [];
+        const users = [...firebaseUsers, ...localUsers]
+            .filter(user => this.isValidAppUser(user) && !deletedUserIds.has(Number(user.id)));
 
-        merged.forEach(user => {
-            if (user.phone) userKeys.add(`phone:${String(user.phone).trim()}`);
-            if (user.email) userKeys.add(`email:${String(user.email).trim().toLowerCase()}`);
-        });
+        users.forEach(user => {
+            const keys = this.getUserIdentityKeys(user);
+            const existing = keys.map(key => mergedByKey.get(key)).find(Boolean);
 
-        localUsers
-            .filter(user => this.isValidAppUser(user) && !deletedUserIds.has(Number(user.id)))
-            .forEach(user => {
-            const phoneKey = user.phone ? `phone:${String(user.phone).trim()}` : '';
-            const emailKey = user.email ? `email:${String(user.email).trim().toLowerCase()}` : '';
-
-            if ((phoneKey && userKeys.has(phoneKey)) || (emailKey && userKeys.has(emailKey))) {
+            if (!keys.length) {
+                usersWithoutIdentity.push(user);
                 return;
             }
 
-            merged.push(user);
+            const selectedUser = existing && !this.shouldUseUser(user, existing) ? existing : user;
+            keys.forEach(key => mergedByKey.set(key, selectedUser));
         });
 
-        return merged;
+        return [...new Set(mergedByKey.values()), ...usersWithoutIdentity];
+    },
+
+    getUserIdentityKeys(user) {
+        const keys = [];
+        if (user?.phone) keys.push(`phone:${String(user.phone).trim()}`);
+        if (user?.email) keys.push(`email:${String(user.email).trim().toLowerCase()}`);
+        return keys;
+    },
+
+    getUserTimestamp(user) {
+        const dateValues = [
+            user?.updatedAt,
+            user?.joinDate,
+            user?.createdAt
+        ];
+
+        return dateValues.reduce((latest, value) => {
+            const time = value ? new Date(value).getTime() : 0;
+            return Number.isFinite(time) ? Math.max(latest, time) : latest;
+        }, 0);
+    },
+
+    getUserStatusRank(status) {
+        if (status === 'active') return 3;
+        if (status === 'inactive') return 2;
+        if (status === 'pending') return 1;
+        return 0;
+    },
+
+    shouldUseUser(nextUser, existingUser) {
+        const nextTime = this.getUserTimestamp(nextUser);
+        const existingTime = this.getUserTimestamp(existingUser);
+
+        if (nextTime !== existingTime) {
+            return nextTime > existingTime;
+        }
+
+        return this.getUserStatusRank(nextUser?.status) >= this.getUserStatusRank(existingUser?.status);
     },
 
     /**

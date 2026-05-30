@@ -524,17 +524,36 @@
             document.getElementById('adminUsersTable').innerHTML = html;
         }
 
-        function approveUser(userId) {
-            const updated = StorageManager.updateUser(userId, { status: 'active' });
+        async function approveUser(userId) {
+            const updated = StorageManager.updateUser(userId, {
+                status: 'active',
+                updatedAt: new Date().toISOString()
+            });
             if (!updated) {
                 App.showToast('User not found', 'error');
                 return;
+            }
+
+            let firebaseSyncFailed = false;
+            if (window.FirebaseSync?.enabled) {
+                try {
+                    await FirebaseSync.syncCollectionToFirebase('users');
+                } catch (error) {
+                    firebaseSyncFailed = true;
+                    console.error('Firebase user approval sync failed', error);
+                }
             }
 
             initializeCollectorSelects();
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
+
+            if (firebaseSyncFailed) {
+                App.showToast('User approved locally, but Firebase sync failed', 'warning');
+                return;
+            }
+
             App.showToast('User approved successfully', 'success');
         }
 
