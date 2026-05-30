@@ -166,6 +166,45 @@ const FirebaseSync = {
         return [...mergedByMonth.values()].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
     },
 
+    getAnnouncementKey(announcement) {
+        if (announcement?.id !== undefined && announcement?.id !== null) {
+            return `id:${announcement.id}`;
+        }
+
+        return [
+            'content',
+            announcement?.createdAt || '',
+            announcement?.title || '',
+            announcement?.content || ''
+        ].join(':');
+    },
+
+    getAnnouncementTimestamp(announcement) {
+        const time = announcement?.createdAt ? new Date(announcement.createdAt).getTime() : 0;
+        return Number.isFinite(time) ? time : 0;
+    },
+
+    mergeAnnouncements(firebaseAnnouncements, localAnnouncements) {
+        const mergedByKey = new Map();
+
+        [...firebaseAnnouncements, ...localAnnouncements].forEach(announcement => {
+            if (!announcement) return;
+
+            const key = this.getAnnouncementKey(announcement);
+            const existing = mergedByKey.get(key);
+            if (!existing) {
+                mergedByKey.set(key, announcement);
+                return;
+            }
+
+            if (this.getAnnouncementTimestamp(announcement) >= this.getAnnouncementTimestamp(existing)) {
+                mergedByKey.set(key, announcement);
+            }
+        });
+
+        return [...mergedByKey.values()].sort((a, b) => this.getAnnouncementTimestamp(b) - this.getAnnouncementTimestamp(a));
+    },
+
     async syncFromFirebase() {
         if (!this.enabled || !window.StorageManager) return;
 
@@ -198,6 +237,9 @@ const FirebaseSync = {
                 }
                 if (name === 'contributions') {
                     mergedData = this.mergeContributions(data, localItems);
+                }
+                if (name === 'announcements') {
+                    mergedData = this.mergeAnnouncements(data, localItems);
                 }
                 localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }

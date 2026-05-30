@@ -126,7 +126,7 @@
                 await FirebaseSync.ready;
             }
 
-            StorageManager.addAnnouncement({
+            const announcement = StorageManager.addAnnouncement({
                 title,
                 type,
                 content,
@@ -134,7 +134,9 @@
                 createdById: currentUser.id
             });
 
-            await syncAnnouncementsToFirebase();
+            preservePostedAnnouncement(announcement);
+            loadAnnouncements();
+            await syncAnnouncementsToFirebase(announcement);
             App.showToast('নোটিশ সফলভাবে পোস্ট হয়েছে', 'success');
 
             // Clear form
@@ -217,19 +219,40 @@
             }
         }
 
-        async function syncAnnouncementsToFirebase() {
+        async function syncAnnouncementsToFirebase(announcement = null) {
             if (window.FirebaseSync?.ready) {
                 await FirebaseSync.ready;
             }
+
+            preservePostedAnnouncement(announcement);
 
             if (!window.FirebaseSync?.enabled) return;
 
             try {
                 await FirebaseSync.syncCollectionToFirebase('announcements');
             } catch (error) {
+                preservePostedAnnouncement(announcement);
                 console.error('Announcement Firebase sync failed', error);
                 App.showToast('নোটিশ লোকালি সেভ হয়েছে, কিন্তু সবার কাছে যেতে দেরি হতে পারে', 'warning');
             }
+        }
+
+        function preservePostedAnnouncement(announcement) {
+            if (!announcement) return;
+
+            const announcements = StorageManager.getAnnouncements();
+            const existingIndex = announcements.findIndex(item => Number(item.id) === Number(announcement.id));
+
+            if (existingIndex >= 0) {
+                announcements[existingIndex] = {
+                    ...announcements[existingIndex],
+                    ...announcement
+                };
+            } else {
+                announcements.push(announcement);
+            }
+
+            localStorage.setItem(StorageManager.KEYS.ANNOUNCEMENTS, JSON.stringify(announcements));
         }
 
         function escapeHtml(value) {

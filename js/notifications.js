@@ -87,7 +87,7 @@ const NotificationManager = {
 
     async saveCurrentToken() {
         try {
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            const registration = await this.registerMessagingServiceWorker();
             const token = await getToken(this.messaging, {
                 vapidKey: FCM_VAPID_KEY,
                 serviceWorkerRegistration: registration
@@ -99,23 +99,69 @@ const NotificationManager = {
             }
 
             const tokenKey = this.getSafeTokenKey(token);
-            await set(ref(db, `${FIREBASE_BASE_PATH}/notificationTokens/${this.currentUser.id}/${tokenKey}`), {
-                token,
-                userId: this.currentUser.id,
-                userName: this.currentUser.name,
-                userRole: this.currentUser.role,
-                userAgent: navigator.userAgent,
-                updatedAt: new Date().toISOString()
-            });
-
             localStorage.setItem('meatAppFcmToken', token);
+
+            try {
+                await set(ref(db, `${FIREBASE_BASE_PATH}/notificationTokens/${this.currentUser.id}/${tokenKey}`), {
+                    token,
+                    userId: this.currentUser.id,
+                    userName: this.currentUser.name,
+                    userRole: this.currentUser.role,
+                    userAgent: navigator.userAgent,
+                    updatedAt: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('FCM token database save failed', error);
+                this.updateStatus(`Notification token created, but Firebase DB save failed: ${this.getReadableError(error)}`, 'error');
+                return token;
+            }
+
             this.updateStatus('Notifications enabled. Payment confirmation popup will be sent to this browser.', 'success');
             return token;
         } catch (error) {
             console.error('FCM token save failed', error);
-            this.updateStatus('Could not enable Firebase notifications. Check console/configuration.', 'error');
+            this.updateStatus(`Could not enable Firebase notifications: ${this.getReadableError(error)}`, 'error');
             return null;
         }
+    },
+
+    async registerMessagingServiceWorker() {
+        const candidates = [
+            '/firebase-messaging-sw.js',
+            `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}firebase-messaging-sw.js`
+        ];
+
+        let lastError = null;
+        for (const scriptUrl of candidates) {
+            try {
+                return await navigator.serviceWorker.register(scriptUrl);
+            } catch (error) {
+                lastError = error;
+                console.warn(`Service worker registration failed for ${scriptUrl}`, error);
+            }
+        }
+
+        throw lastError || new Error('Service worker registration failed.');
+    },
+
+    getReadableError(error) {
+        const code = error?.code || '';
+        const message = error?.message || String(error || 'Unknown error');
+
+        if (code.includes('messaging/permission-blocked')) {
+            return 'browser notification permission is blocked.';
+        }
+        if (code.includes('messaging/failed-service-worker-registration')) {
+            return 'service worker registration failed. Open the app from HTTPS or localhost and make sure firebase-messaging-sw.js is available.';
+        }
+        if (code.includes('messaging/token-subscribe-failed')) {
+            return 'FCM token subscription failed. Check Firebase Cloud Messaging Web Push certificate/VAPID key.';
+        }
+        if (code.includes('permission_denied') || message.toLowerCase().includes('permission_denied')) {
+            return 'Realtime Database rules denied saving the notification token.';
+        }
+
+        return code ? `${code} - ${message}` : message;
     },
 
     listenForForegroundMessages() {
