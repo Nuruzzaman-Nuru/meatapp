@@ -402,7 +402,7 @@
                     const paymentProof = e.target.result;
                     const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
                     if (result.success) {
-                        await syncPaymentRequestToFirebase();
+                        await syncPaymentRequestToFirebase(result.contribution);
                         // Show immediate success toast
                         App.showToast('Payment request submitted successfully!', 'success');
                         console.log('Payment success:', result);
@@ -438,7 +438,7 @@
             } else {
                 const result = App.recordPayment(contribution.id, method, paidBy, null);
                 if (result.success) {
-                    await syncPaymentRequestToFirebase();
+                    await syncPaymentRequestToFirebase(result.contribution);
                     // Show immediate success toast
                     App.showToast('Payment request submitted successfully!', 'success');
                     console.log('Payment success:', result);
@@ -472,15 +472,59 @@
             }
         }
 
-        async function syncPaymentRequestToFirebase() {
-            if (!window.FirebaseSync?.enabled) return;
-
+        async function syncPaymentRequestToFirebase(submittedContribution) {
             try {
+                if (window.FirebaseSync?.ready) {
+                    await FirebaseSync.ready;
+                } else if (!window.FirebaseSync) {
+                    await new Promise(resolve => {
+                        window.addEventListener('firebase-sync-ready', resolve, { once: true });
+                        setTimeout(resolve, 3000);
+                    });
+                }
+
+                preserveSubmittedPaymentRequest(submittedContribution);
+
+                if (!window.FirebaseSync?.enabled) {
+                    App.showToast('Payment request saved locally, but Firebase sync is not ready', 'warning');
+                    return;
+                }
+
                 await FirebaseSync.syncCollectionToFirebase('contributions');
             } catch (error) {
+                preserveSubmittedPaymentRequest(submittedContribution);
                 console.error('Payment request Firebase sync failed', error);
                 App.showToast('Payment request saved locally, but admin sync may be delayed', 'warning');
             }
+        }
+
+        function preserveSubmittedPaymentRequest(submittedContribution) {
+            if (!submittedContribution) return;
+
+            const contributions = StorageManager.getContributions();
+            const existingIndex = contributions.findIndex(c =>
+                Number(c.id) === Number(submittedContribution.id) ||
+                (
+                    Number(c.userId) === Number(submittedContribution.userId) &&
+                    Number(c.month) === Number(submittedContribution.month) &&
+                    Number(c.year) === Number(submittedContribution.year)
+                )
+            );
+
+            if (existingIndex >= 0) {
+                contributions[existingIndex] = {
+                    ...contributions[existingIndex],
+                    ...submittedContribution,
+                    status: 'pending'
+                };
+            } else {
+                contributions.push({
+                    ...submittedContribution,
+                    status: 'pending'
+                });
+            }
+
+            localStorage.setItem(StorageManager.KEYS.CONTRIBUTIONS, JSON.stringify(contributions));
         }
 
         function showPaymentSuccessScreen(contribution, method, paidBy = '') {

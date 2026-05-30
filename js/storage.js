@@ -121,7 +121,7 @@ const StorageManager = {
      */
     getUserById(id) {
         const users = this.getUsers();
-        return users.find(u => u.id === id);
+        return users.find(u => Number(u.id) === Number(id));
     },
 
     getDeletedUserIds() {

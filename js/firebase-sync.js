@@ -112,6 +112,60 @@ const FirebaseSync = {
         return merged;
     },
 
+    getContributionKey(contribution) {
+        return [
+            Number(contribution?.userId),
+            Number(contribution?.month),
+            Number(contribution?.year)
+        ].join(':');
+    },
+
+    getContributionTimestamp(contribution) {
+        const dateValues = [
+            contribution?.paymentDate,
+            contribution?.paymentRequestedAt,
+            contribution?.updatedAt,
+            contribution?.createdAt
+        ];
+
+        return dateValues.reduce((latest, value) => {
+            const time = value ? new Date(value).getTime() : 0;
+            return Number.isFinite(time) ? Math.max(latest, time) : latest;
+        }, 0);
+    },
+
+    getContributionStatusRank(status) {
+        if (status === 'paid') return 3;
+        if (status === 'pending') return 2;
+        return 1;
+    },
+
+    mergeContributions(firebaseContributions, localContributions) {
+        const mergedByMonth = new Map();
+
+        [...firebaseContributions, ...localContributions].forEach(contribution => {
+            if (!contribution) return;
+
+            const key = this.getContributionKey(contribution);
+            const existing = mergedByMonth.get(key);
+            if (!existing) {
+                mergedByMonth.set(key, contribution);
+                return;
+            }
+
+            const existingTime = this.getContributionTimestamp(existing);
+            const nextTime = this.getContributionTimestamp(contribution);
+            const existingRank = this.getContributionStatusRank(existing.status);
+            const nextRank = this.getContributionStatusRank(contribution.status);
+
+            if (nextTime > existingTime || (nextTime === existingTime && nextRank >= existingRank)) {
+                mergedByMonth.set(key, contribution);
+            }
+        });
+
+        return [...mergedByMonth.values()].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
+    },
+
     async syncFromFirebase() {
         if (!this.enabled || !window.StorageManager) return;
 
@@ -138,7 +192,13 @@ const FirebaseSync = {
 
             if (data.length > 0) {
                 const localItems = this.getLocalItems(storageKey);
-                const mergedData = name === 'users' ? this.mergeUsers(data, localItems) : data;
+                let mergedData = data;
+                if (name === 'users') {
+                    mergedData = this.mergeUsers(data, localItems);
+                }
+                if (name === 'contributions') {
+                    mergedData = this.mergeContributions(data, localItems);
+                }
                 localStorage.setItem(storageKey, JSON.stringify(mergedData));
             }
         }));

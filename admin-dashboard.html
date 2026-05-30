@@ -800,7 +800,7 @@
                     contribution,
                     user: StorageManager.getUserById(contribution.userId)
                 }))
-                .filter(item => item.user && item.user.role === 'member' && item.user.status === 'active')
+                .filter(item => item.user && item.user.role === 'member')
                 .sort((a, b) => {
                     const bTime = new Date(b.contribution.paymentRequestedAt || b.contribution.createdAt || 0).getTime();
                     const aTime = new Date(a.contribution.paymentRequestedAt || a.contribution.createdAt || 0).getTime();
