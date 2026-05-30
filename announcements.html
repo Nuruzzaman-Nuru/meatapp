@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Announcements - Contribution System</title>
+    <title>নোটিশ - Contribution System</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -17,7 +17,7 @@
                 <div class="navbar-brand">💰 Contribution System</div>
                 <div class="navbar-menu">
                     <a id="dashboardNavLink" href="dashboard.html">Dashboard</a>
-                    <a href="announcements.html">Announcements</a>
+                    <a href="announcements.html">নোটিশ</a>
                     <button class="logout-btn" onclick="handleLogout()">Logout</button>
                 </div>
             </div>
@@ -27,8 +27,8 @@
     <div class="container">
         <!-- Welcome Section -->
         <div style="margin: 2rem 0; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px;">
-            <h1>📢 Announcements & Meetings</h1>
-            <p>Important updates and meeting information</p>
+            <h1>📢 নোটিশ</h1>
+            <p>গুরুত্বপূর্ণ আপডেট ও সভার তথ্য</p>
         </div>
 
         <!-- Alerts -->
@@ -37,35 +37,35 @@
         <!-- Admin Add Announcement (Admin only) -->
         <div id="adminSection" style="display: none;">
             <div class="card" style="margin-bottom: 2rem;">
-                <h2>📝 Post Announcement</h2>
+                <h2>📝 নোটিশ পোস্ট করুন</h2>
                 
                 <div class="form-group">
-                    <label for="announcementTitle">Title</label>
-                    <input type="text" id="announcementTitle" placeholder="Enter announcement title">
+                    <label for="announcementTitle">শিরোনাম</label>
+                    <input type="text" id="announcementTitle" placeholder="নোটিশের শিরোনাম লিখুন">
                 </div>
 
                 <div class="form-group">
-                    <label for="announcementType">Type</label>
+                    <label for="announcementType">ধরন</label>
                     <select id="announcementType">
-                        <option value="general">General Announcement</option>
-                        <option value="meeting">Meeting Info</option>
-                        <option value="decision">Decision/Update</option>
+                        <option value="general">সাধারণ নোটিশ</option>
+                        <option value="meeting">সভা</option>
+                        <option value="decision">সিদ্ধান্ত/আপডেট</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="announcementContent">Content</label>
-                    <textarea id="announcementContent" placeholder="Enter detailed announcement"></textarea>
+                    <label for="announcementContent">বিস্তারিত</label>
+                    <textarea id="announcementContent" placeholder="নোটিশের বিস্তারিত লিখুন"></textarea>
                 </div>
 
-                <button class="btn btn-primary btn-block" onclick="postAnnouncement()">📤 Post Announcement</button>
+                <button class="btn btn-primary btn-block" onclick="postAnnouncement()">📤 নোটিশ পোস্ট করুন</button>
             </div>
         </div>
 
         <!-- Announcements List -->
         <div class="dashboard-container">
             <div class="card">
-                <h2>📋 All Announcements</h2>
+                <h2>📋 সকল নোটিশ</h2>
                 <div id="announcementsList"></div>
             </div>
         </div>
@@ -76,6 +76,8 @@
     <script src="js/app.js"></script>
     <script>
         let currentUser = null;
+        let announcementsRefreshTimer = null;
+        let announcementsRefreshInProgress = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             if (!AuthManager.requireAuth()) return;
@@ -89,16 +91,39 @@
             }
 
             loadAnnouncements();
+            startAnnouncementsAutoRefresh();
         });
 
-        function postAnnouncement() {
+        window.addEventListener('firebase-sync-ready', () => {
+            if (!AuthManager.isLoggedIn()) return;
+            refreshAnnouncementsFromFirebase();
+            startAnnouncementsAutoRefresh();
+        });
+
+        window.addEventListener('focus', () => {
+            if (AuthManager.isLoggedIn()) {
+                refreshAnnouncementsFromFirebase();
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && AuthManager.isLoggedIn()) {
+                refreshAnnouncementsFromFirebase();
+            }
+        });
+
+        async function postAnnouncement() {
             const title = document.getElementById('announcementTitle').value.trim();
             const type = document.getElementById('announcementType').value;
             const content = document.getElementById('announcementContent').value.trim();
 
             if (!title || !content) {
-                App.showToast('Please fill in all fields', 'warning');
+                App.showToast('সব তথ্য পূরণ করুন', 'warning');
                 return;
+            }
+
+            if (window.FirebaseSync?.ready) {
+                await FirebaseSync.ready;
             }
 
             StorageManager.addAnnouncement({
@@ -109,7 +134,8 @@
                 createdById: currentUser.id
             });
 
-            App.showToast('Announcement posted successfully!', 'success');
+            await syncAnnouncementsToFirebase();
+            App.showToast('নোটিশ সফলভাবে পোস্ট হয়েছে', 'success');
 
             // Clear form
             document.getElementById('announcementTitle').value = '';
@@ -128,7 +154,7 @@
 
             let html = '';
             if (sorted.length === 0) {
-                html = '<p style="color: #999; text-align: center; padding: 2rem;">No announcements yet.</p>';
+                html = '<p style="color: #999; text-align: center; padding: 2rem;">এখনো কোনো নোটিশ নেই।</p>';
             } else {
                 sorted.forEach(announcement => {
                     const typeIcon = {
@@ -146,16 +172,16 @@
                     html += `
                         <div style="background: ${typeBg}; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 4px; border-left: 4px solid var(--primary-color);">
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                                <h3 style="margin: 0; color: var(--primary-color);">${typeIcon} ${announcement.title}</h3>
+                                <h3 style="margin: 0; color: var(--primary-color);">${typeIcon} ${escapeHtml(announcement.title)}</h3>
                                 ${currentUser.id === announcement.createdById ? `
                                     <button style="background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 1.2rem;" onclick="deleteAnnouncement(${announcement.id})">🗑️</button>
                                 ` : ''}
                             </div>
                             <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
-                                <strong>By:</strong> ${announcement.createdByName} | 
-                                <strong>Date:</strong> ${App.formatDate(announcement.createdAt)}
+                                <strong>পোস্ট করেছেন:</strong> ${escapeHtml(announcement.createdByName || 'Admin')} | 
+                                <strong>তারিখ:</strong> ${App.formatDate(announcement.createdAt)}
                             </p>
-                            <p style="line-height: 1.6; white-space: pre-wrap;">${announcement.content}</p>
+                            <p style="line-height: 1.6; white-space: pre-wrap;">${escapeHtml(announcement.content)}</p>
                         </div>
                     `;
                 });
@@ -164,10 +190,63 @@
             document.getElementById('announcementsList').innerHTML = html;
         }
 
-        function deleteAnnouncement(id) {
-            if (confirm('Are you sure you want to delete this announcement?')) {
+        function startAnnouncementsAutoRefresh() {
+            if (announcementsRefreshTimer) return;
+
+            announcementsRefreshTimer = setInterval(() => {
+                if (!document.hidden && AuthManager.isLoggedIn()) {
+                    refreshAnnouncementsFromFirebase();
+                }
+            }, 10000);
+        }
+
+        async function refreshAnnouncementsFromFirebase() {
+            if (!window.FirebaseSync?.enabled || announcementsRefreshInProgress) return;
+
+            announcementsRefreshInProgress = true;
+            try {
+                if (window.FirebaseSync?.ready) {
+                    await FirebaseSync.ready;
+                }
+                await FirebaseSync.syncFromFirebase();
+                loadAnnouncements();
+            } catch (error) {
+                console.error('Announcements Firebase refresh failed', error);
+            } finally {
+                announcementsRefreshInProgress = false;
+            }
+        }
+
+        async function syncAnnouncementsToFirebase() {
+            if (window.FirebaseSync?.ready) {
+                await FirebaseSync.ready;
+            }
+
+            if (!window.FirebaseSync?.enabled) return;
+
+            try {
+                await FirebaseSync.syncCollectionToFirebase('announcements');
+            } catch (error) {
+                console.error('Announcement Firebase sync failed', error);
+                App.showToast('নোটিশ লোকালি সেভ হয়েছে, কিন্তু সবার কাছে যেতে দেরি হতে পারে', 'warning');
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[char]));
+        }
+
+        async function deleteAnnouncement(id) {
+            if (confirm('এই নোটিশ মুছে ফেলতে চান?')) {
                 StorageManager.deleteAnnouncement(id);
-                App.showToast('Announcement deleted', 'success');
+                await syncAnnouncementsToFirebase();
+                App.showToast('নোটিশ মুছে ফেলা হয়েছে', 'success');
                 loadAnnouncements();
             }
         }
