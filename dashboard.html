@@ -143,6 +143,8 @@
     <script type="module" src="js/notifications.js"></script>
     <script>
         let currentUser = null;
+        let memberContributionRefreshTimer = null;
+        let memberContributionRefreshInProgress = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             if (!AuthManager.requireAuth()) return;
@@ -150,9 +152,28 @@
             currentUser = AuthManager.getCurrentUser();
             initializeDashboard();
             populateMonthSelector();
+            startMemberContributionAutoRefresh();
+        });
+
+        window.addEventListener('firebase-sync-ready', () => {
+            if (!AuthManager.isLoggedIn()) return;
+
+            refreshMemberDashboardFromFirebase();
+            startMemberContributionAutoRefresh();
+        });
+
+        window.addEventListener('focus', () => {
+            if (AuthManager.isLoggedIn()) {
+                refreshMemberDashboardFromFirebase();
+            }
         });
 
         function initializeDashboard() {
+            const savedUser = StorageManager.getUserById(currentUser.id);
+            if (savedUser) {
+                currentUser = savedUser;
+            }
+
             // Set user info
             document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
             document.getElementById('userInfo').textContent = `Email: ${currentUser.email} | Phone: ${currentUser.phone}`;
@@ -172,6 +193,31 @@
 
             // History
             loadHistory();
+        }
+
+        function startMemberContributionAutoRefresh() {
+            if (memberContributionRefreshTimer) return;
+
+            memberContributionRefreshTimer = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    refreshMemberDashboardFromFirebase();
+                }
+            }, 5000);
+        }
+
+        async function refreshMemberDashboardFromFirebase() {
+            if (!window.FirebaseSync?.enabled || memberContributionRefreshInProgress) return;
+
+            memberContributionRefreshInProgress = true;
+            try {
+                await FirebaseSync.syncFromFirebase();
+                initializeDashboard();
+                checkSelectedMonthStatus();
+            } catch (error) {
+                console.error('Member dashboard Firebase refresh failed', error);
+            } finally {
+                memberContributionRefreshInProgress = false;
+            }
         }
 
         function loadCurrentMonthStatus() {

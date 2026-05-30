@@ -135,10 +135,10 @@
                 <div id="collectorsList"></div>
             </div>
 
-            <!-- User Payment Requests This Month -->
+            <!-- User Payment Requests -->
             <div class="card">
-                <h2>⚠️ User Payment Requests This Month</h2>
-                <p style="color: #666; margin-bottom: 1rem;">Members who submitted a payment request for this month</p>
+                <h2>⚠️ User Payment Requests</h2>
+                <p style="color: #666; margin-bottom: 1rem;">Members who submitted payment requests and are waiting for admin confirmation</p>
                 <div id="pendingPaymentTable"></div>
             </div>
 
@@ -287,6 +287,15 @@
                 <button class="btn btn-secondary" type="button" onclick="closeEditChargeModal()">Cancel</button>
                 <button class="btn btn-primary" type="button" onclick="saveMemberCharge()">Save Changes</button>
             </div>
+        </div>
+    </div>
+    <div id="paymentProofModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Payment Proof</h2>
+                <button class="close-btn" type="button" onclick="closePaymentProofModal()">&times;</button>
+            </div>
+            <div id="paymentProofContent"></div>
         </div>
     </div>
 <script type="module" src="firebase-config.js"></script>
@@ -732,14 +741,11 @@
         }
 
         function loadPendingPaymentMembers(month, year) {
-            const stats = StorageManager.getMonthlyStats(month, year);
-            const contributions = stats.contributions;
-            
-            // Only show member-submitted payment requests here.
-            const paymentRequests = contributions.filter(c => c.status === 'pending');
+            const paymentRequests = getPendingPaymentRequests();
+            const pendingPaymentTable = document.getElementById('pendingPaymentTable');
 
             if (paymentRequests.length === 0) {
-                document.getElementById('pendingPaymentTable').innerHTML = '<div style="text-align: center; padding: 2rem; background: #eef6ff; border-radius: 4px; color: #1e3a8a;"><strong>No payment requests yet.</strong></div>';
+                pendingPaymentTable.innerHTML = '<p style="color: #666; text-align: center; padding: 2rem;">No pending payment requests right now.</p>';
                 return;
             }
 
@@ -749,25 +755,33 @@
                         <tr>
                             <th>Member ID</th>
                             <th>Member Name</th>
-                            <th>Request Amount</th>
-                            <th>Status</th>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Transaction ID / Paid To</th>
+                            <th>Requested</th>
+                            <th>Proof</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            paymentRequests.forEach(c => {
-                const user = StorageManager.getUserById(c.userId);
-                if (!user) return;
-                const statusBadge = '<span class="table-badge badge-warning">REQUEST</span>';
-                
+            paymentRequests.forEach(({ contribution: c, user }) => {
+                const proofButton = c.paymentProof
+                    ? `<button class="btn btn-primary btn-sm" type="button" onclick="openPaymentProofModal(${c.id})">View</button>`
+                    : '-';
+
                 html += `
                     <tr>
                         <td><strong>#${user.id}</strong></td>
                         <td><strong>${escapeHtml(user.name)}</strong></td>
+                        <td>${App.getMonthName(c.month)} ${c.year}</td>
                         <td><span style="color: #b45309; font-weight: bold;">${App.formatCurrency(c.amount)}</span></td>
-                        <td>${statusBadge}</td>
+                        <td>${escapeHtml(formatPaymentMethod(c.paymentMethod))}</td>
+                        <td>${escapeHtml(c.paidBy || '-')}</td>
+                        <td>${c.paymentRequestedAt ? App.formatDate(c.paymentRequestedAt) : '-'}</td>
+                        <td>${proofButton}</td>
                         <td>
                             <button class="btn btn-success btn-sm" type="button" onclick="confirmMemberPayment(${c.id})">Confirm Payment</button>
                         </td>
@@ -776,7 +790,56 @@
             });
 
             html += '</tbody></table>';
-            document.getElementById('pendingPaymentTable').innerHTML = html;
+            pendingPaymentTable.innerHTML = html;
+        }
+
+        function getPendingPaymentRequests() {
+            return StorageManager.getContributions()
+                .filter(c => c.status === 'pending')
+                .map(contribution => ({
+                    contribution,
+                    user: StorageManager.getUserById(contribution.userId)
+                }))
+                .filter(item => item.user && item.user.role === 'member' && item.user.status === 'active')
+                .sort((a, b) => {
+                    const bTime = new Date(b.contribution.paymentRequestedAt || b.contribution.createdAt || 0).getTime();
+                    const aTime = new Date(a.contribution.paymentRequestedAt || a.contribution.createdAt || 0).getTime();
+                    return bTime - aTime;
+                });
+        }
+
+        function formatPaymentMethod(method) {
+            if (!method) return '-';
+            return String(method)
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        function openPaymentProofModal(contributionId) {
+            const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
+            const modal = document.getElementById('paymentProofModal');
+            const content = document.getElementById('paymentProofContent');
+
+            if (!contribution?.paymentProof) {
+                App.showToast('No payment proof uploaded', 'warning');
+                return;
+            }
+
+            const proofSrc = escapeHtml(contribution.paymentProof);
+            content.innerHTML = `
+                <img src="${proofSrc}" alt="Payment proof" style="width: 100%; max-height: 70vh; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px;">
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="${proofSrc}" target="_blank" rel="noopener">Open Full Size</a>
+                    <button class="btn btn-secondary" type="button" onclick="closePaymentProofModal()">Close</button>
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function closePaymentProofModal() {
+            document.getElementById('paymentProofModal').classList.remove('show');
+            document.getElementById('paymentProofContent').innerHTML = '';
         }
 
         async function confirmMemberPayment(contributionId) {
@@ -800,6 +863,15 @@
             if (!result.success) {
                 App.showToast(result.message || 'Payment could not be confirmed', 'error');
                 return;
+            }
+
+            if (window.FirebaseSync?.enabled) {
+                try {
+                    await FirebaseSync.syncCollectionToFirebase('contributions');
+                } catch (error) {
+                    console.error('Payment confirmation Firebase sync failed', error);
+                    App.showToast('Payment confirmed locally, but admin sync failed', 'warning');
+                }
             }
 
             refreshReport();
