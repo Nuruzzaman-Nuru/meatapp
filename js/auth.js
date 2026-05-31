@@ -426,6 +426,7 @@ const AuthManager = {
             return { success: false, message: 'Phone number and password are required' };
         }
 
+        await this.refreshIndexedUserBeforeAuth(phone);
         let authResult = await this.getAuthenticatedLocalUser(phone, password);
 
         if (!authResult.user && authResult.canRefresh) {
@@ -472,7 +473,7 @@ const AuthManager = {
         if (!passwordValid) {
             return {
                 user: null,
-                canRefresh: false,
+                canRefresh: true,
                 message: 'Invalid phone number or password'
             };
         }
@@ -492,17 +493,29 @@ const AuthManager = {
         };
     },
 
+    async refreshIndexedUserBeforeAuth(phone = '') {
+        try {
+            const indexedUser = await this.getFirebaseUserByIndexedPhone(phone);
+            if (!indexedUser) return false;
+
+            const mergedUsers = this.mergeUsersForAuth([indexedUser], StorageManager.getUsers());
+            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
+            return true;
+        } catch (error) {
+            console.warn('Unable to refresh indexed user before login. Using local data.', error);
+            return false;
+        }
+    },
+
     async refreshUsersBeforeAuth(phone = '') {
         try {
-            if (window.FirebaseSync?.ready) {
-                await window.FirebaseSync.ready;
+            const refreshedIndexedUser = await this.refreshIndexedUserBeforeAuth(phone);
+            if (refreshedIndexedUser) {
+                return;
             }
 
-            const indexedUser = await this.getFirebaseUserByIndexedPhone(phone);
-            if (indexedUser) {
-                const mergedUsers = this.mergeUsersForAuth([indexedUser], StorageManager.getUsers());
-                localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
-                return;
+            if (window.FirebaseSync?.ready) {
+                await this.waitForFirebaseSyncReady(3000);
             }
 
             const firebaseUsers = await this.getFirebaseUsers();
