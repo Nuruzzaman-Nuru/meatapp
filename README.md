@@ -57,8 +57,7 @@ Simply open `index.html` in any modern web browser. That's it!
 
 ### 3. Login with Demo Credentials
 ```
-Phone:    01737075894
-Password: adminnuru1234
+
 ```
 
 ---
