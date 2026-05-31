@@ -41,7 +41,10 @@
 
                 <div class="form-group">
                     <label for="loginPassword">Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                    <div class="password-field">
+                        <input type="password" id="loginPassword" placeholder="Enter your password">
+                        <button class="password-toggle" type="button" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show password">Show</button>
+                    </div>
                 </div>
 
                 <div class="form-buttons">
@@ -84,6 +87,14 @@
                 alert.textContent = result.message;
                 alert.style.display = 'block';
             }
+        }
+
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const shouldShow = input.type === 'password';
+            input.type = shouldShow ? 'text' : 'password';
+            button.textContent = shouldShow ? 'Hide' : 'Show';
+            button.setAttribute('aria-label', shouldShow ? 'Hide password' : 'Show password');
         }
 
         document.addEventListener('keypress', (e) => {
