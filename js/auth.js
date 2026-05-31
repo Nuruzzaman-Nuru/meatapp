@@ -428,12 +428,12 @@ const AuthManager = {
             return { success: false, message: 'Phone number and password are required' };
         }
 
-        await this.refreshIndexedUserBeforeAuth(phone);
-        let authResult = await this.getAuthenticatedLocalUser(phone, password);
+        const indexedUser = await this.refreshIndexedUserBeforeAuth(phone);
+        let authResult = await this.getAuthenticatedLocalUser(phone, password, indexedUser);
 
         if (!authResult.user && authResult.canRefresh) {
-            await this.refreshUsersBeforeAuth(phone);
-            authResult = await this.getAuthenticatedLocalUser(phone, password);
+            const refreshedUser = await this.refreshUsersBeforeAuth(phone);
+            authResult = await this.getAuthenticatedLocalUser(phone, password, refreshedUser || indexedUser);
         }
 
         if (!authResult.user) {
@@ -465,8 +465,8 @@ const AuthManager = {
         };
     },
 
-    async getAuthenticatedLocalUser(phone, password) {
-        const user = StorageManager.getUserByPhone(phone);
+    async getAuthenticatedLocalUser(phone, password, preferredUser = null) {
+        const user = preferredUser || StorageManager.getUserByPhone(phone);
         if (!user) {
             return {
                 user: null,
@@ -502,14 +502,13 @@ const AuthManager = {
     async refreshIndexedUserBeforeAuth(phone = '') {
         try {
             const indexedUser = await this.getFirebaseUserByIndexedPhone(phone);
-            if (!indexedUser) return false;
+            if (!indexedUser) return null;
 
-            const mergedUsers = this.mergeUsersForAuth([indexedUser], StorageManager.getUsers());
-            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
-            return true;
+            this.saveCanonicalUserToLocal(indexedUser);
+            return indexedUser;
         } catch (error) {
             console.warn('Unable to refresh indexed user before login. Using local data.', error);
-            return false;
+            return null;
         }
     },
 
@@ -517,7 +516,7 @@ const AuthManager = {
         try {
             const refreshedIndexedUser = await this.refreshIndexedUserBeforeAuth(phone);
             if (refreshedIndexedUser) {
-                return;
+                return refreshedIndexedUser;
             }
 
             if (window.FirebaseSync?.ready) {
@@ -528,10 +527,26 @@ const AuthManager = {
             if (firebaseUsers.length > 0) {
                 const mergedUsers = this.mergeUsersForAuth(firebaseUsers, StorageManager.getUsers());
                 localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
+                return StorageManager.getUserByPhone(phone);
             }
         } catch (error) {
             console.warn('Unable to refresh users before login. Using local data.', error);
         }
+
+        return null;
+    },
+
+    saveCanonicalUserToLocal(user) {
+        if (!user || !this.isValidAppUser(user)) return;
+
+        const keys = new Set(this.getUserIdentityKeys(user));
+        const users = StorageManager.getUsers().filter(localUser => {
+            if (Number(localUser.id) === Number(user.id)) return false;
+            return !this.getUserIdentityKeys(localUser).some(key => keys.has(key));
+        });
+
+        users.push(user);
+        localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(users));
     },
 
     mergeUsersForAuth(firebaseUsers, localUsers) {
