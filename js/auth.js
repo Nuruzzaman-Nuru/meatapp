@@ -51,9 +51,19 @@ const AuthManager = {
         const nextUserId = await this.getNextUserId(firebaseUsers);
 
         // Check if phone already exists
+        const indexedPhoneUser = await this.getFirebaseUserByIndexedPhone(formData.phone);
+        if (indexedPhoneUser) {
+            return { success: false, message: 'Phone number already registered' };
+        }
+
         const existingUser = StorageManager.getUserByPhone(formData.phone);
         if (existingUser) {
             return { success: false, message: 'Phone number already registered' };
+        }
+
+        const indexedEmailUser = await this.getFirebaseUserByIndexedEmail(formData.email);
+        if (indexedEmailUser) {
+            return { success: false, message: 'Email already registered' };
         }
 
         const existingEmailUser = StorageManager.getUserByEmail(formData.email);
@@ -82,8 +92,8 @@ const AuthManager = {
         }
 
         if (window.FirebaseSync?.enabled) {
-            await FirebaseSync.syncCollectionToFirebase('users').catch(error => {
-                console.warn('Background Firebase sync failed after registration', error);
+            FirebaseSync.syncCollectionToFirebase('users').catch(error => {
+                console.warn('Background Firebase users sync failed after registration', error);
             });
         }
 
@@ -221,6 +231,120 @@ const AuthManager = {
         }
     },
 
+    makeFirebaseKey(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[.#$/[\]\s]/g, '_');
+    },
+
+    async getFirebaseUserByIndexedPhone(phone) {
+        const phoneKey = this.makeFirebaseKey(phone);
+        if (!phoneKey) return null;
+
+        return await this.getFirebaseUserByIndex(`userPhoneIndex/${phoneKey}`);
+    },
+
+    async getFirebaseUserByIndexedEmail(email) {
+        const emailKey = this.makeFirebaseKey(email);
+        if (!emailKey) return null;
+
+        return await this.getFirebaseUserByIndex(`userEmailIndex/${emailKey}`);
+    },
+
+    async getFirebaseUserByIndex(indexPath) {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+            if (!databaseURL) return null;
+
+            const indexResponse = await this.fetchWithTimeout(`${databaseURL}/${basePath}/${indexPath}.json`, {
+                cache: 'no-store'
+            }, 5000);
+
+            if (!indexResponse.ok) return null;
+
+            const userId = await indexResponse.json();
+            if (!userId) return null;
+
+            const userResponse = await this.fetchWithTimeout(`${databaseURL}/${basePath}/users/${userId}.json`, {
+                cache: 'no-store'
+            }, 5000);
+
+            if (!userResponse.ok) return null;
+
+            const user = await userResponse.json();
+            return this.isValidAppUser(user) ? user : null;
+        } catch (error) {
+            console.warn('Firebase indexed user lookup failed', error);
+            return null;
+        }
+    },
+
+    async saveUserIndexesToFirebase(user) {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+            if (!databaseURL || !user?.id) return;
+
+            const writes = [];
+            const phoneKey = this.makeFirebaseKey(user.phone);
+            const emailKey = this.makeFirebaseKey(user.email);
+
+            if (phoneKey) {
+                writes.push(this.putFirebaseValue(`${basePath}/userPhoneIndex/${phoneKey}`, user.id));
+            }
+            if (emailKey) {
+                writes.push(this.putFirebaseValue(`${basePath}/userEmailIndex/${emailKey}`, user.id));
+            }
+            writes.push(this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, user.status === 'pending' ? true : null));
+
+            await Promise.all(writes);
+        } catch (error) {
+            console.warn('Firebase user index update failed', error);
+        }
+    },
+
+    async deleteUserIndexesFromFirebase(user) {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+            if (!databaseURL || !user?.id) return;
+
+            const writes = [
+                this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, null)
+            ];
+            const phoneKey = this.makeFirebaseKey(user.phone);
+            const emailKey = this.makeFirebaseKey(user.email);
+
+            if (phoneKey) {
+                writes.push(this.putFirebaseValue(`${basePath}/userPhoneIndex/${phoneKey}`, null));
+            }
+            if (emailKey) {
+                writes.push(this.putFirebaseValue(`${basePath}/userEmailIndex/${emailKey}`, null));
+            }
+
+            await Promise.all(writes);
+        } catch (error) {
+            console.warn('Firebase user index delete failed', error);
+        }
+    },
+
+    async putFirebaseValue(path, value) {
+        const databaseURL = this.getFirebaseDatabaseURL();
+        if (!databaseURL) return;
+
+        const response = await this.fetchWithTimeout(`${databaseURL}/${path}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(value)
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase write failed: ${response.status}`);
+        }
+    },
+
     isValidAppUser(user) {
         if (!user || typeof user !== 'object') {
             return false;
@@ -264,6 +388,7 @@ const AuthManager = {
                 throw new Error(`Firebase users write failed: ${response.status}`);
             }
 
+            await this.saveUserIndexesToFirebase(newUser);
             await this.updateUsersMetaInFirebase();
             return true;
         } catch (error) {
@@ -304,7 +429,7 @@ const AuthManager = {
         let authResult = await this.getAuthenticatedLocalUser(phone, password);
 
         if (!authResult.user && authResult.canRefresh) {
-            await this.refreshUsersBeforeAuth();
+            await this.refreshUsersBeforeAuth(phone);
             authResult = await this.getAuthenticatedLocalUser(phone, password);
         }
 
@@ -367,10 +492,17 @@ const AuthManager = {
         };
     },
 
-    async refreshUsersBeforeAuth() {
+    async refreshUsersBeforeAuth(phone = '') {
         try {
             if (window.FirebaseSync?.ready) {
                 await window.FirebaseSync.ready;
+            }
+
+            const indexedUser = await this.getFirebaseUserByIndexedPhone(phone);
+            if (indexedUser) {
+                const mergedUsers = this.mergeUsersForAuth([indexedUser], StorageManager.getUsers());
+                localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
+                return;
             }
 
             const firebaseUsers = await this.getFirebaseUsers();

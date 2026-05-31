@@ -83,6 +83,20 @@ const FirebaseSync = {
         return Array.isArray(items) ? items : [];
     },
 
+    async fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            return await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+    },
+
     getUserIdentityKeys(user) {
         const keys = [];
         if (user?.phone) keys.push(`phone:${String(user.phone).trim()}`);
@@ -267,10 +281,14 @@ const FirebaseSync = {
             let data = [];
 
             try {
-                data = await this.readCollectionFromFirebase(name);
+                data = name === 'users'
+                    ? await this.readUsersForSync()
+                    : await this.readCollectionFromFirebase(name);
             } catch (error) {
                 console.warn(`Firebase SDK ${name} read failed. Trying REST fallback.`, error);
-                data = await this.getCollectionFromFirebaseRest(name);
+                data = name === 'users'
+                    ? await this.readPendingUsersFromFirebase()
+                    : await this.getCollectionFromFirebaseRest(name);
             }
 
             if (data.length > 0) {
@@ -285,9 +303,66 @@ const FirebaseSync = {
                 if (name === 'announcements') {
                     mergedData = this.mergeAnnouncements(data, localItems);
                 }
-                localStorage.setItem(storageKey, JSON.stringify(mergedData));
+                try {
+                    localStorage.setItem(storageKey, JSON.stringify(mergedData));
+                } catch (error) {
+                    if (name !== 'users') {
+                        throw error;
+                    }
+
+                    console.warn('Full users list is too large for localStorage. Keeping local users plus pending cloud users.', error);
+                    const pendingUsers = await this.readPendingUsersFromFirebase();
+                    const compactUsers = this.mergeUsers(pendingUsers, localItems);
+                    localStorage.setItem(storageKey, JSON.stringify(compactUsers));
+                }
             }
         }));
+    },
+
+    async readUsersForSync() {
+        const pendingUsers = await this.readPendingUsersFromFirebase();
+
+        try {
+            const allUsers = await this.getCollectionFromFirebaseRest('users', 8000);
+            return this.mergeUsers(allUsers, pendingUsers);
+        } catch (error) {
+            console.warn('Full users read skipped. Using pending users only.', error);
+            return pendingUsers;
+        }
+    },
+
+    async readPendingUsersFromFirebase() {
+        if (!this.databaseURL) return [];
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/pendingUserIds.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase pending user index read failed with status ${response.status}`);
+        }
+
+        const pendingIds = await response.json();
+        if (!pendingIds || typeof pendingIds !== 'object') return [];
+
+        const users = await Promise.all(Object.keys(pendingIds)
+            .filter(userId => pendingIds[userId])
+            .map(userId => this.getUserFromFirebaseRest(userId)));
+
+        return users.filter(Boolean);
+    },
+
+    async getUserFromFirebaseRest(userId) {
+        if (!this.databaseURL) return null;
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/users/${userId}.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) return null;
+
+        const user = await response.json();
+        return user && typeof user === 'object' ? user : null;
     },
 
     async readCollectionFromFirebase(name) {
@@ -299,10 +374,12 @@ const FirebaseSync = {
         return await this.getCollectionFromFirebaseRest(name);
     },
 
-    async getCollectionFromFirebaseRest(name) {
+    async getCollectionFromFirebaseRest(name, timeoutMs = 8000) {
         if (!this.databaseURL) return [];
 
-        const response = await fetch(`${this.databaseURL}/${this.basePath}/${name}.json`);
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/${name}.json`, {
+            cache: 'no-store'
+        }, timeoutMs);
         if (!response.ok) {
             throw new Error(`Firebase REST ${name} read failed with status ${response.status}`);
         }
@@ -317,7 +394,7 @@ const FirebaseSync = {
         if (!storageKey) return;
 
         const safeItems = this.getLocalItems(storageKey);
-        const payload = this.arrayToFirebaseObject(safeItems);
+        let payload = this.arrayToFirebaseObject(safeItems);
 
         payload._meta = {
             lastSync: new Date().toISOString(),
@@ -325,11 +402,75 @@ const FirebaseSync = {
         };
 
         if (this.databaseURL) {
+            if (name === 'users') {
+                await this.syncUsersIncrementallyToFirebase(safeItems);
+                await this.syncUserIndexesToFirebase(safeItems);
+                return;
+            }
+
             await this.syncCollectionToFirebaseRest(name, payload);
             return;
         }
 
         await this.set(this.ref(this.db, `${this.basePath}/${name}`), payload);
+    },
+
+    async syncUsersIncrementallyToFirebase(users) {
+        if (!this.databaseURL || !Array.isArray(users)) return;
+
+        await Promise.all(users
+            .filter(user => user?.id)
+            .map(user => this.putFirebaseValue(`${this.basePath}/users/${user.id}`, user)));
+
+        await this.putFirebaseValue(`${this.basePath}/users/_meta`, {
+            lastSync: new Date().toISOString(),
+            itemCount: users.length
+        });
+    },
+
+    async syncUserIndexesToFirebase(users) {
+        if (!this.databaseURL || !Array.isArray(users)) return;
+
+        await Promise.all(users.map(user => this.syncSingleUserIndexesToFirebase(user)));
+    },
+
+    async syncSingleUserIndexesToFirebase(user) {
+        if (!user?.id) return;
+
+        const writes = [];
+        const phoneKey = this.makeFirebaseKey(user.phone);
+        const emailKey = this.makeFirebaseKey(user.email);
+
+        if (phoneKey) {
+            writes.push(this.putFirebaseValue(`${this.basePath}/userPhoneIndex/${phoneKey}`, user.id));
+        }
+        if (emailKey) {
+            writes.push(this.putFirebaseValue(`${this.basePath}/userEmailIndex/${emailKey}`, user.id));
+        }
+        writes.push(this.putFirebaseValue(`${this.basePath}/pendingUserIds/${user.id}`, user.status === 'pending' ? true : null));
+
+        await Promise.all(writes);
+    },
+
+    makeFirebaseKey(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[.#$/[\]\s]/g, '_');
+    },
+
+    async putFirebaseValue(path, value) {
+        if (!this.databaseURL) return;
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${path}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(value)
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase REST write failed with status ${response.status}`);
+        }
     },
 
     async syncCollectionToFirebaseRest(name, payload = null) {
