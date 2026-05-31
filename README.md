@@ -93,9 +93,7 @@ Password: adminnuru1234
 ---
 
 ## 🔑 Default Admin Credentials
-
-**Phone:** `01737075894`  
-**Password:** `adminnuru1234`
+phone:01307347646
 
 ⚠️ Change these credentials after first login for security!
 
