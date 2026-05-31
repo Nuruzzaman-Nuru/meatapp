@@ -7,6 +7,8 @@ const AuthManager = {
     firebaseDatabaseURL: 'https://meatapp-eafe7-default-rtdb.asia-southeast1.firebasedatabase.app',
     firebaseUsersPath: 'meatAppData/default/users',
     firebaseReadyTimeoutMs: 3000,
+    sessionGuardTimer: null,
+    sessionGuardInProgress: false,
 
     /**
      * Register a new user with password hashing
@@ -440,6 +442,8 @@ const AuthManager = {
 
         const user = authResult.user;
 
+        const activeSession = await this.createActiveSession(user);
+
         // Store current user (without password/hash)
         const sessionUser = {
             id: user.id,
@@ -448,7 +452,9 @@ const AuthManager = {
             role: user.role,
             phone: user.phone,
             joinDate: user.joinDate,
-            status: user.status
+            status: user.status,
+            sessionId: activeSession.sessionId,
+            deviceId: activeSession.deviceId
         };
         StorageManager.setCurrentUser(sessionUser);
 
@@ -595,6 +601,12 @@ const AuthManager = {
      * Logout user
      */
     logout() {
+        const user = this.getCurrentUser();
+        if (user) {
+            this.clearActiveSession(user).catch(error => {
+                console.warn('Unable to clear active session', error);
+            });
+        }
         StorageManager.clearCurrentUser();
         return { success: true, message: 'Logged out successfully' };
     },
@@ -675,7 +687,104 @@ const AuthManager = {
             return false;
         }
         return true;
+    },
+
+    getFirebaseBasePath() {
+        return window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+    },
+
+    getDeviceId() {
+        const key = 'meatAppDeviceId';
+        let deviceId = localStorage.getItem(key);
+
+        if (!deviceId) {
+            deviceId = `device-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            localStorage.setItem(key, deviceId);
+        }
+
+        return deviceId;
+    },
+
+    async createActiveSession(user) {
+        const session = {
+            userId: user.id,
+            deviceId: this.getDeviceId(),
+            sessionId: `session-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            updatedAt: new Date().toISOString()
+        };
+
+        await this.putFirebaseValue(`${this.getFirebaseBasePath()}/activeSessions/${user.id}`, session)
+            .catch(error => {
+                console.warn('Firebase active session write failed', error);
+            });
+
+        return session;
+    },
+
+    async getActiveSession(userId) {
+        const databaseURL = this.getFirebaseDatabaseURL();
+        if (!databaseURL || !userId) return null;
+
+        const response = await this.fetchWithTimeout(`${databaseURL}/${this.getFirebaseBasePath()}/activeSessions/${userId}.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) return null;
+
+        const session = await response.json();
+        return session && typeof session === 'object' ? session : null;
+    },
+
+    async clearActiveSession(user) {
+        if (!user?.id || !user?.sessionId) return;
+
+        const activeSession = await this.getActiveSession(user.id).catch(() => null);
+        if (!activeSession || activeSession.sessionId !== user.sessionId) return;
+
+        await this.putFirebaseValue(`${this.getFirebaseBasePath()}/activeSessions/${user.id}`, null);
+    },
+
+    async validateCurrentSession() {
+        if (this.sessionGuardInProgress || !this.isLoggedIn()) return true;
+
+        const user = this.getCurrentUser();
+        if (!user?.id || !user?.sessionId) return true;
+
+        this.sessionGuardInProgress = true;
+        try {
+            const activeSession = await this.getActiveSession(user.id);
+            if (!activeSession || activeSession.sessionId === user.sessionId) {
+                return true;
+            }
+
+            StorageManager.clearCurrentUser();
+            alert('This account was opened on another device. Please login again here to continue.');
+            window.location.href = 'login.html';
+            return false;
+        } catch (error) {
+            console.warn('Session validation failed. Keeping current session for now.', error);
+            return true;
+        } finally {
+            this.sessionGuardInProgress = false;
+        }
+    },
+
+    startSessionGuard() {
+        if (this.sessionGuardTimer) return;
+
+        this.validateCurrentSession();
+        this.sessionGuardTimer = setInterval(() => {
+            this.validateCurrentSession();
+        }, 15000);
     }
 };
 
 window.AuthManager = AuthManager;
+
+document.addEventListener('DOMContentLoaded', () => {
+    AuthManager.startSessionGuard();
+});
+
+window.addEventListener('focus', () => {
+    AuthManager.validateCurrentSession();
+});
