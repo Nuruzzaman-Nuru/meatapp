@@ -172,13 +172,16 @@ const StorageManager = {
     async addUserWithPassword(userData, plainPassword) {
         const users = this.getUsers();
         const passwordHash = await PasswordUtils.hash(plainPassword);
+        const now = new Date().toISOString();
         
         const newUser = {
             id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
             status: 'active',
             ...userData,
             passwordHash,
-            joinDate: new Date().toISOString()
+            joinDate: now,
+            createdAt: now,
+            updatedAt: now
         };
         users.push(newUser);
         localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
@@ -199,9 +202,9 @@ const StorageManager = {
      */
     updateUser(userId, updates) {
         const users = this.getUsers();
-        const userIndex = users.findIndex(u => u.id === userId);
+        const userIndex = users.findIndex(u => Number(u.id) === Number(userId));
         if (userIndex !== -1) {
-            users[userIndex] = { ...users[userIndex], ...updates };
+            users[userIndex] = { ...users[userIndex], ...updates, updatedAt: new Date().toISOString() };
             localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
             return users[userIndex];
         }
@@ -219,9 +222,9 @@ const StorageManager = {
 
         this.rememberDeletedUser(userId);
 
-        const users = this.getUsers().filter(u => u.id !== userId);
-        const contributions = this.getContributions().filter(c => c.userId !== userId);
-        const collectors = this.getCollectors().filter(c => c.userId !== userId);
+        const users = this.getUsers().filter(u => Number(u.id) !== Number(userId));
+        const contributions = this.getContributions().filter(c => Number(c.userId) !== Number(userId));
+        const collectors = this.getCollectors().filter(c => Number(c.userId) !== Number(userId));
 
         localStorage.setItem(this.KEYS.USERS, JSON.stringify(users));
         localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify(contributions));

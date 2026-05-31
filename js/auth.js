@@ -6,6 +6,7 @@
 const AuthManager = {
     firebaseDatabaseURL: 'https://meatapp-eafe7-default-rtdb.asia-southeast1.firebasedatabase.app',
     firebaseUsersPath: 'meatAppData/default/users',
+    firebaseReadyTimeoutMs: 3000,
 
     /**
      * Register a new user with password hashing
@@ -39,11 +40,15 @@ const AuthManager = {
             return { success: false, message: 'Password must be at least 6 characters' };
         }
 
+        await this.waitForFirebaseSyncReady();
+
         const firebaseUsers = await this.getFirebaseUsers();
         if (firebaseUsers.length > 0) {
             const mergedUsers = this.mergeUsersForAuth(firebaseUsers, StorageManager.getUsers());
             localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(mergedUsers));
         }
+
+        const nextUserId = await this.getNextUserId(firebaseUsers);
 
         // Check if phone already exists
         const existingUser = StorageManager.getUserByPhone(formData.phone);
@@ -58,6 +63,7 @@ const AuthManager = {
 
         // Create user with hashed password
         const newUser = await StorageManager.addUserWithPassword({
+            id: nextUserId,
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
@@ -76,7 +82,7 @@ const AuthManager = {
         }
 
         if (window.FirebaseSync?.enabled) {
-            FirebaseSync.syncCollectionToFirebase('users').catch(error => {
+            await FirebaseSync.syncCollectionToFirebase('users').catch(error => {
                 console.warn('Background Firebase sync failed after registration', error);
             });
         }
@@ -96,11 +102,40 @@ const AuthManager = {
         return /^\d{11}$/.test(String(phone || '').trim());
     },
 
+    getFirebaseDatabaseURL() {
+        return window.FirebaseSync?.databaseURL || this.firebaseDatabaseURL;
+    },
+
+    getFirebaseUsersPath() {
+        const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+        return `${basePath}/users`;
+    },
+
+    async waitForFirebaseSyncReady(timeoutMs = this.firebaseReadyTimeoutMs) {
+        if (!window.FirebaseSync?.ready) {
+            return;
+        }
+
+        await Promise.race([
+            window.FirebaseSync.ready.catch(error => {
+                console.warn('Firebase sync was not ready before auth action', error);
+            }),
+            new Promise(resolve => setTimeout(resolve, timeoutMs))
+        ]);
+    },
+
     async getFirebaseUsers() {
         try {
-            const response = await this.fetchWithTimeout(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}.json`, {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const usersPath = this.getFirebaseUsersPath();
+
+            if (!databaseURL) {
+                return StorageManager.getUsers();
+            }
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${usersPath}.json`, {
                 cache: 'no-store'
-            }, 4000);
+            }, 15000);
 
             if (!response.ok) {
                 throw new Error(`Firebase users read failed: ${response.status}`);
@@ -120,6 +155,69 @@ const AuthManager = {
         } catch (error) {
             console.error('Firebase users read failed', error);
             return StorageManager.getUsers();
+        }
+    },
+
+    async getNextUserId(firebaseUsers = []) {
+        const localMaxId = StorageManager.getUsers().reduce((max, user) => {
+            return Math.max(max, Number(user.id) || 0);
+        }, 0);
+        const firebaseMaxId = firebaseUsers.reduce((max, user) => {
+            return Math.max(max, Number(user.id) || 0);
+        }, 0);
+        const keyMaxId = await this.getFirebaseUserKeyMaxId();
+        const metaCount = await this.getFirebaseUsersMetaCount();
+        const maxKnownId = Math.max(localMaxId, firebaseMaxId, keyMaxId, metaCount);
+
+        if (maxKnownId > 0) {
+            return maxKnownId + 1;
+        }
+
+        return Date.now();
+    },
+
+    async getFirebaseUserKeyMaxId() {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const usersPath = this.getFirebaseUsersPath();
+            if (!databaseURL) return 0;
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${usersPath}.json?shallow=true`, {
+                cache: 'no-store'
+            }, 8000);
+
+            if (!response.ok) return 0;
+
+            const value = await response.json();
+            if (!value || typeof value !== 'object') return 0;
+
+            return Object.keys(value).reduce((max, key) => {
+                if (key === '_meta') return max;
+                return Math.max(max, Number(key) || 0);
+            }, 0);
+        } catch (error) {
+            console.warn('Firebase user key scan failed', error);
+            return 0;
+        }
+    },
+
+    async getFirebaseUsersMetaCount() {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const usersPath = this.getFirebaseUsersPath();
+            if (!databaseURL) return 0;
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${usersPath}/_meta/itemCount.json`, {
+                cache: 'no-store'
+            }, 4000);
+
+            if (!response.ok) return 0;
+
+            const count = Number(await response.json());
+            return Number.isFinite(count) ? count : 0;
+        } catch (error) {
+            console.warn('Firebase users meta count read failed', error);
+            return 0;
         }
     },
 
@@ -149,7 +247,14 @@ const AuthManager = {
 
     async saveRegisteredUserToFirebase(newUser) {
         try {
-            const response = await this.fetchWithTimeout(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/${newUser.id}.json`, {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const usersPath = this.getFirebaseUsersPath();
+
+            if (!databaseURL) {
+                throw new Error('Firebase databaseURL is missing');
+            }
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${usersPath}/${newUser.id}.json`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newUser)
@@ -168,8 +273,12 @@ const AuthManager = {
     },
 
     async updateUsersMetaInFirebase() {
+        const databaseURL = this.getFirebaseDatabaseURL();
+        const usersPath = this.getFirebaseUsersPath();
         const users = StorageManager.getUsers();
-        await fetch(`${this.firebaseDatabaseURL}/${this.firebaseUsersPath}/_meta.json`, {
+        if (!databaseURL) return;
+
+        await fetch(`${databaseURL}/${usersPath}/_meta.json`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
