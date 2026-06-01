@@ -296,9 +296,6 @@ const FirebaseSync = {
                 let mergedData = data;
                 if (name === 'users') {
                     mergedData = this.mergeUsers(data, localItems);
-                    if (window.StorageManager?.activatePendingMembersInList) {
-                        mergedData = StorageManager.activatePendingMembersInList(mergedData);
-                    }
                 }
                 if (name === 'contributions') {
                     mergedData = this.mergeContributions(data, localItems);

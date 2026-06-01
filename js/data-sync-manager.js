@@ -210,21 +210,60 @@ const DataSyncManager = {
         if (!window.FirebaseSync?.enabled) return true;
 
         try {
-            // Get user counts from both systems
-            const localUsers = StorageManager.getUsers();
-            const localDeletedIds = StorageManager.getDeletedUserIds();
-            
-            console.log('Data Consistency Check:');
-            console.log('- Local Users:', localUsers.length);
-            console.log('- Deleted User IDs:', localDeletedIds.length);
-            console.log('- Local Contributions:', StorageManager.getContributions().length);
-            console.log('- Local Collectors:', StorageManager.getCollectors().length);
+            await FirebaseSync.syncFromFirebase();
 
-            return true;
+            const report = {
+                users: await this.compareCollectionCount('users', StorageManager.getUsers()),
+                contributions: await this.compareCollectionCount('contributions', StorageManager.getContributions()),
+                collectors: await this.compareCollectionCount('collectors', StorageManager.getCollectors()),
+                announcements: await this.compareCollectionCount('announcements', StorageManager.getAnnouncements()),
+                deletedUserIds: await this.compareCollectionCount('deletedUserIds', StorageManager.getDeletedUserIds())
+            };
+
+            const mismatches = Object.entries(report)
+                .filter(([, result]) => !result.matches)
+                .map(([name, result]) => `${name}: local ${result.localCount}, firebase ${result.firebaseCount}`);
+
+            console.log('Data Consistency Check:', report);
+            if (mismatches.length > 0) {
+                console.warn('Data consistency mismatch:', mismatches.join('; '));
+            }
+
+            return mismatches.length === 0;
         } catch (error) {
             console.error('Data consistency verification failed:', error);
             return false;
         }
+    },
+
+    async compareCollectionCount(collectionName, localItems) {
+        const firebaseItems = await this.readFirebaseCollection(collectionName);
+        return {
+            localCount: Array.isArray(localItems) ? localItems.length : 0,
+            firebaseCount: firebaseItems.length,
+            matches: (Array.isArray(localItems) ? localItems.length : 0) === firebaseItems.length
+        };
+    },
+
+    async readFirebaseCollection(collectionName) {
+        if (!window.FirebaseSync?.databaseURL || !window.FirebaseSync?.basePath) {
+            return [];
+        }
+
+        if (collectionName === 'deletedUserIds') {
+            const response = await FirebaseSync.fetchWithTimeout(
+                `${FirebaseSync.databaseURL}/${FirebaseSync.basePath}/${collectionName}.json`,
+                { cache: 'no-store' },
+                8000
+            );
+            if (!response.ok) return [];
+            const value = await response.json();
+            if (!value) return [];
+            if (Array.isArray(value)) return value.filter(item => item !== null && item !== undefined);
+            return Object.values(value).filter(item => item !== null && item !== undefined);
+        }
+
+        return await FirebaseSync.getCollectionFromFirebaseRest(collectionName, 8000);
     },
 
     /**

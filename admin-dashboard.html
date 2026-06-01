@@ -445,6 +445,15 @@
             }[char]));
         }
 
+        function restoreLocalValue(key, value) {
+            if (value === null) {
+                localStorage.removeItem(key);
+                return;
+            }
+
+            localStorage.setItem(key, value);
+        }
+
         function getStatusBadge(status) {
             if (status === 'active') {
                 return '<span class="table-badge badge-success">ACTIVE</span>';
@@ -648,6 +657,13 @@
                 return;
             }
 
+            if (!window.FirebaseSync?.enabled) {
+                App.showToast('Firebase is not connected. User was not updated.', 'error');
+                return;
+            }
+
+            const beforeUsers = localStorage.getItem(StorageManager.KEYS.USERS);
+            const beforeCollectors = localStorage.getItem(StorageManager.KEYS.COLLECTORS);
             const updates = { name, email, phone, status };
             updates.updatedAt = new Date().toISOString();
             if (password) {
@@ -669,18 +685,28 @@
                 localStorage.setItem(StorageManager.KEYS.COLLECTORS, JSON.stringify(collectors));
             }
 
-            let firebaseSyncFailed = false;
-            if (window.FirebaseSync?.enabled) {
-                try {
-                    await FirebaseSync.syncCollectionToFirebase('users');
-                    await AuthManager.saveUserIndexesToFirebase(updated);
-                    if (status !== 'active') {
-                        await FirebaseSync.syncCollectionToFirebase('collectors');
-                    }
-                } catch (error) {
-                    firebaseSyncFailed = true;
-                    console.error('Firebase user status sync failed', error);
+            try {
+                await FirebaseSync.syncCollectionToFirebase('users');
+                await AuthManager.saveUserIndexesToFirebase(updated);
+                if (status !== 'active') {
+                    await FirebaseSync.syncCollectionToFirebase('collectors');
                 }
+            } catch (error) {
+                console.error('Firebase user status sync failed', error);
+                if (beforeUsers === null) {
+                    localStorage.removeItem(StorageManager.KEYS.USERS);
+                } else {
+                    localStorage.setItem(StorageManager.KEYS.USERS, beforeUsers);
+                }
+                if (beforeCollectors === null) {
+                    localStorage.removeItem(StorageManager.KEYS.COLLECTORS);
+                } else {
+                    localStorage.setItem(StorageManager.KEYS.COLLECTORS, beforeCollectors);
+                }
+                loadAdminUsers();
+                refreshReport();
+                App.showToast('Firebase sync failed. User was not updated.', 'error');
+                return;
             }
 
             const savedUser = StorageManager.getUserById(userId);
@@ -694,11 +720,6 @@
             initializeEditSelects();
             loadAdminUsers();
             refreshReport();
-
-            if (firebaseSyncFailed) {
-                App.showToast(`${statusMessages[status]} locally, but Firebase sync failed`, 'warning');
-                return;
-            }
 
             App.showToast(statusMessages[status], 'success');
         }
@@ -1958,6 +1979,15 @@
                 return;
             }
 
+            if (!window.FirebaseSync?.enabled) {
+                App.showToast('Firebase is not connected. Users were not deleted.', 'error');
+                return;
+            }
+
+            const beforeUsers = localStorage.getItem(StorageManager.KEYS.USERS);
+            const beforeDeletedUserIds = localStorage.getItem(StorageManager.KEYS.DELETED_USER_IDS);
+            const beforeContributions = localStorage.getItem(StorageManager.KEYS.CONTRIBUTIONS);
+            const beforeCollectors = localStorage.getItem(StorageManager.KEYS.COLLECTORS);
             let deleteCount = 0;
             let errorCount = 0;
             let syncFailed = false;
@@ -2000,7 +2030,13 @@
             refreshReport();
 
             if (syncFailed) {
-                App.showToast(`Deleted ${deleteCount} user(s) locally, but Firebase sync failed. Will retry automatically.`, 'warning');
+                restoreLocalValue(StorageManager.KEYS.USERS, beforeUsers);
+                restoreLocalValue(StorageManager.KEYS.DELETED_USER_IDS, beforeDeletedUserIds);
+                restoreLocalValue(StorageManager.KEYS.CONTRIBUTIONS, beforeContributions);
+                restoreLocalValue(StorageManager.KEYS.COLLECTORS, beforeCollectors);
+                loadAdminUsers();
+                refreshReport();
+                App.showToast('Firebase sync failed. Users were not deleted.', 'error');
             } else if (errorCount === 0) {
                 App.showToast(`Successfully deleted ${deleteCount} inactive user(s)`, 'success');
             } else {
@@ -2024,6 +2060,12 @@
                 return;
             }
 
+            if (!window.FirebaseSync?.enabled) {
+                App.showToast('Firebase is not connected. Users were not approved.', 'error');
+                return;
+            }
+
+            const beforeUsers = localStorage.getItem(StorageManager.KEYS.USERS);
             let approveCount = 0;
             let syncFailed = false;
             const userIds = [];
@@ -2068,7 +2110,12 @@
             refreshReport();
 
             if (syncFailed) {
-                App.showToast(`Approved ${approveCount} user(s) locally, but Firebase sync failed. Will retry automatically.`, 'warning');
+                restoreLocalValue(StorageManager.KEYS.USERS, beforeUsers);
+                initializeCollectorSelects();
+                initializeEditSelects();
+                loadAdminUsers();
+                refreshReport();
+                App.showToast('Firebase sync failed. Users were not approved.', 'error');
             } else {
                 App.showToast(`Successfully approved ${approveCount} user(s)`, 'success');
             }
