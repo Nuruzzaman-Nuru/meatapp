@@ -62,7 +62,7 @@ const DataSyncManager = {
      * CRITICAL: Sync user deletion to Firebase
      * Ensures deleted users are removed from Firebase and indices
      */
-    async syncUserDeletion(userId) {
+    async syncUserDeletion(userId, deletedUser = null) {
         if (!window.FirebaseSync?.enabled) return null;
 
         try {
@@ -75,7 +75,7 @@ const DataSyncManager = {
              * 5. User indices - cleaned up for deleted user
              */
             
-            const user = StorageManager.getUserById(userId) || { id: userId };
+            const user = deletedUser || StorageManager.getUserById(userId) || { id: userId };
             
             // Sync main collections
             await Promise.all([
