@@ -769,37 +769,11 @@ const AuthManager = {
     },
 
     async validateCurrentSession() {
-        if (this.sessionGuardInProgress || !this.isLoggedIn()) return true;
-
-        const user = this.getCurrentUser();
-        if (!user?.id || !user?.sessionId) return true;
-
-        this.sessionGuardInProgress = true;
-        try {
-            const activeSession = await this.getActiveSession(user.id);
-            if (!activeSession || activeSession.sessionId === user.sessionId) {
-                return true;
-            }
-
-            StorageManager.clearCurrentUser();
-            alert('This account was opened on another device. Please login again here to continue.');
-            window.location.href = 'login.html';
-            return false;
-        } catch (error) {
-            console.warn('Session validation failed. Keeping current session for now.', error);
-            return true;
-        } finally {
-            this.sessionGuardInProgress = false;
-        }
+        return true;
     },
 
     startSessionGuard() {
-        if (this.sessionGuardTimer) return;
-
-        this.validateCurrentSession();
-        this.sessionGuardTimer = setInterval(() => {
-            this.validateCurrentSession();
-        }, 15000);
+        return;
     }
 };
 
