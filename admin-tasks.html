@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Tasks & Notifications</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-tasks-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .task-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .task-card.urgent {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .task-card.warning {
+            border-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .task-card.success {
+            border-color: #28a745;
+            background: #f0fdf4;
+        }
+
+        .task-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .task-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .task-count {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #004e89;
+            margin: 0.5rem 0;
+        }
+
+        .task-count.urgent {
+            color: #dc3545;
+        }
+
+        .task-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .task-action {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #004e89;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #003554;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 2rem 0 1rem 0;
+            border-bottom: 3px solid #004e89;
+            padding-bottom: 0.5rem;
+        }
+
+        .requests-list {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .request-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .request-item:hover {
+            background: #f9f9f9;
+        }
+
+        .request-item:last-child {
+            border-bottom: none;
+        }
+
+        .request-info {
+            flex: 1;
+        }
+
+        .request-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .request-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+
+        .request-status {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 0.3rem;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .status-payment-pending {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .status-approved {
+            background: #28a745;
+            color: white;
+        }
+
+        .request-amount {
+            font-weight: bold;
+            color: #004e89;
+            margin: 0 1rem;
+            min-width: 100px;
+            text-align: right;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+        }
+
+        .btn-confirm {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #0056b3;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: #dc3545;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat.pending {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat.payment {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat.approved {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <div class="navbar-brand">📋 Admin Tasks & Notifications</div>
+                <div class="navbar-menu">
+                    <a href="admin-dashboard.html">Dashboard</a>
+                    <a href="verify-sync.html">Verify Sync</a>
+                    <button class="logout-btn" onclick="goBack()">Back</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-tasks-container">
+        <h1>👨‍💼 Admin Dashboard - Tasks & Notifications</h1>
+        
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat pending">
+                <div class="stat-label">New Memberships</div>
+                <div class="stat-value" id="newMembershipsCount">0</div>
+            </div>
+            <div class="stat payment">
+                <div class="stat-label">Payment Requests</div>
+                <div class="stat-value" id="paymentRequestsCount">0</div>
+            </div>
+            <div class="stat approved">
+                <div class="stat-label">Total Active Members</div>
+                <div class="stat-value" id="activeUsersCount">0</div>
+            </div>
+        </div>
+
+        <!-- Priority Tasks Grid -->
+        <div class="tasks-grid">
+            <div class="task-card urgent" id="membershipTaskCard">
+                <div class="task-icon">👤</div>
+                <div class="task-title">New Membership Requests</div>
+                <div class="task-count" id="membershipCount">0</div>
+                <div class="task-description">New users waiting for approval</div>
+                <div class="task-action">
+                    <a href="#pending-members" class="btn btn-primary" onclick="scrollToPendingMembers()">Review Requests</a>
+                </div>
+            </div>
+
+            <div class="task-card warning" id="paymentTaskCard">
+                <div class="task-icon">💳</div>
+                <div class="task-title">Payment Confirmations</div>
+                <div class="task-count" id="paymentCount">0</div>
+                <div class="task-description">Members waiting for payment confirmation</div>
+                <div class="task-action">
+                    <a href="#pending-payments" class="btn btn-primary" onclick="scrollToPendingPayments()">Review Payments</a>
+                </div>
+            </div>
+
+            <div class="task-card success" id="inactiveTaskCard">
+                <div class="task-icon">⚠️</div>
+                <div class="task-title">Inactive Members</div>
+                <div class="task-count" id="inactiveCount">0</div>
+                <div class="task-description">Members marked as inactive</div>
+                <div class="task-action">
+                    <button class="btn btn-primary" onclick="goToAdminDashboard()">Manage</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Membership Requests Section -->
+        <div id="pending-members">
+            <div class="section-title">
+                📝 New Membership Requests
+                <span class="badge" id="membershipBadge" style="display: none;">0</span>
+            </div>
+            <div class="requests-list" id="membershipList">
+                <div class="empty-state">
+                    <div class="empty-icon">✨</div>
+                    <p>No pending membership requests. All users have been approved!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Confirmation Section -->
+        <div id="pending-payments">
+            <div class="section-title">
+                💰 Payment Confirmations Required
+                <span class="badge" id="paymentBadge" style="display: none;">0</span>
+            </div>
+            <div class="requests-list" id="paymentList">
+                <div class="empty-state">
+                    <div class="empty-icon">✅</div>
+                    <p>No pending payment confirmations. Everything is up to date!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin: 3rem 0; background: #f8f9fa; padding: 2rem; border-radius: 8px;">
+            <h2>⚡ Quick Actions</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <button class="btn btn-primary" onclick="window.location.href='admin-dashboard.html#user-management'">
+                    👥 User Management
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='verify-sync.html'">
+                    🔄 Verify Sync Status
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='admin-dashboard.html#monthly-stats'">
+                    📊 View Monthly Stats
+                </button>
+                <button class="btn btn-primary" onclick="downloadReport()">
+                    📥 Download Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/app.js"></script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="js/firebase-sync.js"></script>
+    <script src="js/data-sync-manager.js"></script>
+    <script>
+        function loadTasks() {
+            const users = StorageManager.getUsers();
+            const contributions = StorageManager.getContributions();
+
+            const pendingUsers = users.filter(u => u.role === 'member' && u.status === 'pending');
+            const activeUsers = users.filter(u => u.role === 'member' && u.status === 'active');
+            const inactiveUsers = users.filter(u => u.role === 'member' && u.status === 'inactive');
+            const pendingPayments = contributions.filter(c => c.status === 'pending');
+
+            // Update counts
+            document.getElementById('newMembershipsCount').textContent = pendingUsers.length;
+            document.getElementById('paymentRequestsCount').textContent = pendingPayments.length;
+            document.getElementById('activeUsersCount').textContent = activeUsers.length;
+            document.getElementById('membershipCount').textContent = pendingUsers.length;
+            document.getElementById('paymentCount').textContent = pendingPayments.length;
+            document.getElementById('inactiveCount').textContent = inactiveUsers.length;
+
+            // Update badges
+            if (pendingUsers.length > 0) {
+                document.getElementById('membershipBadge').textContent = pendingUsers.length;
+                document.getElementById('membershipBadge').style.display = 'inline-block';
+            } else {
+                document.getElementById('membershipBadge').style.display = 'none';
+            }
+
+            if (pendingPayments.length > 0) {
+                document.getElementById('paymentBadge').textContent = pendingPayments.length;
+                document.getElementById('paymentBadge').style.display = 'inline-block';
+            } else {
+                document.getElementById('paymentBadge').style.display = 'none';
+            }
+
+            // Update task card styles
+            document.getElementById('membershipTaskCard').style.opacity = pendingUsers.length > 0 ? '1' : '0.7';
+            document.getElementById('paymentTaskCard').style.opacity = pendingPayments.length > 0 ? '1' : '0.7';
+
+            // Display membership requests
+            displayMembershipRequests(pendingUsers);
+
+            // Display payment requests
+            displayPaymentRequests(pendingPayments, users);
+        }
+
+        function displayMembershipRequests(pendingUsers) {
+            const container = document.getElementById('membershipList');
+
+            if (pendingUsers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✨</div>
+                        <p>No pending membership requests. All users have been approved!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingUsers.map(user => `
+                <div class="request-item">
+                    <div class="request-info">
+                        <div class="request-name">👤 ${escapeHtml(user.name)}</div>
+                        <div class="request-details">
+                            📧 ${escapeHtml(user.email)}<br>
+                            📱 ${escapeHtml(user.phone)}<br>
+                            📅 Registered: ${new Date(user.joinDate).toLocaleDateString()}
+                        </div>
+                        <span class="request-status status-pending">PENDING APPROVAL</span>
+                    </div>
+                    <div class="request-actions">
+                        <button class="btn-sm btn-approve" onclick="approveUserFromPanel(${user.id})">✓ Approve</button>
+                        <button class="btn-sm btn-reject" onclick="rejectUserFromPanel(${user.id})">✗ Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayPaymentRequests(pendingPayments, users) {
+            const container = document.getElementById('paymentList');
+
+            if (pendingPayments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✅</div>
+                        <p>No pending payment confirmations. Everything is up to date!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pendingPayments.map(payment => {
+                const user = users.find(u => u.id === payment.userId);
+                return `
+                    <div class="request-item">
+                        <div class="request-info">
+                            <div class="request-name">💳 ${user?.name ? escapeHtml(user.name) : 'Unknown User'}</div>
+                            <div class="request-details">
+                                🗓️ ${App.getMonthName(payment.month)} ${payment.year}<br>
+                                📧 ${user?.email ? escapeHtml(user.email) : 'N/A'}<br>
+                                ⏰ Submitted: ${payment.paymentRequestedAt ? new Date(payment.paymentRequestedAt).toLocaleString() : 'N/A'}
+                            </div>
+                            <span class="request-status status-payment-pending">PAYMENT PENDING</span>
+                        </div>
+                        <div class="request-amount">৳ ${App.formatCurrency(payment.amount)}</div>
+                        <div class="request-actions">
+                            <button class="btn-sm btn-confirm" onclick="confirmPaymentFromPanel(${payment.id})">✓ Confirm Payment</button>
+                            <button class="btn-sm btn-reject" onclick="rejectPaymentFromPanel(${payment.id})">✗ Reject</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function approveUserFromPanel(userId) {
+            const user = StorageManager.getUserById(userId);
+            if (!user || !confirm(`Approve ${user.name}?`)) {
+                return;
+            }
+
+            StorageManager.updateUser(userId, {
+                status: 'active',
+                updatedAt: new Date().toISOString()
+            });
+
+            if (window.FirebaseSync?.enabled) {
+                FirebaseSync.syncCollectionToFirebase('users').catch(err => console.error('Sync failed:', err));
+            }
+
+            loadTasks();
+            alert(`✅ ${user.name} has been approved!`);
+        }
+
+        function rejectUserFromPanel(userId) {
+            const user = StorageManager.getUserById(userId);
+            if (!user) return;
+
+            if (confirm(`Mark ${user.name} as inactive?`)) {
+                StorageManager.updateUser(userId, {
+                    status: 'inactive',
+                    updatedAt: new Date().toISOString()
+                });
+
+                if (window.FirebaseSync?.enabled) {
+                    FirebaseSync.syncCollectionToFirebase('users').catch(err => console.error('Sync failed:', err));
+                }
+
+                loadTasks();
+                alert(`✅ ${user.name} has been marked as inactive.`);
+            }
+        }
+
+        function confirmPaymentFromPanel(contributionId) {
+            const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
+            if (!contribution) return;
+
+            const user = StorageManager.getUserById(contribution.userId);
+            if (confirm(`Confirm payment for ${user?.name || 'Unknown'} - ৳${App.formatCurrency(contribution.amount)}?`)) {
+                App.confirmPayment(contributionId, 'Admin');
+
+                if (window.FirebaseSync?.enabled) {
+                    FirebaseSync.syncCollectionToFirebase('contributions').catch(err => console.error('Sync failed:', err));
+                }
+
+                loadTasks();
+                alert(`✅ Payment confirmed for ${user?.name}!`);
+            }
+        }
+
+        function rejectPaymentFromPanel(contributionId) {
+            if (confirm('Reject this payment request?')) {
+                StorageManager.updateContribution(contributionId, {
+                    status: 'unpaid',
+                    updatedAt: new Date().toISOString()
+                });
+
+                if (window.FirebaseSync?.enabled) {
+                    FirebaseSync.syncCollectionToFirebase('contributions').catch(err => console.error('Sync failed:', err));
+                }
+
+                loadTasks();
+                alert('✅ Payment request rejected.');
+            }
+        }
+
+        function scrollToPendingMembers() {
+            document.getElementById('pending-members').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToPendingPayments() {
+            document.getElementById('pending-payments').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function goBack() {
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        function goToAdminDashboard() {
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        function downloadReport() {
+            const users = StorageManager.getUsers();
+            const contributions = StorageManager.getContributions();
+            const timestamp = new Date().toLocaleString();
+
+            const report = `
+ADMIN REPORT - ${timestamp}
+
+=== SUMMARY ===
+Total Users: ${users.filter(u => u.role === 'member').length}
+Active Members: ${users.filter(u => u.role === 'member' && u.status === 'active').length}
+Pending Approvals: ${users.filter(u => u.role === 'member' && u.status === 'pending').length}
+Inactive Users: ${users.filter(u => u.role === 'member' && u.status === 'inactive').length}
+
+Total Contributions: ${contributions.length}
+Paid: ${contributions.filter(c => c.status === 'paid').length}
+Pending Payments: ${contributions.filter(c => c.status === 'pending').length}
+Unpaid: ${contributions.filter(c => c.status === 'unpaid').length}
+
+=== PENDING APPROVALS ===
+${users.filter(u => u.role === 'member' && u.status === 'pending').map(u => `
+- ${u.name} (${u.email}, ${u.phone})
+  Registered: ${new Date(u.joinDate).toLocaleString()}
+`).join('')}
+
+=== PENDING PAYMENTS ===
+${contributions.filter(c => c.status === 'pending').map(c => {
+    const user = users.find(u => u.id === c.userId);
+    return `
+- ${App.getMonthName(c.month)} ${c.year}: ${user?.name || 'Unknown'} - ৳${App.formatCurrency(c.amount)}
+`;
+}).join('')}
+`;
+
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(report));
+            element.setAttribute('download', `admin-report-${new Date().getTime()}.txt`);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // Load tasks on page load
+        window.addEventListener('load', loadTasks);
+
+        // Auto-refresh every 10 seconds
+        setInterval(loadTasks, 10000);
+
+        // Reload when Firebase sync is ready
+        window.addEventListener('firebase-sync-ready', loadTasks);
+    </script>
+</body>
+</html>

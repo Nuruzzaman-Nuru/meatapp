@@ -338,16 +338,28 @@
             refreshReport();
             refreshReportFromFirebase();
             startAdminContributionAutoRefresh();
+            startSessionKeepAlive();  // Keep session alive when Firebase is ready
         });
 
         window.addEventListener('focus', () => {
             if (AuthManager.isAdmin()) {
+                // Update session immediately on focus
+                const currentUser = AuthManager.getCurrentUser();
+                if (currentUser) {
+                    currentUser.lastActivity = new Date().toISOString();
+                    localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                }
                 refreshReportFromFirebase();
             }
         });
 
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && AuthManager.isAdmin()) {
+                const currentUser = AuthManager.getCurrentUser();
+                if (currentUser) {
+                    currentUser.lastActivity = new Date().toISOString();
+                    localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                }
                 refreshReportFromFirebase();
             }
         });
@@ -1374,9 +1386,22 @@
         }
 
         function handleLogout() {
+            // Clear session keep-alive immediately
+            if (sessionKeepAliveTimer) {
+                clearInterval(sessionKeepAliveTimer);
+                sessionKeepAliveTimer = null;
+            }
+            
             if (confirm('Are you sure you want to logout?')) {
-                AuthManager.logout();
-                window.location.href = 'index.html';
+                // Clear all session data
+                localStorage.removeItem(StorageManager.KEYS.CURRENT_USER);
+                localStorage.setItem('adminLogout', new Date().toISOString());
+                
+                // Wait a moment for storage to clear
+                setTimeout(() => {
+                    AuthManager.logout();
+                    window.location.href = 'index.html';
+                }, 100);
             }
         }
 
@@ -1720,28 +1745,58 @@
         function startSessionKeepAlive() {
             if (sessionKeepAliveTimer) clearInterval(sessionKeepAliveTimer);
             
-            // Update the session every 5 minutes to keep it alive
+            // Update the session more frequently to keep it alive
             sessionKeepAliveTimer = setInterval(() => {
-                if (!document.hidden && AuthManager.isAdmin()) {
+                if (AuthManager.isAdmin()) {
                     try {
                         // Refresh the current user from storage
                         const currentUser = AuthManager.getCurrentUser();
                         if (currentUser) {
+                            // Update last activity timestamp
+                            currentUser.lastActivity = new Date().toISOString();
                             // Save it back to mark the session as active
                             localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                            
+                            // Also sync to Firebase to keep session alive there
+                            if (window.FirebaseSync?.enabled && window.AuthManager?.saveUserIndexesToFirebase) {
+                                AuthManager.saveUserIndexesToFirebase(currentUser)
+                                    .catch(err => console.warn('Session Firebase sync failed (not critical):', err));
+                            }
                         }
                     } catch (error) {
                         console.error('Session keep-alive error:', error);
                     }
                 }
-            }, 5 * 60 * 1000); // Every 5 minutes
+            }, 2 * 60 * 1000); // Every 2 minutes
         }
+
+        // Additional session guard - prevent timeout on ANY activity
+        document.addEventListener('mousedown', () => {
+            const currentUser = AuthManager.getCurrentUser();
+            if (currentUser) {
+                currentUser.lastActivity = new Date().toISOString();
+                localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+            }
+        });
+
+        document.addEventListener('keydown', () => {
+            const currentUser = AuthManager.getCurrentUser();
+            if (currentUser) {
+                currentUser.lastActivity = new Date().toISOString();
+                localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+            }
+        });
 
         // Stop session keep-alive when page is closed
         window.addEventListener('beforeunload', () => {
             if (sessionKeepAliveTimer) {
                 clearInterval(sessionKeepAliveTimer);
                 sessionKeepAliveTimer = null;
+            }
+            // On logout, clear the keep-alive
+            const logoutKey = localStorage.getItem('adminLogout');
+            if (logoutKey) {
+                clearInterval(sessionKeepAliveTimer);
             }
         });
 
