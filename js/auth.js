@@ -73,6 +73,8 @@ const AuthManager = {
             return { success: false, message: 'Email already registered' };
         }
 
+        const beforeUsers = localStorage.getItem(StorageManager.KEYS.USERS);
+
         // Create user with hashed password
         const newUser = await StorageManager.addUserWithPassword({
             id: nextUserId,
@@ -83,35 +85,30 @@ const AuthManager = {
             status: 'active'
         }, formData.password);
 
-        // Try to save to Firebase, but KEEP user in localStorage regardless
-        let firebaseSyncFailed = false;
+        // Registration must reach Firebase, otherwise other devices/admin cannot see it.
         try {
             const savedToFirebase = await this.saveRegisteredUserToFirebase(newUser);
             if (!savedToFirebase) {
-                firebaseSyncFailed = true;
-                console.warn('Firebase registration save returned false, will retry during sync');
+                throw new Error('Firebase registration save returned false');
             }
         } catch (error) {
-            firebaseSyncFailed = true;
             console.error('Firebase registration save failed', error);
-        }
+            if (beforeUsers === null) {
+                localStorage.removeItem(StorageManager.KEYS.USERS);
+            } else {
+                localStorage.setItem(StorageManager.KEYS.USERS, beforeUsers);
+            }
 
-        // Don't delete from localStorage - keep data for retry
-        if (window.FirebaseSync?.enabled) {
-            FirebaseSync.syncCollectionToFirebase('users').catch(error => {
-                console.warn('Background Firebase users sync failed after registration', error);
-            });
+            return {
+                success: false,
+                message: 'Registration failed because Firebase sync failed. Please check internet and try again.'
+            };
         }
-
-        const message = firebaseSyncFailed
-            ? 'Registration completed on this device, but Firebase sync failed. Please try again when online.'
-            : 'Registration successful. You can login now.';
 
         return { 
             success: true, 
-            message: message,
-            user: newUser,
-            firebaseSyncFailed: firebaseSyncFailed
+            message: 'Registration successful. You can login now.',
+            user: newUser
         };
     },
 
