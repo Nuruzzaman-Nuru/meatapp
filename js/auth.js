@@ -80,7 +80,7 @@ const AuthManager = {
             email: formData.email,
             phone: formData.phone,
             role: 'member',
-            status: 'pending'
+            status: 'active'
         }, formData.password);
 
         // Try to save to Firebase, but KEEP user in localStorage regardless
@@ -103,9 +103,9 @@ const AuthManager = {
             });
         }
 
-        const message = firebaseSyncFailed 
-            ? 'Registration submitted locally (admin notification may be delayed. Please wait for approval).'
-            : 'Registration submitted. Please wait for admin approval.';
+        const message = firebaseSyncFailed
+            ? 'Registration completed on this device, but Firebase sync failed. Please try again when online.'
+            : 'Registration successful. You can login now.';
 
         return { 
             success: true, 
@@ -497,7 +497,7 @@ const AuthManager = {
             return {
                 user: null,
                 canRefresh: true,
-                message: 'Your account is waiting for admin approval'
+                message: 'Your account is inactive. Please contact admin.'
             };
         }
 

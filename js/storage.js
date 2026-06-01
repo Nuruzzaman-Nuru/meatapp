@@ -67,6 +67,8 @@ const StorageManager = {
                 status: 'active'
             };
             localStorage.setItem(this.KEYS.USERS, JSON.stringify([adminUser]));
+        } else {
+            this.activatePendingMembers();
         }
 
         if (!localStorage.getItem(this.KEYS.CONTRIBUTIONS)) {
@@ -83,6 +85,34 @@ const StorageManager = {
 
         if (!localStorage.getItem(this.KEYS.MONTHLY_REPORTS)) {
             localStorage.setItem(this.KEYS.MONTHLY_REPORTS, JSON.stringify([]));
+        }
+    },
+
+    activatePendingMembers() {
+        const users = JSON.parse(localStorage.getItem(this.KEYS.USERS) || '[]');
+        if (!Array.isArray(users)) return;
+
+        let changed = false;
+        const updatedUsers = users.map(user => {
+            if (user?.role === 'member' && user.status === 'pending') {
+                changed = true;
+                return {
+                    ...user,
+                    status: 'active',
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            return user;
+        });
+
+        if (changed) {
+            localStorage.setItem(this.KEYS.USERS, JSON.stringify(updatedUsers));
+            if (window.FirebaseSync?.enabled) {
+                FirebaseSync.syncCollectionToFirebase('users').catch(error => {
+                    console.warn('Pending member activation sync failed', error);
+                });
+            }
         }
     },
 

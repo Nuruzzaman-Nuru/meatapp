@@ -332,11 +332,11 @@
         <div class="tasks-grid">
             <div class="task-card urgent" id="membershipTaskCard">
                 <div class="task-icon">👤</div>
-                <div class="task-title">New Membership Requests</div>
+                <div class="task-title">Auto Active Members</div>
                 <div class="task-count" id="membershipCount">0</div>
-                <div class="task-description">New users waiting for approval</div>
+                <div class="task-description">New accounts become active automatically</div>
                 <div class="task-action">
-                    <a href="#pending-members" class="btn btn-primary" onclick="scrollToPendingMembers()">Review Requests</a>
+                    <button class="btn btn-primary" onclick="goToAdminDashboard()">Manage Members</button>
                 </div>
             </div>
 
@@ -361,7 +361,7 @@
             </div>
         </div>
 
-        <!-- New Membership Requests Section -->
+        <!-- Membership Status Section -->
         <div id="pending-members">
             <div class="section-title">
                 📝 New Membership Requests
@@ -370,7 +370,7 @@
             <div class="requests-list" id="membershipList">
                 <div class="empty-state">
                     <div class="empty-icon">✨</div>
-                    <p>No pending membership requests. All users have been approved!</p>
+                    <p>New users are activated automatically. No approval is required.</p>
                 </div>
             </div>
         </div>
@@ -419,16 +419,16 @@
             const users = StorageManager.getUsers();
             const contributions = StorageManager.getContributions();
 
-            const pendingUsers = users.filter(u => u.role === 'member' && u.status === 'pending');
+            const pendingUsers = [];
             const activeUsers = users.filter(u => u.role === 'member' && u.status === 'active');
             const inactiveUsers = users.filter(u => u.role === 'member' && u.status === 'inactive');
             const pendingPayments = contributions.filter(c => c.status === 'pending');
 
             // Update counts
-            document.getElementById('newMembershipsCount').textContent = pendingUsers.length;
+            document.getElementById('newMembershipsCount').textContent = activeUsers.length;
             document.getElementById('paymentRequestsCount').textContent = pendingPayments.length;
             document.getElementById('activeUsersCount').textContent = activeUsers.length;
-            document.getElementById('membershipCount').textContent = pendingUsers.length;
+            document.getElementById('membershipCount').textContent = activeUsers.length;
             document.getElementById('paymentCount').textContent = pendingPayments.length;
             document.getElementById('inactiveCount').textContent = inactiveUsers.length;
 
@@ -448,7 +448,7 @@
             }
 
             // Update task card styles
-            document.getElementById('membershipTaskCard').style.opacity = pendingUsers.length > 0 ? '1' : '0.7';
+            document.getElementById('membershipTaskCard').style.opacity = '1';
             document.getElementById('paymentTaskCard').style.opacity = pendingPayments.length > 0 ? '1' : '0.7';
 
             // Display membership requests
@@ -465,7 +465,7 @@
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">✨</div>
-                        <p>No pending membership requests. All users have been approved!</p>
+                        <p>New users are activated automatically. No approval is required.</p>
                     </div>
                 `;
                 return;
@@ -480,7 +480,7 @@
                             📱 ${escapeHtml(user.phone)}<br>
                             📅 Registered: ${new Date(user.joinDate).toLocaleDateString()}
                         </div>
-                        <span class="request-status status-pending">PENDING APPROVAL</span>
+                        <span class="request-status status-pending">AUTO ACTIVE</span>
                     </div>
                     <div class="request-actions">
                         <button class="btn-sm btn-approve" onclick="approveUserFromPanel(${user.id})">✓ Approve</button>
@@ -630,19 +630,13 @@ ADMIN REPORT - ${timestamp}
 === SUMMARY ===
 Total Users: ${users.filter(u => u.role === 'member').length}
 Active Members: ${users.filter(u => u.role === 'member' && u.status === 'active').length}
-Pending Approvals: ${users.filter(u => u.role === 'member' && u.status === 'pending').length}
+Auto Active Registrations: Enabled
 Inactive Users: ${users.filter(u => u.role === 'member' && u.status === 'inactive').length}
 
 Total Contributions: ${contributions.length}
 Paid: ${contributions.filter(c => c.status === 'paid').length}
 Pending Payments: ${contributions.filter(c => c.status === 'pending').length}
 Unpaid: ${contributions.filter(c => c.status === 'unpaid').length}
-
-=== PENDING APPROVALS ===
-${users.filter(u => u.role === 'member' && u.status === 'pending').map(u => `
-- ${u.name} (${u.email}, ${u.phone})
-  Registered: ${new Date(u.joinDate).toLocaleString()}
-`).join('')}
 
 === PENDING PAYMENTS ===
 ${contributions.filter(c => c.status === 'pending').map(c => {
