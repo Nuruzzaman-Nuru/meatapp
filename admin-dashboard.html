@@ -97,7 +97,7 @@
                         <div class="stat-value" id="activeUserCount">0</div>
                     </div>
                     <div class="stat-box warning">
-                        <div class="stat-label">Auto Active</div>
+                        <div class="stat-label">Pending Approval</div>
                         <div class="stat-value" id="pendingUserCount">0</div>
                     </div>
                     <div class="stat-box danger">
@@ -483,7 +483,7 @@
             const inactiveCount = members.filter(user => user.status === 'inactive').length;
 
             document.getElementById('activeUserCount').textContent = activeCount;
-            document.getElementById('pendingUserCount').textContent = activeCount;
+            document.getElementById('pendingUserCount').textContent = pendingCount;
             document.getElementById('inactiveUserCount').textContent = inactiveCount;
 
             if (members.length === 0) {
@@ -524,6 +524,7 @@
                         <td>${App.formatDate(user.joinDate)}</td>
                         <td>
                             <div class="table-actions">
+                                ${user.status === 'pending' ? `<button class="btn btn-success btn-sm" onclick="approveUser(${user.id})">Approve</button>` : ''}
                                 <button class="btn btn-primary btn-sm" onclick="openEditUserModal(${user.id})">Edit</button>
                                 <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id}, this)">Delete</button>
                             </div>
