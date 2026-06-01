@@ -105,6 +105,10 @@
                         <div class="stat-value" id="inactiveUserCount">0</div>
                     </div>
                 </div>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-success btn-sm" onclick="approveAllPendingUsers()" title="Approve all pending member requests">✓ Approve All Pending</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAllInactiveUsers()" title="Delete all inactive members">🗑️ Delete All Inactive</button>
+                </div>
                 <div id="adminUsersTable"></div>
             </div>
 
@@ -321,6 +325,7 @@
             loadAdminUsers();
             refreshReport();
             startAdminContributionAutoRefresh();
+            startSessionKeepAlive();
         });
 
         window.addEventListener('firebase-sync-ready', () => {
@@ -676,7 +681,10 @@
                 return;
             }
 
-            if (!confirm(`Delete ${user.name}? This will also remove this user's contributions and collector assignments.`)) {
+            const summary = App.getUserContributionSummary(userId);
+            const detailsMessage = `\n\nMember Details:\n- Name: ${user.name}\n- Email: ${user.email}\n- Total Contributions: ${summary.totalContributions}\n- Total Amount: ${App.formatCurrency(summary.totalPaid + summary.totalDue)}\n\n⚠️ This action cannot be undone!`;
+            
+            if (!confirm(`Delete ${user.name}? This will also remove this user's contributions and collector assignments.${detailsMessage}`)) {
                 return;
             }
 
@@ -1667,6 +1675,130 @@
 
             html += '</tbody></table>';
             document.getElementById('memberTotalSummary').innerHTML = html;
+        }
+
+        // Session Keep-Alive - prevent session timeout warnings
+        let sessionKeepAliveTimer = null;
+        function startSessionKeepAlive() {
+            if (sessionKeepAliveTimer) clearInterval(sessionKeepAliveTimer);
+            
+            // Update the session every 5 minutes to keep it alive
+            sessionKeepAliveTimer = setInterval(() => {
+                if (!document.hidden && AuthManager.isAdmin()) {
+                    try {
+                        // Refresh the current user from storage
+                        const currentUser = AuthManager.getCurrentUser();
+                        if (currentUser) {
+                            // Save it back to mark the session as active
+                            localStorage.setItem(StorageManager.KEYS.CURRENT_USER, JSON.stringify(currentUser));
+                        }
+                    } catch (error) {
+                        console.error('Session keep-alive error:', error);
+                    }
+                }
+            }, 5 * 60 * 1000); // Every 5 minutes
+        }
+
+        // Stop session keep-alive when page is closed
+        window.addEventListener('beforeunload', () => {
+            if (sessionKeepAliveTimer) {
+                clearInterval(sessionKeepAliveTimer);
+                sessionKeepAliveTimer = null;
+            }
+        });
+
+        // Helper function - Return month collectors formatted for display
+        function App_getMonthCollectorNames(month, year) {
+            const collectors = StorageManager.getCollectors()
+                .filter(c => c.month === month && c.year === year);
+            
+            return collectors.map(c => {
+                const user = StorageManager.getUserById(c.userId);
+                return {
+                    name: user?.name || 'Unknown',
+                    phone: user?.phone || 'N/A',
+                    id: user?.id || c.userId
+                };
+            });
+        }
+
+        // Add compatibility for existing code
+        if (!App.getMonthCollectorNames) {
+            App.getMonthCollectorNames = App_getMonthCollectorNames;
+        }
+
+        // Quick delete inactive users function
+        function deleteAllInactiveUsers() {
+            const users = StorageManager.getUsers();
+            const inactiveUsers = users.filter(u => u.role === 'member' && u.status === 'inactive');
+            
+            if (inactiveUsers.length === 0) {
+                App.showToast('No inactive users to delete', 'info');
+                return;
+            }
+
+            const message = `Delete all ${inactiveUsers.length} inactive member(s)? This will also remove their contributions.\n\nUsers to be deleted:\n${inactiveUsers.map(u => `- ${u.name} (#${u.id})`).join('\n')}`;
+            
+            if (!confirm(message)) {
+                return;
+            }
+
+            let deleteCount = 0;
+            let errorCount = 0;
+
+            inactiveUsers.forEach(user => {
+                const deleted = StorageManager.deleteUser(user.id);
+                if (deleted) {
+                    deleteCount++;
+                } else {
+                    errorCount++;
+                }
+            });
+
+            if (errorCount === 0) {
+                loadAdminUsers();
+                refreshReport();
+                App.showToast(`Successfully deleted ${deleteCount} inactive user(s)`, 'success');
+            } else {
+                App.showToast(`Deleted ${deleteCount}, failed ${errorCount}`, 'warning');
+                loadAdminUsers();
+                refreshReport();
+            }
+        }
+
+        // Approve all pending users function
+        function approveAllPendingUsers() {
+            const users = StorageManager.getUsers();
+            const pendingUsers = users.filter(u => u.role === 'member' && u.status === 'pending');
+            
+            if (pendingUsers.length === 0) {
+                App.showToast('No pending users to approve', 'info');
+                return;
+            }
+
+            const message = `Approve all ${pendingUsers.length} pending member(s)?\n\nUsers to be approved:\n${pendingUsers.map(u => `- ${u.name} (${u.email})`).join('\n')}`;
+            
+            if (!confirm(message)) {
+                return;
+            }
+
+            let approveCount = 0;
+            pendingUsers.forEach(user => {
+                const updated = StorageManager.updateUser(user.id, {
+                    status: 'active',
+                    updatedAt: new Date().toISOString()
+                });
+                if (updated) {
+                    approveCount++;
+                }
+            });
+
+            initializeCollectorSelects();
+            initializeEditSelects();
+            loadAdminUsers();
+            refreshReport();
+
+            App.showToast(`Successfully approved ${approveCount} user(s)`, 'success');
         }
 
     </script>
