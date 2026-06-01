@@ -83,26 +83,35 @@ const AuthManager = {
             status: 'pending'
         }, formData.password);
 
-        const savedToFirebase = await this.saveRegisteredUserToFirebase(newUser);
-        if (!savedToFirebase) {
-            const users = StorageManager.getUsers().filter(user => user.id !== newUser.id);
-            localStorage.setItem(StorageManager.KEYS.USERS, JSON.stringify(users));
-            return {
-                success: false,
-                message: 'Registration could not be sent to admin. Please try again.'
-            };
+        // Try to save to Firebase, but KEEP user in localStorage regardless
+        let firebaseSyncFailed = false;
+        try {
+            const savedToFirebase = await this.saveRegisteredUserToFirebase(newUser);
+            if (!savedToFirebase) {
+                firebaseSyncFailed = true;
+                console.warn('Firebase registration save returned false, will retry during sync');
+            }
+        } catch (error) {
+            firebaseSyncFailed = true;
+            console.error('Firebase registration save failed', error);
         }
 
+        // Don't delete from localStorage - keep data for retry
         if (window.FirebaseSync?.enabled) {
             FirebaseSync.syncCollectionToFirebase('users').catch(error => {
                 console.warn('Background Firebase users sync failed after registration', error);
             });
         }
 
+        const message = firebaseSyncFailed 
+            ? 'Registration submitted locally (admin notification may be delayed. Please wait for approval).'
+            : 'Registration submitted. Please wait for admin approval.';
+
         return { 
             success: true, 
-            message: 'Registration submitted. Please wait for admin approval.', 
-            user: newUser 
+            message: message,
+            user: newUser,
+            firebaseSyncFailed: firebaseSyncFailed
         };
     },
 
