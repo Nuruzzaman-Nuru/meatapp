@@ -82,7 +82,7 @@ const AuthManager = {
             email: formData.email,
             phone: formData.phone,
             role: 'member',
-            status: 'active'
+            status: 'pending'
         }, formData.password);
 
         // Registration must reach Firebase, otherwise other devices/admin cannot see it.
@@ -112,7 +112,7 @@ const AuthManager = {
 
         return { 
             success: true, 
-            message: 'Registration successful. You can login now.',
+            message: 'Registration successful. Please wait for admin approval before login.',
             user: newUser
         };
     },
@@ -519,7 +519,9 @@ const AuthManager = {
             return {
                 user: null,
                 canRefresh: true,
-                message: 'Your account is inactive. Please contact admin.'
+                message: user.status === 'pending'
+                    ? 'Your account is pending admin approval.'
+                    : 'Your account is inactive. Please contact admin.'
             };
         }
 

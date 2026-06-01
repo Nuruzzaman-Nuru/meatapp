@@ -878,8 +878,9 @@
                         <td>${escapeHtml(c.paidBy || '-')}</td>
                         <td>${c.paymentRequestedAt ? App.formatDate(c.paymentRequestedAt) : '-'}</td>
                         <td>${proofButton}</td>
-                        <td>
+                        <td class="table-actions">
                             <button class="btn btn-success btn-sm" type="button" onclick="confirmMemberPayment(${c.id})">Confirm Payment</button>
+                            <button class="btn btn-danger btn-sm" type="button" onclick="rejectMemberPayment(${c.id})">Reject</button>
                         </td>
                     </tr>
                 `;
@@ -1013,6 +1014,64 @@
                 console.error('Payment notification failed', error);
                 App.showToast(`Payment confirmed, notification failed: ${error.message}`, 'warning');
             }
+        }
+
+        async function rejectMemberPayment(contributionId) {
+            const contribution = StorageManager.getContributions().find(c => Number(c.id) === Number(contributionId));
+            if (!contribution) {
+                App.showToast('Contribution not found', 'error');
+                return;
+            }
+
+            const user = StorageManager.getUserById(contribution.userId);
+            if (!user) {
+                App.showToast('Member not found', 'error');
+                return;
+            }
+
+            const reason = prompt(`Reject payment request for ${user.name}? Add a reason:`, 'Payment information could not be verified.');
+            if (reason === null) {
+                return;
+            }
+
+            if (!window.FirebaseSync?.enabled) {
+                App.showToast('Firebase is not connected. Payment was not rejected.', 'error');
+                return;
+            }
+
+            const beforeContributions = localStorage.getItem(StorageManager.KEYS.CONTRIBUTIONS);
+            const result = App.rejectPayment(contributionId, 'Admin', reason.trim());
+            if (!result.success) {
+                App.showToast(result.message || 'Payment could not be rejected', 'error');
+                return;
+            }
+
+            let firebaseSyncFailed = false;
+            if (window.DataSyncManager?.syncContributionUpdate) {
+                const syncResult = await DataSyncManager.syncContributionUpdate(contributionId);
+                firebaseSyncFailed = Boolean(syncResult && !syncResult.success);
+            } else {
+                try {
+                    await FirebaseSync.syncCollectionToFirebase('contributions');
+                } catch (error) {
+                    firebaseSyncFailed = true;
+                    console.error('Payment rejection Firebase sync failed', error);
+                }
+            }
+
+            if (firebaseSyncFailed) {
+                if (beforeContributions === null) {
+                    localStorage.removeItem(StorageManager.KEYS.CONTRIBUTIONS);
+                } else {
+                    localStorage.setItem(StorageManager.KEYS.CONTRIBUTIONS, beforeContributions);
+                }
+                refreshReport();
+                App.showToast('Firebase sync failed. Payment was not rejected.', 'error');
+                return;
+            }
+
+            refreshReport();
+            App.showToast('Payment request rejected', 'success');
         }
 
         function openEditChargeModal(memberId, memberName, monthlyCharge, totalMonths) {

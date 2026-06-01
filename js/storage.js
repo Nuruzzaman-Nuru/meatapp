@@ -67,8 +67,6 @@ const StorageManager = {
                 status: 'active'
             };
             localStorage.setItem(this.KEYS.USERS, JSON.stringify([adminUser]));
-        } else {
-            this.activatePendingMembers();
         }
 
         if (!localStorage.getItem(this.KEYS.CONTRIBUTIONS)) {
@@ -89,6 +87,12 @@ const StorageManager = {
     },
 
     activatePendingMembers() {
+        // Kept for backward compatibility with old admin tools. New registrations
+        // must remain pending until an admin approves them.
+        return;
+    },
+
+    activatePendingMembersLegacy() {
         const users = JSON.parse(localStorage.getItem(this.KEYS.USERS) || '[]');
         if (!Array.isArray(users)) return;
 
@@ -209,7 +213,7 @@ const StorageManager = {
         
         const newUser = {
             id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-            status: 'active',
+            status: userData.status || 'pending',
             ...userData,
             passwordHash,
             joinDate: now,
@@ -298,7 +302,47 @@ const StorageManager = {
      */
     getContributions() {
         const contributions = localStorage.getItem(this.KEYS.CONTRIBUTIONS);
-        return contributions ? JSON.parse(contributions) : [];
+        const parsed = contributions ? JSON.parse(contributions) : [];
+        return Array.isArray(parsed) ? this.dedupeContributions(parsed) : [];
+    },
+
+    getContributionIdentity(contribution) {
+        return [
+            Number(contribution?.userId),
+            Number(contribution?.month),
+            Number(contribution?.year)
+        ].join(':');
+    },
+
+    getContributionTimestamp(contribution) {
+        const fields = [
+            contribution?.paymentDate,
+            contribution?.paymentRequestedAt,
+            contribution?.updatedAt,
+            contribution?.createdAt
+        ];
+
+        return fields.reduce((latest, value) => {
+            const time = value ? new Date(value).getTime() : 0;
+            return Number.isFinite(time) ? Math.max(latest, time) : latest;
+        }, 0);
+    },
+
+    dedupeContributions(contributions) {
+        const byIdentity = new Map();
+
+        contributions.forEach(contribution => {
+            if (!contribution) return;
+
+            const key = this.getContributionIdentity(contribution);
+            const existing = byIdentity.get(key);
+
+            if (!existing || this.getContributionTimestamp(contribution) >= this.getContributionTimestamp(existing)) {
+                byIdentity.set(key, contribution);
+            }
+        });
+
+        return [...byIdentity.values()].sort((a, b) => Number(a.id || 0) - Number(b.id || 0));
     },
 
     /**
@@ -306,13 +350,23 @@ const StorageManager = {
      */
     addContribution(contribution) {
         const contributions = this.getContributions();
+        const existing = contributions.find(c =>
+            Number(c.userId) === Number(contribution.userId) &&
+            Number(c.month) === Number(contribution.month) &&
+            Number(c.year) === Number(contribution.year)
+        );
+
+        if (existing) {
+            return existing;
+        }
+
         const newContribution = {
-            id: contributions.length > 0 ? Math.max(...contributions.map(c => c.id)) + 1 : 1,
+            id: contributions.length > 0 ? Math.max(...contributions.map(c => Number(c.id) || 0)) + 1 : 1,
             ...contribution,
             createdAt: new Date().toISOString()
         };
         contributions.push(newContribution);
-        localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify(contributions));
+        localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify(this.dedupeContributions(contributions)));
         return newContribution;
     },
 
@@ -321,10 +375,10 @@ const StorageManager = {
      */
     updateContribution(contributionId, updates) {
         const contributions = this.getContributions();
-        const index = contributions.findIndex(c => c.id === contributionId);
+        const index = contributions.findIndex(c => Number(c.id) === Number(contributionId));
         if (index !== -1) {
-            contributions[index] = { ...contributions[index], ...updates };
-            localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify(contributions));
+            contributions[index] = { ...contributions[index], ...updates, updatedAt: new Date().toISOString() };
+            localStorage.setItem(this.KEYS.CONTRIBUTIONS, JSON.stringify(this.dedupeContributions(contributions)));
             return contributions[index];
         }
         return null;

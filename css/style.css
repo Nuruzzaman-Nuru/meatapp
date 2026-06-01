@@ -2919,51 +2919,6 @@ textarea {
         margin-bottom: 0.85rem;
     }
 
-    /* Responsive stat boxes */
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
-        gap: 0.8rem;
-    }
-
-    .stat-box {
-        padding: 1rem;
-        min-height: 100px;
-    }
-
-    .stat-label {
-        font-size: 0.75rem;
-        line-height: 1.1;
-    }
-
-    .stat-value {
-        font-size: 1.4rem;
-        margin-top: 0.4rem;
-    }
-
-    /* Better table responsiveness */
-    .table-responsive {
-        -webkit-overflow-scrolling: touch;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Admin Dashboard Mobile Optimization - Extra Responsive Rules for Cards */
-@media (max-width: 768px) {
-    /* Better card spacing on tablets */
-    .dashboard-container {
-        gap: 1.25rem;
-    }
-
-    .card {
-        padding: 1.25rem;
-        border-radius: 8px;
-    }
-
-    .card h2 {
-        font-size: 1.1rem;
-        margin-bottom: 0.85rem;
-    }
-
     .card h3 {
         font-size: 1rem;
     }

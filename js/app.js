@@ -88,7 +88,10 @@ const App = {
         const updateData = {
             status: 'pending',
             paymentMethod,
-            paymentRequestedAt: new Date().toISOString()
+            paymentRequestedAt: new Date().toISOString(),
+            rejectedAt: null,
+            rejectedBy: null,
+            rejectionReason: null
         };
 
         if (paidBy) {
@@ -124,7 +127,10 @@ const App = {
         const updateData = {
             status: 'paid',
             paymentDate: new Date().toISOString(),
-            confirmedBy
+            confirmedBy,
+            rejectedAt: null,
+            rejectedBy: null,
+            rejectionReason: null
         };
 
         if (!contribution.paymentMethod) {
@@ -134,6 +140,35 @@ const App = {
         const updated = StorageManager.updateContribution(contributionId, updateData);
         if (!updated) {
             return { success: false, message: 'Failed to confirm payment' };
+        }
+
+        return { success: true, contribution: updated };
+    },
+
+    /**
+     * Reject a member payment request and return it to unpaid state.
+     */
+    rejectPayment(contributionId, rejectedBy = 'Admin', rejectionReason = '') {
+        const contribution = StorageManager.getContributions().find(c => Number(c.id) === Number(contributionId));
+        if (!contribution) {
+            return { success: false, message: 'Contribution not found' };
+        }
+
+        if (contribution.status !== 'pending') {
+            return { success: false, message: 'Only pending payment requests can be rejected' };
+        }
+
+        const updated = StorageManager.updateContribution(contributionId, {
+            status: 'unpaid',
+            paymentDate: null,
+            confirmedBy: null,
+            rejectedAt: new Date().toISOString(),
+            rejectedBy,
+            rejectionReason: rejectionReason || 'Rejected by admin'
+        });
+
+        if (!updated) {
+            return { success: false, message: 'Failed to reject payment' };
         }
 
         return { success: true, contribution: updated };
