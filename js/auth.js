@@ -91,6 +91,11 @@ const AuthManager = {
             if (!savedToFirebase) {
                 throw new Error('Firebase registration save returned false');
             }
+
+            const verifiedUser = await this.getUserFromFirebaseById(newUser.id);
+            if (!verifiedUser || Number(verifiedUser.id) !== Number(newUser.id)) {
+                throw new Error('Firebase registration verification failed');
+            }
         } catch (error) {
             console.error('Firebase registration save failed', error);
             if (beforeUsers === null) {
@@ -285,6 +290,26 @@ const AuthManager = {
             return this.isValidAppUser(user) ? user : null;
         } catch (error) {
             console.warn('Firebase indexed user lookup failed', error);
+            return null;
+        }
+    },
+
+    async getUserFromFirebaseById(userId) {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+            if (!databaseURL || !userId) return null;
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${basePath}/users/${userId}.json`, {
+                cache: 'no-store'
+            }, 5000);
+
+            if (!response.ok) return null;
+
+            const user = await response.json();
+            return this.isValidAppUser(user) ? user : null;
+        } catch (error) {
+            console.warn('Firebase user verification failed', error);
             return null;
         }
     },

@@ -92,19 +92,8 @@ const StorageManager = {
         const users = JSON.parse(localStorage.getItem(this.KEYS.USERS) || '[]');
         if (!Array.isArray(users)) return;
 
-        let changed = false;
-        const updatedUsers = users.map(user => {
-            if (user?.role === 'member' && user.status === 'pending') {
-                changed = true;
-                return {
-                    ...user,
-                    status: 'active',
-                    updatedAt: new Date().toISOString()
-                };
-            }
-
-            return user;
-        });
+        const updatedUsers = this.activatePendingMembersInList(users);
+        const changed = JSON.stringify(updatedUsers) !== JSON.stringify(users);
 
         if (changed) {
             localStorage.setItem(this.KEYS.USERS, JSON.stringify(updatedUsers));
@@ -114,6 +103,20 @@ const StorageManager = {
                 });
             }
         }
+    },
+
+    activatePendingMembersInList(users) {
+        return users.map(user => {
+            if (user?.role === 'member' && user.status === 'pending') {
+                return {
+                    ...user,
+                    status: 'active',
+                    updatedAt: new Date().toISOString()
+                };
+            }
+
+            return user;
+        });
     },
 
     /**
