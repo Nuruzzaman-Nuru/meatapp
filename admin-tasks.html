@@ -532,6 +532,19 @@
             return div.innerHTML;
         }
 
+        function runFirebaseAction(action, failureMessage = 'Firebase sync failed. Local change is saved.') {
+            if (!window.FirebaseSync?.enabled) {
+                console.warn('Firebase is not connected. Local change is saved.');
+                return;
+            }
+
+            Promise.resolve()
+                .then(action)
+                .catch(error => {
+                    console.error(failureMessage, error);
+                });
+        }
+
         function approveUserFromPanel(userId) {
             const user = StorageManager.getUserById(userId);
             if (!user || !confirm(`Approve ${user.name}?`)) {
@@ -543,12 +556,14 @@
                 updatedAt: new Date().toISOString()
             });
 
-            if (window.FirebaseSync?.enabled) {
-                FirebaseSync.syncCollectionToFirebase('users').catch(err => console.error('Sync failed:', err));
-            }
-
             loadTasks();
             alert(`✅ ${user.name} has been approved!`);
+            runFirebaseAction(
+                () => window.DataSyncManager?.syncUserApproval
+                    ? DataSyncManager.syncUserApproval(userId)
+                    : FirebaseSync.syncCollectionToFirebase('users'),
+                'User approval Firebase sync failed.'
+            );
         }
 
         function rejectUserFromPanel(userId) {
@@ -561,12 +576,12 @@
                     updatedAt: new Date().toISOString()
                 });
 
-                if (window.FirebaseSync?.enabled) {
-                    FirebaseSync.syncCollectionToFirebase('users').catch(err => console.error('Sync failed:', err));
-                }
-
                 loadTasks();
                 alert(`✅ ${user.name} has been marked as inactive.`);
+                runFirebaseAction(
+                    () => FirebaseSync.syncCollectionToFirebase('users'),
+                    'User rejection Firebase sync failed.'
+                );
             }
         }
 
@@ -578,12 +593,14 @@
             if (confirm(`Confirm payment for ${user?.name || 'Unknown'} - ৳${App.formatCurrency(contribution.amount)}?`)) {
                 App.confirmPayment(contributionId, 'Admin');
 
-                if (window.FirebaseSync?.enabled) {
-                    FirebaseSync.syncCollectionToFirebase('contributions').catch(err => console.error('Sync failed:', err));
-                }
-
                 loadTasks();
                 alert(`✅ Payment confirmed for ${user?.name}!`);
+                runFirebaseAction(
+                    () => window.DataSyncManager?.syncContributionUpdate
+                        ? DataSyncManager.syncContributionUpdate(contributionId)
+                        : FirebaseSync.syncCollectionToFirebase('contributions'),
+                    'Payment confirmation Firebase sync failed.'
+                );
             }
         }
 
@@ -594,12 +611,14 @@
                     updatedAt: new Date().toISOString()
                 });
 
-                if (window.FirebaseSync?.enabled) {
-                    FirebaseSync.syncCollectionToFirebase('contributions').catch(err => console.error('Sync failed:', err));
-                }
-
                 loadTasks();
                 alert('✅ Payment request rejected.');
+                runFirebaseAction(
+                    () => window.DataSyncManager?.syncContributionUpdate
+                        ? DataSyncManager.syncContributionUpdate(contributionId)
+                        : FirebaseSync.syncCollectionToFirebase('contributions'),
+                    'Payment rejection Firebase sync failed.'
+                );
             }
         }
 

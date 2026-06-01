@@ -122,10 +122,6 @@
                 return;
             }
 
-            if (window.FirebaseSync?.ready) {
-                await FirebaseSync.ready;
-            }
-
             const announcement = StorageManager.addAnnouncement({
                 title,
                 type,
@@ -136,8 +132,8 @@
 
             preservePostedAnnouncement(announcement);
             loadAnnouncements();
-            await syncAnnouncementsToFirebase(announcement);
             App.showToast('নোটিশ সফলভাবে পোস্ট হয়েছে', 'success');
+            syncAnnouncementsToFirebase(announcement);
 
             // Clear form
             document.getElementById('announcementTitle').value = '';
@@ -268,9 +264,9 @@
         async function deleteAnnouncement(id) {
             if (confirm('এই নোটিশ মুছে ফেলতে চান?')) {
                 StorageManager.deleteAnnouncement(id);
-                await syncAnnouncementsToFirebase();
                 App.showToast('নোটিশ মুছে ফেলা হয়েছে', 'success');
                 loadAnnouncements();
+                syncAnnouncementsToFirebase();
             }
         }
 
