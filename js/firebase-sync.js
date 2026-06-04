@@ -264,7 +264,10 @@ const FirebaseSync = {
 
         const keyMap = this.getKeyMap();
         if (keyMap.deletedUserIds) {
-            const deletedIds = await this.readDeletedUserIdsFromFirebase();
+            const deletedIds = await this.readDeletedUserIdsFromFirebase().catch(error => {
+                console.warn('Firebase deleted user ids read failed. Continuing without deleted id refresh.', error);
+                return [];
+            });
             if (deletedIds.length > 0) {
                 const localDeletedIds = this.getLocalItems(keyMap.deletedUserIds);
                 const mergedDeletedIds = [...new Set([...localDeletedIds, ...deletedIds].map(id => Number(id)))];
@@ -376,26 +379,36 @@ const FirebaseSync = {
     },
 
     async readUsersForSync() {
-        const pendingUsers = await this.readPendingUsersFromFirebase();
-
         try {
             const allUsers = await this.getCollectionFromFirebaseRest('users', 8000);
+            const pendingUsers = await this.readPendingUsersFromFirebase().catch(error => {
+                console.warn('Pending users index read skipped.', error);
+                return [];
+            });
             return this.mergeUsers(allUsers, pendingUsers);
         } catch (error) {
-            console.warn('Full users read skipped. Using pending users only.', error);
-            return pendingUsers;
+            console.warn('Full users read skipped. Trying pending users only.', error);
+            return await this.readPendingUsersFromFirebase().catch(pendingError => {
+                console.warn('Pending users read also failed.', pendingError);
+                return [];
+            });
         }
     },
 
     async readContributionsForSync() {
-        const pendingContributions = await this.readPendingContributionsFromFirebase();
-
         try {
             const allContributions = await this.getCollectionFromFirebaseRest('contributions', 8000);
+            const pendingContributions = await this.readPendingContributionsFromFirebase().catch(error => {
+                console.warn('Pending payment index read skipped.', error);
+                return [];
+            });
             return this.mergeContributions(allContributions, pendingContributions);
         } catch (error) {
-            console.warn('Full contributions read skipped. Using pending payment requests only.', error);
-            return pendingContributions;
+            console.warn('Full contributions read skipped. Trying pending payment requests only.', error);
+            return await this.readPendingContributionsFromFirebase().catch(pendingError => {
+                console.warn('Pending payment requests read also failed.', pendingError);
+                return [];
+            });
         }
     },
 
