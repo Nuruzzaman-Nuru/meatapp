@@ -739,6 +739,7 @@
                     ? DataSyncManager.syncUserDeletion(userId, user)
                     : Promise.all([
                         FirebaseSync.syncCollectionToFirebase('users'),
+                        FirebaseSync.deleteUserEverywhere ? FirebaseSync.deleteUserEverywhere(user) : Promise.resolve(),
                         AuthManager.deleteUserIndexesFromFirebase(user),
                         FirebaseSync.syncCollectionToFirebase('deletedUserIds'),
                         FirebaseSync.syncCollectionToFirebase('contributions'),
@@ -1888,9 +1889,12 @@
             if (deleteCount > 0) {
                 runFirebaseAction(
                     () => window.DataSyncManager?.syncBatchUserDeletions
-                        ? DataSyncManager.syncBatchUserDeletions(deletedUserIds)
+                        ? DataSyncManager.syncBatchUserDeletions(deletedUserIds, inactiveUsers)
                         : Promise.all([
                             FirebaseSync.syncCollectionToFirebase('users'),
+                            ...(FirebaseSync.deleteUserEverywhere
+                                ? inactiveUsers.map(user => FirebaseSync.deleteUserEverywhere(user))
+                                : []),
                             FirebaseSync.syncCollectionToFirebase('deletedUserIds'),
                             FirebaseSync.syncCollectionToFirebase('contributions'),
                             FirebaseSync.syncCollectionToFirebase('collectors')

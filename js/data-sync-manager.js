@@ -85,7 +85,12 @@ const DataSyncManager = {
                 FirebaseSync.syncCollectionToFirebase('collectors')
             ]);
 
-            // Clean up user indices
+            // Hard delete the user node and related single-user paths.
+            if (window.FirebaseSync?.deleteUserEverywhere) {
+                await FirebaseSync.deleteUserEverywhere(user);
+            }
+
+            // Clean up user indices for older FirebaseSync versions.
             if (window.AuthManager?.deleteUserIndexesFromFirebase) {
                 await AuthManager.deleteUserIndexesFromFirebase(user);
             }
@@ -134,7 +139,7 @@ const DataSyncManager = {
     /**
      * CRITICAL: Sync batch user deletions
      */
-    async syncBatchUserDeletions(userIds) {
+    async syncBatchUserDeletions(userIds, deletedUsers = []) {
         if (!window.FirebaseSync?.enabled || userIds.length === 0) return null;
 
         try {
@@ -146,10 +151,22 @@ const DataSyncManager = {
                 FirebaseSync.syncCollectionToFirebase('collectors')
             ]);
 
-            // Clean up indices for all deleted users
+            const deletedUsersById = new Map(
+                deletedUsers
+                    .filter(user => user?.id)
+                    .map(user => [Number(user.id), user])
+            );
+
+            // Hard delete user nodes and clean up indices for all deleted users.
             const cleanupPromises = [];
             userIds.forEach(userId => {
-                const user = StorageManager.getUserById(userId) || { id: userId };
+                const user = deletedUsersById.get(Number(userId)) || StorageManager.getUserById(userId) || { id: userId };
+                if (window.FirebaseSync?.deleteUserEverywhere) {
+                    cleanupPromises.push(
+                        FirebaseSync.deleteUserEverywhere(user)
+                            .catch(err => console.warn(`Firebase hard delete failed for user ${userId}:`, err))
+                    );
+                }
                 if (window.AuthManager?.deleteUserIndexesFromFirebase) {
                     cleanupPromises.push(
                         AuthManager.deleteUserIndexesFromFirebase(user)

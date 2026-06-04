@@ -428,6 +428,12 @@ const FirebaseSync = {
             .filter(user => user?.id)
             .map(user => this.putFirebaseValue(`${this.basePath}/users/${user.id}`, user)));
 
+        if (window.StorageManager?.getDeletedUserIds) {
+            await Promise.all(StorageManager.getDeletedUserIds()
+                .filter(userId => userId)
+                .map(userId => this.deleteUserEverywhere({ id: userId })));
+        }
+
         await this.putFirebaseValue(`${this.basePath}/users/_meta`, {
             lastSync: new Date().toISOString(),
             itemCount: users.length
@@ -454,6 +460,27 @@ const FirebaseSync = {
             writes.push(this.putFirebaseValue(`${this.basePath}/userEmailIndex/${emailKey}`, user.id));
         }
         writes.push(this.putFirebaseValue(`${this.basePath}/pendingUserIds/${user.id}`, user.status === 'pending' ? true : null));
+
+        await Promise.all(writes);
+    },
+
+    async deleteUserEverywhere(user) {
+        if (!this.databaseURL || !user?.id) return;
+
+        const writes = [
+            this.putFirebaseValue(`${this.basePath}/users/${user.id}`, null),
+            this.putFirebaseValue(`${this.basePath}/pendingUserIds/${user.id}`, null),
+            this.putFirebaseValue(`${this.basePath}/activeSessions/${user.id}`, null)
+        ];
+        const phoneKey = this.makeFirebaseKey(user.phone);
+        const emailKey = this.makeFirebaseKey(user.email);
+
+        if (phoneKey) {
+            writes.push(this.putFirebaseValue(`${this.basePath}/userPhoneIndex/${phoneKey}`, null));
+        }
+        if (emailKey) {
+            writes.push(this.putFirebaseValue(`${this.basePath}/userEmailIndex/${emailKey}`, null));
+        }
 
         await Promise.all(writes);
     },
