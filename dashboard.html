@@ -138,7 +138,7 @@
     </div>
 
     <script src="js/storage.js"></script>
-    <script src="js/auth.js?v=single-admin-pass-1"></script>
+    <script src="js/auth.js?v=firebase-only-5"></script>
     <script src="js/app.js"></script>
     <script type="module" src="js/notifications.js"></script>
     <script>
@@ -483,11 +483,8 @@
                     });
                 }
 
-                preserveSubmittedPaymentRequest(submittedContribution);
-
                 if (!window.FirebaseSync?.enabled) {
-                    App.showToast('Payment request saved locally, but Firebase sync is not ready', 'warning');
-                    return;
+                    throw new Error('Firebase sync is not ready');
                 }
 
                 if (FirebaseSync.syncContributionToFirebase) {
@@ -496,10 +493,23 @@
                     await FirebaseSync.syncCollectionToFirebase('contributions');
                 }
             } catch (error) {
-                preserveSubmittedPaymentRequest(submittedContribution);
                 console.error('Payment request Firebase sync failed', error);
-                App.showToast('Payment request saved locally, but admin sync may be delayed', 'warning');
+                rollbackLocalPaymentRequest(submittedContribution);
+                App.showToast('Payment request could not be sent to Firebase. Please try again.', 'error');
+                throw error;
             }
+        }
+
+        function rollbackLocalPaymentRequest(submittedContribution) {
+            if (!submittedContribution?.id) return;
+
+            StorageManager.updateContribution(submittedContribution.id, {
+                status: 'unpaid',
+                paymentMethod: null,
+                paymentRequestedAt: null,
+                paidBy: null,
+                paymentProof: null
+            });
         }
 
         function preserveSubmittedPaymentRequest(submittedContribution) {
@@ -736,6 +746,6 @@
         }
     </script>
     <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js?v=firebase-admin-live-4"></script>
+<script type="module" src="js/firebase-sync.js?v=firebase-only-5"></script>
 </body>
 </html>

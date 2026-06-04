@@ -30,10 +30,6 @@ const FirebaseSync = {
 
             console.log('Firebase Realtime Database sync ready');
             window.dispatchEvent(new CustomEvent('firebase-sync-ready'));
-
-            this.syncAllToFirebase().catch(error => {
-                console.warn('Firebase background sync failed', error);
-            });
         } catch (error) {
             this.enabled = false;
             console.warn('Firebase sync disabled. Using localStorage only.', error);
@@ -296,7 +292,7 @@ const FirebaseSync = {
                         : await this.getCollectionFromFirebaseRest(name);
             }
 
-            if (data.length > 0) {
+            if (data.length > 0 || name !== 'users') {
                 const localItems = this.getLocalItems(storageKey);
                 let mergedData = data;
                 if (name === 'users') {
@@ -696,17 +692,13 @@ const FirebaseSync = {
     },
 
     async syncAllToFirebase() {
-        await Promise.all(Object.keys(this.getKeyMap()).map(name => this.syncCollectionToFirebase(name)));
+        await this.syncFromFirebase();
     },
 
     syncSoon(name) {
-        if (!this.enabled) return;
-
-        setTimeout(() => {
-            this.syncCollectionToFirebase(name).catch(error => {
-                console.error(`Firebase ${name} sync failed`, error);
-            });
-        }, 0);
+        // Firebase is the source of truth. LocalStorage changes are only a cache;
+        // user/admin actions must call the explicit Firebase write helpers.
+        return;
     },
 
     patchStorageManager() {

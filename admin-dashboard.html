@@ -302,11 +302,11 @@
         </div>
     </div>
 <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js?v=firebase-admin-live-4"></script>
+<script type="module" src="js/firebase-sync.js?v=firebase-only-5"></script>
     <script src="js/storage.js"></script>
-    <script src="js/auth.js?v=auto-active-firebase-2"></script>
+    <script src="js/auth.js?v=firebase-only-5"></script>
     <script src="js/app.js"></script>
-    <script src="js/data-sync-manager.js?v=firebase-admin-live-4"></script>
+    <script src="js/data-sync-manager.js?v=firebase-only-5"></script>
     <script type="module" src="js/notifications.js"></script>
     <script>
         let adminContributionRefreshTimer = null;
@@ -549,9 +549,9 @@
             document.getElementById('adminUsersTable').innerHTML = html;
         }
 
-        function runFirebaseAction(action, successMessage = '', failureMessage = 'Firebase sync failed. Local change is saved.') {
+        function runFirebaseAction(action, successMessage = '', failureMessage = 'Firebase sync failed. Local change is not saved to Firebase.') {
             if (!window.FirebaseSync?.enabled) {
-                App.showToast('Local change saved. Firebase is not connected.', 'warning');
+                App.showToast('Firebase is not connected. Please refresh and try again.', 'error');
                 return;
             }
 
@@ -568,10 +568,34 @@
                 .catch(error => {
                     console.error(failureMessage, error);
                     App.showToast(failureMessage, 'warning');
+                    if (window.FirebaseSync?.enabled) {
+                        FirebaseSync.syncFromFirebase()
+                            .then(() => {
+                                if (FirebaseSync.purgeDeletedUsersLocally) {
+                                    FirebaseSync.purgeDeletedUsersLocally();
+                                }
+                                initializeCollectorSelects();
+                                initializeEditSelects();
+                                loadAdminUsers();
+                                refreshReport();
+                            })
+                            .catch(refreshError => {
+                                console.error('Firebase restore after failed write failed', refreshError);
+                            });
+                    }
                 });
         }
 
+        function requireFirebaseWrite() {
+            if (window.FirebaseSync?.enabled) return true;
+
+            App.showToast('Firebase is not connected. Please refresh and try again.', 'error');
+            return false;
+        }
+
         async function approveUser(userId) {
+            if (!requireFirebaseWrite()) return;
+
             const updated = StorageManager.updateUser(userId, {
                 status: 'active',
                 updatedAt: new Date().toISOString()
@@ -595,7 +619,7 @@
                         AuthManager.saveUserIndexesToFirebase(updated)
                     ]),
                 '',
-                'Firebase sync failed. User approved locally.'
+                'Firebase sync failed. User approval was not saved to Firebase.'
             );
         }
 
@@ -620,6 +644,8 @@
         }
 
         async function saveUserEdit() {
+            if (!requireFirebaseWrite()) return;
+
             const userId = Number(document.getElementById('editUserId').value);
             const name = document.getElementById('editUserName').value.trim();
             const email = document.getElementById('editUserEmail').value.trim();
@@ -698,11 +724,13 @@
                         : Promise.resolve()
                 ]),
                 '',
-                'Firebase sync failed. User updated locally.'
+                'Firebase sync failed. User update was not saved to Firebase.'
             );
         }
 
         async function deleteUser(userId, button = null) {
+            if (!requireFirebaseWrite()) return;
+
             const user = StorageManager.getUserById(userId);
             if (!user || user.role === 'admin') {
                 App.showToast('User not found', 'error');
@@ -749,7 +777,7 @@
                         FirebaseSync.syncCollectionToFirebase('collectors')
                     ]),
                 '',
-                'Firebase sync failed. User deleted locally.'
+                'Firebase sync failed. User deletion was not saved to Firebase.'
             );
         }
 
@@ -897,6 +925,8 @@
         }
 
         async function confirmMemberPayment(contributionId) {
+            if (!requireFirebaseWrite()) return;
+
             const contribution = StorageManager.getContributions().find(c => c.id === contributionId);
             if (!contribution) {
                 App.showToast('Contribution not found', 'error');
@@ -926,7 +956,7 @@
                     ? DataSyncManager.syncContributionUpdate(contributionId)
                     : FirebaseSync.syncCollectionToFirebase('contributions'),
                 '',
-                'Firebase sync failed. Payment confirmed locally.'
+                'Firebase sync failed. Payment confirmation was not saved to Firebase.'
             );
 
             if (!window.NotificationManager) {
@@ -948,6 +978,8 @@
         }
 
         async function rejectMemberPayment(contributionId) {
+            if (!requireFirebaseWrite()) return;
+
             const contribution = StorageManager.getContributions().find(c => Number(c.id) === Number(contributionId));
             if (!contribution) {
                 App.showToast('Contribution not found', 'error');
@@ -978,7 +1010,7 @@
                     ? DataSyncManager.syncContributionUpdate(contributionId)
                     : FirebaseSync.syncCollectionToFirebase('contributions'),
                 '',
-                'Firebase sync failed. Payment rejected locally.'
+                'Firebase sync failed. Payment rejection was not saved to Firebase.'
             );
         }
 
@@ -1851,6 +1883,8 @@
 
         // Quick delete inactive users function
         async function deleteAllInactiveUsers() {
+            if (!requireFirebaseWrite()) return;
+
             const users = StorageManager.getUsers();
             const inactiveUsers = users.filter(u => u.role === 'member' && u.status === 'inactive');
             
@@ -1869,7 +1903,7 @@
             let errorCount = 0;
             const deletedUserIds = [];
 
-            // Delete users locally
+            // Delete users from the Firebase-backed cache, then hard-delete in Firebase.
             inactiveUsers.forEach(user => {
                 const deleted = StorageManager.deleteUser(user.id);
                 if (deleted) {
@@ -1903,13 +1937,15 @@
                             FirebaseSync.syncCollectionToFirebase('collectors')
                         ]),
                     '',
-                    'Firebase sync failed. Inactive users deleted locally.'
+                    'Firebase sync failed. Inactive user deletion was not saved to Firebase.'
                 );
             }
         }
 
         // Approve all pending users function
         async function approveAllPendingUsers() {
+            if (!requireFirebaseWrite()) return;
+
             const users = StorageManager.getUsers();
             const pendingUsers = users.filter(u => u.role === 'member' && u.status === 'pending');
             
@@ -1927,7 +1963,7 @@
             let approveCount = 0;
             const userIds = [];
 
-            // Update all users in localStorage
+            // Update Firebase-backed cache, then sync all approvals to Firebase.
             pendingUsers.forEach(user => {
                 const updated = StorageManager.updateUser(user.id, {
                     status: 'active',
@@ -1956,7 +1992,7 @@
                                 .map(user => AuthManager.saveUserIndexesToFirebase(user))
                         )),
                     '',
-                    'Firebase sync failed. Users approved locally.'
+                    'Firebase sync failed. User approvals were not saved to Firebase.'
                 );
             }
         }

@@ -459,6 +459,11 @@ const AuthManager = {
             return { success: false, message: 'Phone number and password are required' };
         }
 
+        await this.waitForFirebaseSyncReady();
+        if (!window.FirebaseSync?.enabled) {
+            return { success: false, message: 'Firebase is not connected. Please refresh and try again.' };
+        }
+
         const indexedUser = await this.refreshIndexedUserBeforeAuth(phone);
         let authResult = await this.getAuthenticatedLocalUser(phone, password, indexedUser);
 
