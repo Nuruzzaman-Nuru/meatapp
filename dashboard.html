@@ -490,7 +490,11 @@
                     return;
                 }
 
-                await FirebaseSync.syncCollectionToFirebase('contributions');
+                if (FirebaseSync.syncContributionToFirebase) {
+                    await FirebaseSync.syncContributionToFirebase(submittedContribution);
+                } else {
+                    await FirebaseSync.syncCollectionToFirebase('contributions');
+                }
             } catch (error) {
                 preserveSubmittedPaymentRequest(submittedContribution);
                 console.error('Payment request Firebase sync failed', error);

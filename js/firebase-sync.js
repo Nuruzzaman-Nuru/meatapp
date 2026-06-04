@@ -283,12 +283,16 @@ const FirebaseSync = {
             try {
                 data = name === 'users'
                     ? await this.readUsersForSync()
-                    : await this.readCollectionFromFirebase(name);
+                    : name === 'contributions'
+                        ? await this.readContributionsForSync()
+                        : await this.readCollectionFromFirebase(name);
             } catch (error) {
                 console.warn(`Firebase SDK ${name} read failed. Trying REST fallback.`, error);
                 data = name === 'users'
                     ? await this.readPendingUsersFromFirebase()
-                    : await this.getCollectionFromFirebaseRest(name);
+                    : name === 'contributions'
+                        ? await this.readPendingContributionsFromFirebase()
+                        : await this.getCollectionFromFirebaseRest(name);
             }
 
             if (data.length > 0) {
@@ -335,6 +339,52 @@ const FirebaseSync = {
             console.warn('Full users read skipped. Using pending users only.', error);
             return pendingUsers;
         }
+    },
+
+    async readContributionsForSync() {
+        const pendingContributions = await this.readPendingContributionsFromFirebase();
+
+        try {
+            const allContributions = await this.getCollectionFromFirebaseRest('contributions', 8000);
+            return this.mergeContributions(allContributions, pendingContributions);
+        } catch (error) {
+            console.warn('Full contributions read skipped. Using pending payment requests only.', error);
+            return pendingContributions;
+        }
+    },
+
+    async readPendingContributionsFromFirebase() {
+        if (!this.databaseURL) return [];
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/pendingPaymentIds.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase pending payment index read failed with status ${response.status}`);
+        }
+
+        const pendingIds = await response.json();
+        if (!pendingIds || typeof pendingIds !== 'object') return [];
+
+        const contributions = await Promise.all(Object.keys(pendingIds)
+            .filter(contributionId => pendingIds[contributionId])
+            .map(contributionId => this.getContributionFromFirebaseRest(contributionId)));
+
+        return contributions.filter(Boolean);
+    },
+
+    async getContributionFromFirebaseRest(contributionId) {
+        if (!this.databaseURL) return null;
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/contributions/${contributionId}.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) return null;
+
+        const contribution = await response.json();
+        return contribution && typeof contribution === 'object' ? contribution : null;
     },
 
     async readPendingUsersFromFirebase() {
@@ -414,6 +464,11 @@ const FirebaseSync = {
                 return;
             }
 
+            if (name === 'contributions') {
+                await this.syncContributionsIncrementallyToFirebase(safeItems);
+                return;
+            }
+
             await this.syncCollectionToFirebaseRest(name, payload);
             return;
         }
@@ -438,6 +493,43 @@ const FirebaseSync = {
             lastSync: new Date().toISOString(),
             itemCount: users.length
         });
+    },
+
+    async syncContributionsIncrementallyToFirebase(contributions) {
+        if (!this.databaseURL || !Array.isArray(contributions)) return;
+
+        await Promise.all(contributions
+            .filter(contribution => contribution?.id)
+            .map(contribution => this.syncContributionToFirebase(contribution)));
+
+        await this.putFirebaseValue(`${this.basePath}/contributions/_meta`, {
+            lastSync: new Date().toISOString(),
+            itemCount: contributions.length
+        });
+    },
+
+    async syncContributionIndexesToFirebase(contributions) {
+        if (!this.databaseURL || !Array.isArray(contributions)) return;
+
+        await Promise.all(contributions.map(contribution => this.syncSingleContributionIndexesToFirebase(contribution)));
+    },
+
+    async syncContributionToFirebase(contribution) {
+        if (!this.databaseURL || !contribution?.id) return;
+
+        await Promise.all([
+            this.putFirebaseValue(`${this.basePath}/contributions/${contribution.id}`, contribution),
+            this.syncSingleContributionIndexesToFirebase(contribution)
+        ]);
+    },
+
+    async syncSingleContributionIndexesToFirebase(contribution) {
+        if (!this.databaseURL || !contribution?.id) return;
+
+        await this.putFirebaseValue(
+            `${this.basePath}/pendingPaymentIds/${contribution.id}`,
+            contribution.status === 'pending' ? true : null
+        );
     },
 
     async syncUserIndexesToFirebase(users) {

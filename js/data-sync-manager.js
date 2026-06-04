@@ -192,7 +192,15 @@ const DataSyncManager = {
         if (!window.FirebaseSync?.enabled) return null;
 
         try {
-            await FirebaseSync.syncCollectionToFirebase('contributions');
+            const contribution = StorageManager.getContributions()
+                .find(item => Number(item.id) === Number(contributionId));
+
+            if (contribution && window.FirebaseSync?.syncContributionToFirebase) {
+                await FirebaseSync.syncContributionToFirebase(contribution);
+            } else {
+                await FirebaseSync.syncCollectionToFirebase('contributions');
+            }
+
             this.recordSync('contribution-update', contributionId, 'success');
             return { success: true };
         } catch (error) {
