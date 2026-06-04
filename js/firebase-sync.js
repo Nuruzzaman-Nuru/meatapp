@@ -305,6 +305,9 @@ const FirebaseSync = {
                 }
                 try {
                     localStorage.setItem(storageKey, JSON.stringify(mergedData));
+                    if (name === 'users' && window.StorageManager?.activatePendingMembers) {
+                        StorageManager.activatePendingMembers();
+                    }
                 } catch (error) {
                     if (name !== 'users') {
                         throw error;
@@ -314,6 +317,9 @@ const FirebaseSync = {
                     const pendingUsers = await this.readPendingUsersFromFirebase();
                     const compactUsers = this.mergeUsers(pendingUsers, localItems);
                     localStorage.setItem(storageKey, JSON.stringify(compactUsers));
+                    if (window.StorageManager?.activatePendingMembers) {
+                        StorageManager.activatePendingMembers();
+                    }
                 }
             }
         }));

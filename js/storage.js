@@ -84,15 +84,11 @@ const StorageManager = {
         if (!localStorage.getItem(this.KEYS.MONTHLY_REPORTS)) {
             localStorage.setItem(this.KEYS.MONTHLY_REPORTS, JSON.stringify([]));
         }
+
+        this.activatePendingMembers();
     },
 
     activatePendingMembers() {
-        // Kept for backward compatibility with old admin tools. New registrations
-        // must remain pending until an admin approves them.
-        return;
-    },
-
-    activatePendingMembersLegacy() {
         const users = JSON.parse(localStorage.getItem(this.KEYS.USERS) || '[]');
         if (!Array.isArray(users)) return;
 
@@ -107,6 +103,10 @@ const StorageManager = {
                 });
             }
         }
+    },
+
+    activatePendingMembersLegacy() {
+        this.activatePendingMembers();
     },
 
     activatePendingMembersInList(users) {
@@ -213,8 +213,8 @@ const StorageManager = {
         
         const newUser = {
             id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
-            status: userData.status || 'pending',
             ...userData,
+            status: userData.status || 'active',
             passwordHash,
             joinDate: now,
             createdAt: now,

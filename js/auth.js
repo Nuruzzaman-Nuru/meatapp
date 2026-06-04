@@ -82,7 +82,7 @@ const AuthManager = {
             email: formData.email,
             phone: formData.phone,
             role: 'member',
-            status: 'pending'
+            status: 'active'
         }, formData.password);
 
         // Registration must reach Firebase, otherwise other devices/admin cannot see it.
@@ -112,7 +112,7 @@ const AuthManager = {
 
         return { 
             success: true, 
-            message: 'Registration successful. Please wait for admin approval before login.',
+            message: 'Registration successful. Your account is active. You can login now.',
             user: newUser
         };
     },
@@ -515,12 +515,31 @@ const AuthManager = {
             };
         }
 
+        if (user.role === 'member' && user.status === 'pending') {
+            const activatedUser = {
+                ...user,
+                status: 'active',
+                updatedAt: new Date().toISOString()
+            };
+
+            StorageManager.updateUser(user.id, activatedUser);
+            this.saveRegisteredUserToFirebase(activatedUser).catch(error => {
+                console.warn('Pending account activation sync failed', error);
+            });
+
+            return {
+                user: activatedUser,
+                canRefresh: false,
+                message: 'Login successful'
+            };
+        }
+
         if (user.role !== 'admin' && user.status !== 'active') {
             return {
                 user: null,
                 canRefresh: true,
                 message: user.status === 'pending'
-                    ? 'Your account is pending admin approval.'
+                    ? 'Your account is being activated. Please try again.'
                     : 'Your account is inactive. Please contact admin.'
             };
         }
