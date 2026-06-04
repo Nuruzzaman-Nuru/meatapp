@@ -302,11 +302,11 @@
         </div>
     </div>
 <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js?v=auto-active-firebase-2"></script>
+<script type="module" src="js/firebase-sync.js?v=firebase-admin-live-4"></script>
     <script src="js/storage.js"></script>
     <script src="js/auth.js?v=auto-active-firebase-2"></script>
     <script src="js/app.js"></script>
-    <script src="js/data-sync-manager.js"></script>
+    <script src="js/data-sync-manager.js?v=firebase-admin-live-4"></script>
     <script type="module" src="js/notifications.js"></script>
     <script>
         let adminContributionRefreshTimer = null;
@@ -424,6 +424,9 @@
             adminContributionRefreshInProgress = true;
             try {
                 await FirebaseSync.syncFromFirebase();
+                if (FirebaseSync.purgeDeletedUsersLocally) {
+                    FirebaseSync.purgeDeletedUsersLocally();
+                }
                 initializeCollectorSelects();
                 initializeEditSelects();
                 loadAdminUsers();

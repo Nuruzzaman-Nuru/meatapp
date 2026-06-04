@@ -268,11 +268,12 @@ const FirebaseSync = {
 
         const keyMap = this.getKeyMap();
         if (keyMap.deletedUserIds) {
-            const deletedIds = await this.readCollectionFromFirebase('deletedUserIds');
+            const deletedIds = await this.readDeletedUserIdsFromFirebase();
             if (deletedIds.length > 0) {
                 const localDeletedIds = this.getLocalItems(keyMap.deletedUserIds);
                 const mergedDeletedIds = [...new Set([...localDeletedIds, ...deletedIds].map(id => Number(id)))];
                 localStorage.setItem(keyMap.deletedUserIds, JSON.stringify(mergedDeletedIds));
+                this.purgeDeletedUsersLocally();
             }
         }
 
@@ -310,6 +311,7 @@ const FirebaseSync = {
                 try {
                     localStorage.setItem(storageKey, JSON.stringify(mergedData));
                     if (name === 'users' && window.StorageManager?.activatePendingMembers) {
+                        this.purgeDeletedUsersLocally();
                         StorageManager.activatePendingMembers();
                     }
                 } catch (error) {
@@ -321,12 +323,60 @@ const FirebaseSync = {
                     const pendingUsers = await this.readPendingUsersFromFirebase();
                     const compactUsers = this.mergeUsers(pendingUsers, localItems);
                     localStorage.setItem(storageKey, JSON.stringify(compactUsers));
+                    this.purgeDeletedUsersLocally();
                     if (window.StorageManager?.activatePendingMembers) {
                         StorageManager.activatePendingMembers();
                     }
                 }
             }
         }));
+    },
+
+    purgeDeletedUsersLocally() {
+        if (!window.StorageManager?.getDeletedUserIds) return;
+
+        const deletedIds = new Set(StorageManager.getDeletedUserIds().map(id => Number(id)));
+        if (deletedIds.size === 0) return;
+
+        const keyMap = this.getKeyMap();
+        const users = this.getLocalItems(keyMap.users).filter(user => !deletedIds.has(Number(user.id)));
+        const contributions = this.getLocalItems(keyMap.contributions).filter(item => !deletedIds.has(Number(item.userId)));
+        const collectors = this.getLocalItems(keyMap.collectors).filter(item => !deletedIds.has(Number(item.userId)));
+
+        localStorage.setItem(keyMap.users, JSON.stringify(users));
+        localStorage.setItem(keyMap.contributions, JSON.stringify(contributions));
+        localStorage.setItem(keyMap.collectors, JSON.stringify(collectors));
+    },
+
+    async readDeletedUserIdsFromFirebase() {
+        if (!this.databaseURL) {
+            const ids = await this.readCollectionFromFirebase('deletedUserIds');
+            return ids.map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0);
+        }
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/deletedUserIds.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase deleted user index read failed with status ${response.status}`);
+        }
+
+        const value = await response.json();
+        if (!value) return [];
+
+        if (Array.isArray(value)) {
+            return value.map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0);
+        }
+
+        if (typeof value === 'object') {
+            return Object.entries(value)
+                .map(([key, item]) => item === true ? Number(key) : Number(item))
+                .filter(id => Number.isFinite(id) && id > 0);
+        }
+
+        const id = Number(value);
+        return Number.isFinite(id) && id > 0 ? [id] : [];
     },
 
     async readUsersForSync() {
@@ -469,6 +519,11 @@ const FirebaseSync = {
                 return;
             }
 
+            if (name === 'deletedUserIds') {
+                await this.syncDeletedUserIdsToFirebase(safeItems);
+                return;
+            }
+
             await this.syncCollectionToFirebaseRest(name, payload);
             return;
         }
@@ -493,6 +548,23 @@ const FirebaseSync = {
             lastSync: new Date().toISOString(),
             itemCount: users.length
         });
+    },
+
+    async syncDeletedUserIdsToFirebase(userIds) {
+        if (!this.databaseURL || !Array.isArray(userIds)) return;
+
+        const uniqueIds = [...new Set(userIds.map(id => Number(id)).filter(id => Number.isFinite(id) && id > 0))];
+        const payload = uniqueIds.reduce((data, userId) => {
+            data[userId] = true;
+            return data;
+        }, {
+            _meta: {
+                lastSync: new Date().toISOString(),
+                itemCount: uniqueIds.length
+            }
+        });
+
+        await this.putFirebaseValue(`${this.basePath}/deletedUserIds`, payload);
     },
 
     async syncContributionsIncrementallyToFirebase(contributions) {
