@@ -90,9 +90,18 @@
                     <label for="paymentMethod">Payment Method</label>
                     <select id="paymentMethod">
                         <option value="cash">Cash</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
                         <option value="online">Online Transfer</option>
                         <option value="cheque">Cheque</option>
                     </select>
+                </div>
+
+                <div id="mobileWalletActions" class="form-group" style="display: none;">
+                    <button id="openWalletAppBtn" class="btn btn-primary btn-block" type="button" onclick="openSelectedWalletApp()">Open Payment App</button>
+                    <small id="walletPaymentHint" style="color: #6b7280; display: block; margin-top: 0.4rem;">
+                        Pay manually in the app, then enter the transaction ID below.
+                    </small>
                 </div>
 
             
@@ -148,6 +157,7 @@
             currentUser = AuthManager.getCurrentUser();
             initializeDashboard();
             populateMonthSelector();
+            initializePaymentMethodActions();
             startMemberContributionAutoRefresh();
         });
 
@@ -189,6 +199,81 @@
 
             // History
             loadHistory();
+        }
+
+        function initializePaymentMethodActions() {
+            const paymentMethod = document.getElementById('paymentMethod');
+            if (!paymentMethod) return;
+
+            paymentMethod.addEventListener('change', updateWalletPaymentActions);
+            updateWalletPaymentActions();
+        }
+
+        function updateWalletPaymentActions() {
+            const method = document.getElementById('paymentMethod')?.value;
+            const actions = document.getElementById('mobileWalletActions');
+            const button = document.getElementById('openWalletAppBtn');
+            const hint = document.getElementById('walletPaymentHint');
+            const walletNames = {
+                bkash: 'bKash',
+                nagad: 'Nagad'
+            };
+
+            if (!actions || !button || !hint) return;
+
+            const walletName = walletNames[method];
+            if (!walletName) {
+                actions.style.display = 'none';
+                return;
+            }
+
+            button.textContent = `Open ${walletName} App`;
+            hint.textContent = `Pay manually in ${walletName}, then enter the transaction ID below.`;
+            actions.style.display = 'block';
+        }
+
+        function openSelectedWalletApp() {
+            const method = document.getElementById('paymentMethod')?.value;
+            const walletApps = {
+                bkash: {
+                    name: 'bKash',
+                    androidPackage: 'com.bKash.customerapp',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
+                    appStore: 'https://apps.apple.com/app/bkash/id1351183172'
+                },
+                nagad: {
+                    name: 'Nagad',
+                    androidPackage: 'com.konasl.nagad',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
+                    appStore: 'https://apps.apple.com/app/nagad/id1471844924'
+                }
+            };
+            const wallet = walletApps[method];
+
+            if (!wallet) {
+                App.showToast('Please select bKash or Nagad first', 'warning');
+                return;
+            }
+
+            App.showToast(`Opening ${wallet.name}. After payment, enter the transaction ID.`, 'info');
+
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            if (isAndroid) {
+                window.location.href = `intent://#Intent;package=${wallet.androidPackage};end`;
+                setTimeout(() => {
+                    window.location.href = wallet.playStore;
+                }, 1200);
+                return;
+            }
+
+            if (isIOS) {
+                window.location.href = wallet.appStore;
+                return;
+            }
+
+            window.open(wallet.playStore, '_blank', 'noopener');
         }
 
         function startMemberContributionAutoRefresh() {
@@ -427,6 +512,7 @@
                         document.getElementById('paymentMonth').value = '';
                         clearPaymentMonthMessage();
                         document.getElementById('paymentMethod').value = 'cash';
+                        updateWalletPaymentActions();
                         const proofInput = document.getElementById('paymentProof');
                         if (proofInput) proofInput.value = '';
                         document.getElementById('paymentPaidBy').value = '';
@@ -463,6 +549,7 @@
                     document.getElementById('paymentMonth').value = '';
                     clearPaymentMonthMessage();
                     document.getElementById('paymentMethod').value = 'cash';
+                    updateWalletPaymentActions();
                     const proofInputEl = document.getElementById('paymentProof');
                     if (proofInputEl) proofInputEl.value = '';
                     document.getElementById('paymentPaidBy').value = '';
