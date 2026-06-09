@@ -339,9 +339,9 @@ const FirebaseSync = {
                         throw error;
                     }
 
-                    console.warn('Full users list is too large for localStorage. Keeping local users plus pending cloud users.', error);
-                    const pendingUsers = await this.readPendingUsersFromFirebase();
-                    const compactUsers = this.mergeUsers(pendingUsers, localItems);
+                    console.warn('Full users list is too large for localStorage. Keeping local users plus indexed cloud users.', error);
+                    const indexedUsers = await this.readIndexedUsersForSync();
+                    const compactUsers = this.mergeUsers(indexedUsers, localItems);
                     localStorage.setItem(storageKey, JSON.stringify(compactUsers));
                     this.purgeDeletedUsersLocally();
                     if (window.StorageManager?.activatePendingMembers) {
@@ -402,18 +402,30 @@ const FirebaseSync = {
     async readUsersForSync() {
         try {
             const allUsers = await this.getCollectionFromFirebaseRest('users', 8000);
-            const pendingUsers = await this.readPendingUsersFromFirebase().catch(error => {
-                console.warn('Pending users index read skipped.', error);
-                return [];
-            });
-            return this.mergeUsers(allUsers, pendingUsers);
+            const indexedUsers = await this.readIndexedUsersForSync();
+            return this.mergeUsers(allUsers, indexedUsers);
         } catch (error) {
-            console.warn('Full users read skipped. Trying pending users only.', error);
-            return await this.readPendingUsersFromFirebase().catch(pendingError => {
-                console.warn('Pending users read also failed.', pendingError);
+            console.warn('Full users read skipped. Trying indexed users only.', error);
+            return await this.readIndexedUsersForSync().catch(indexError => {
+                console.warn('Indexed users read also failed.', indexError);
                 return [];
             });
         }
+    },
+
+    async readIndexedUsersForSync() {
+        const [pendingUsers, recentUsers] = await Promise.all([
+            this.readPendingUsersFromFirebase().catch(error => {
+                console.warn('Pending users index read skipped.', error);
+                return [];
+            }),
+            this.readRecentUsersFromFirebase().catch(error => {
+                console.warn('Recent users index read skipped.', error);
+                return [];
+            })
+        ]);
+
+        return this.mergeUsers(pendingUsers, recentUsers);
     },
 
     async readContributionsForSync() {
@@ -483,6 +495,27 @@ const FirebaseSync = {
 
         const users = await Promise.all(Object.keys(pendingIds)
             .filter(userId => pendingIds[userId])
+            .map(userId => this.getUserFromFirebaseRest(userId)));
+
+        return users.filter(Boolean);
+    },
+
+    async readRecentUsersFromFirebase() {
+        if (!this.databaseURL) return [];
+
+        const response = await this.fetchWithTimeout(`${this.databaseURL}/${this.basePath}/recentUserIds.json`, {
+            cache: 'no-store'
+        }, 5000);
+
+        if (!response.ok) {
+            throw new Error(`Firebase recent user index read failed with status ${response.status}`);
+        }
+
+        const userIds = await response.json();
+        if (!userIds || typeof userIds !== 'object') return [];
+
+        const users = await Promise.all(Object.keys(userIds)
+            .filter(userId => userIds[userId])
             .map(userId => this.getUserFromFirebaseRest(userId)));
 
         return users.filter(Boolean);
@@ -654,6 +687,7 @@ const FirebaseSync = {
             writes.push(this.putFirebaseValue(`${this.basePath}/userEmailIndex/${emailKey}`, user.id));
         }
         writes.push(this.putFirebaseValue(`${this.basePath}/pendingUserIds/${user.id}`, user.status === 'pending' ? true : null));
+        writes.push(this.putFirebaseValue(`${this.basePath}/recentUserIds/${user.id}`, true));
 
         await Promise.all(writes);
     },
@@ -664,6 +698,7 @@ const FirebaseSync = {
         const writes = [
             this.putFirebaseValue(`${this.basePath}/users/${user.id}`, null),
             this.putFirebaseValue(`${this.basePath}/pendingUserIds/${user.id}`, null),
+            this.putFirebaseValue(`${this.basePath}/recentUserIds/${user.id}`, null),
             this.putFirebaseValue(`${this.basePath}/activeSessions/${user.id}`, null)
         ];
         const phoneKey = this.makeFirebaseKey(user.phone);

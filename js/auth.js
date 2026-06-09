@@ -331,6 +331,7 @@ const AuthManager = {
                 writes.push(this.putFirebaseValue(`${basePath}/userEmailIndex/${emailKey}`, user.id));
             }
             writes.push(this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, user.status === 'pending' ? true : null));
+            writes.push(this.putFirebaseValue(`${basePath}/recentUserIds/${user.id}`, true));
 
             await Promise.all(writes);
         } catch (error) {
@@ -345,7 +346,8 @@ const AuthManager = {
             if (!databaseURL || !user?.id) return;
 
             const writes = [
-                this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, null)
+                this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, null),
+                this.putFirebaseValue(`${basePath}/recentUserIds/${user.id}`, null)
             ];
             const phoneKey = this.makeFirebaseKey(user.phone);
             const emailKey = this.makeFirebaseKey(user.email);
