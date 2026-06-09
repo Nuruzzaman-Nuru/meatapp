@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "meatAppData": {
+      "default": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
