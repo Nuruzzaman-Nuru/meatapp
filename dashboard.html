@@ -68,49 +68,8 @@
                 <div id="currentMonthContent"></div>
             </div>
 
-            <!-- Collector Info -->
-            <div class="card">
-                <h2>👥 This Month's Collectors</h2>
-                <div id="collectorInfo"></div>
-            </div>
-
-            <!-- Quick Pay Section -->
-            <div class="card">
-                <h2>💳 Record Payment</h2>
-                <div class="form-group">
-                    <label for="paymentMonth">Select Month</label>
-                    <select id="paymentMonth">
-                        <option value="">-- Select Month --</option>
-                    </select>
-                </div>
-
-                <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
-
-                <div class="form-group">
-                    <label for="paymentMethod">Payment Method</label>
-                    <select id="paymentMethod">
-                        <option value="cash">Cash</option>
-                        <option value="online">Online Transfer</option>
-                        <option value="cheque">Cheque</option>
-                    </select>
-                </div>
-
-                <!-- <div class="form-group">
-                    <label for="paymentProof">Payment Proof (Photo)</label>
-                    <input type="file" id="paymentProof" accept="image/*" capture="environment">
-                    <small style="color: #6b7280; display: block; margin-top: 0.3rem;">Upload payment screenshot or photo</small>
-                </div> -->
-
-                <div class="form-group">
-    <label for="paymentPaidBy">Transaction ID / Paid To</label>
-    
-    <input 
-        type="text" 
-        id="paymentPaidBy" 
-        placeholder="e.g., TrxID: 8HG72K or Nuru"
-      required
-    />
-</div>
+         
+            
 
                 <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">Mark as Paid</button>
             </div>
@@ -361,15 +320,31 @@
         }
 
         async function recordCurrentPayment() {
-            const monthYear = document.getElementById('paymentMonth').value;
-            const method = document.getElementById('paymentMethod').value;
+            const monthSelect = document.getElementById('paymentMonth');
+            const methodSelect = document.getElementById('paymentMethod');
+            const paidByInput = document.getElementById('paymentPaidBy');
+            const monthYear = monthSelect.value;
+            const method = methodSelect.value;
             const proofFileInput = document.getElementById('paymentProof');
             const proofFile = proofFileInput ? proofFileInput.files[0] : null;
-            const paidBy = document.getElementById('paymentPaidBy').value.trim();
+            const paidBy = paidByInput.value.trim();
 
             if (!monthYear) {
-                App.showToast('Please select a month', 'warning');
-                clearPaymentMonthMessage();
+                App.showToast('আগে মাস সিলেক্ট করুন', 'warning');
+                showPaymentMonthMessage('আগে মাস সিলেক্ট করুন', 'warning');
+                monthSelect.focus();
+                return;
+            }
+
+            if (!method) {
+                App.showToast('আগে Payment Method সিলেক্ট করুন', 'warning');
+                methodSelect.focus();
+                return;
+            }
+
+            if (!paidBy) {
+                App.showToast('আগে Transaction ID / Paid To পূরণ করুন', 'warning');
+                paidByInput.focus();
                 return;
             }
 
