@@ -25,7 +25,16 @@ const FirebaseSync = {
             this.databaseURL = configModule.firebaseConfig?.databaseURL || '';
             this.enabled = Boolean(this.databaseURL || this.hasSdk());
 
-            await this.syncFromFirebase();
+            if (!this.enabled) {
+                throw new Error('Firebase databaseURL and SDK database helpers are missing');
+            }
+
+            try {
+                await this.syncFromFirebase();
+            } catch (syncError) {
+                console.warn('Firebase startup sync failed. Firebase writes remain enabled.', syncError);
+            }
+
             this.patchStorageManager();
 
             console.log('Firebase Realtime Database sync ready');
