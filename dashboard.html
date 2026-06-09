@@ -245,7 +245,6 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
-                    androidIntent: 'intent://open/#Intent;scheme=bkash;package=com.bKash.customerapp;end',
                     appUrl: 'bkash://'
                 },
                 nagad: {
@@ -270,7 +269,7 @@
             }, 1500);
 
             window.addEventListener('blur', () => clearTimeout(fallbackTimer), { once: true });
-            if (/Android/i.test(navigator.userAgent)) {
+            if (/Android/i.test(navigator.userAgent) && wallet.androidIntent) {
                 window.location.href = wallet.androidIntent;
                 setTimeout(() => {
                     if (document.visibilityState === 'visible') {
