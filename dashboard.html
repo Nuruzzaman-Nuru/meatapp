@@ -92,8 +92,7 @@
                         <option value="cash">Cash</option>
                         <option value="bkash">bKash</option>
                         <option value="nagad">Nagad</option>
-                        <option value="online">Online Transfer</option>
-                        <option value="cheque">Cheque</option>
+                        
                     </select>
                 </div>
 
@@ -237,12 +236,14 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
+                    scheme: 'bkash',
                     androidPackage: 'com.bKash.customerapp',
                     playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
                     appStore: 'https://apps.apple.com/app/bkash/id1351183172'
                 },
                 nagad: {
                     name: 'Nagad',
+                    scheme: 'nagad',
                     androidPackage: 'com.konasl.nagad',
                     playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
                     appStore: 'https://apps.apple.com/app/nagad/id1471844924'
@@ -261,10 +262,7 @@
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
             if (isAndroid) {
-                window.location.href = `intent://#Intent;package=${wallet.androidPackage};end`;
-                setTimeout(() => {
-                    window.location.href = wallet.playStore;
-                }, 1200);
+                window.location.href = `intent://open/#Intent;scheme=${wallet.scheme};package=${wallet.androidPackage};end`;
                 return;
             }
 
