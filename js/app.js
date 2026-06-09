@@ -175,6 +175,38 @@ const App = {
     },
 
     /**
+     * Allow an admin to correct a paid contribution back to unpaid.
+     */
+    markPaymentUnpaid(contributionId, updatedBy = 'Admin') {
+        const contribution = StorageManager.getContributions().find(c => Number(c.id) === Number(contributionId));
+        if (!contribution) {
+            return { success: false, message: 'Contribution not found' };
+        }
+
+        if (contribution.status !== 'paid') {
+            return { success: false, message: 'Only paid contributions can be marked unpaid' };
+        }
+
+        const updated = StorageManager.updateContribution(contributionId, {
+            status: 'unpaid',
+            paymentMethod: null,
+            paymentDate: null,
+            paymentRequestedAt: null,
+            paidBy: null,
+            paymentProof: null,
+            confirmedBy: null,
+            markedUnpaidAt: new Date().toISOString(),
+            markedUnpaidBy: updatedBy
+        });
+
+        if (!updated) {
+            return { success: false, message: 'Failed to mark payment unpaid' };
+        }
+
+        return { success: true, contribution: updated };
+    },
+
+    /**
      * Get user contribution summary
      */
     getUserContributionSummary(userId) {

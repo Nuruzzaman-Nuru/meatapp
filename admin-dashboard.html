@@ -305,6 +305,7 @@
 <script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
     <script src="js/storage.js"></script>
     <script src="js/auth.js?v=firebase-only-6"></script>
+
     <script src="js/app.js"></script>
     <script src="js/data-sync-manager.js?v=firebase-only-6"></script>
     <script type="module" src="js/notifications.js"></script>
@@ -1037,6 +1038,44 @@
             );
         }
 
+        function markMemberPaymentUnpaid(contributionId) {
+            if (!requireFirebaseWrite()) return;
+
+            const contribution = StorageManager.getContributions().find(c => Number(c.id) === Number(contributionId));
+            if (!contribution) {
+                App.showToast('Contribution not found', 'error');
+                return;
+            }
+
+            const user = StorageManager.getUserById(contribution.userId);
+            if (!user) {
+                App.showToast('Member not found', 'error');
+                return;
+            }
+
+            const monthName = App.getMonthName(contribution.month);
+            if (!confirm(`Mark ${user.name}'s ${monthName} ${contribution.year} payment as unpaid?`)) {
+                return;
+            }
+
+            const result = App.markPaymentUnpaid(contributionId, 'Admin');
+            if (!result.success) {
+                App.showToast(result.message || 'Payment could not be marked unpaid', 'error');
+                return;
+            }
+
+            viewMemberDetails();
+            refreshReport();
+            App.showToast('Payment marked as unpaid', 'success');
+            runFirebaseAction(
+                () => window.DataSyncManager?.syncContributionUpdate
+                    ? DataSyncManager.syncContributionUpdate(contributionId)
+                    : FirebaseSync.syncCollectionToFirebase('contributions'),
+                '',
+                'Firebase sync failed. Payment unpaid change was not saved to Firebase.'
+            );
+        }
+
         function openEditChargeModal(memberId, memberName, monthlyCharge, totalMonths) {
             document.getElementById('editChargeMemberId').value = memberId;
             document.getElementById('editChargeMemberName').value = memberName;
@@ -1610,16 +1649,20 @@
                                 <th>Payment Method</th>
                                 <th>Paid By</th>
                                 <th>Paid Date</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             if (summary.contributions.length === 0) {
-                html += '<tr><td colspan="7" style="text-align: center; color: #999;">No contribution history</td></tr>';
+                html += '<tr><td colspan="8" style="text-align: center; color: #999;">No contribution history</td></tr>';
             } else {
                 summary.contributions.forEach(c => {
                     const statusBadge = getContributionStatusBadge(c.status);
+                    const actionButton = c.status === 'paid'
+                        ? `<button class="btn btn-warning btn-sm" type="button" onclick="markMemberPaymentUnpaid(${c.id})">Mark Unpaid</button>`
+                        : '-';
 
                     html += `
                         <tr>
@@ -1630,6 +1673,7 @@
                             <td>${c.paymentMethod || '-'}</td>
                             <td>${c.paidBy || '-'}</td>
                             <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                            <td>${actionButton}</td>
                         </tr>
                     `;
                 });
