@@ -203,6 +203,14 @@ const FirebaseSync = {
         return 1;
     },
 
+    isGeneratedUnpaidContribution(contribution) {
+        return contribution?.status === 'unpaid'
+            && !contribution.paymentDate
+            && !contribution.paymentRequestedAt
+            && !contribution.updatedAt
+            && !contribution.rejectedAt;
+    },
+
     mergeContributions(firebaseContributions, localContributions) {
         const mergedByMonth = new Map();
 
@@ -220,6 +228,10 @@ const FirebaseSync = {
             const nextTime = this.getContributionTimestamp(contribution);
             const existingRank = this.getContributionStatusRank(existing.status);
             const nextRank = this.getContributionStatusRank(contribution.status);
+
+            if (existingRank > nextRank && this.isGeneratedUnpaidContribution(contribution)) {
+                return;
+            }
 
             if (nextTime > existingTime || (nextTime === existingTime && nextRank >= existingRank)) {
                 mergedByMonth.set(key, contribution);

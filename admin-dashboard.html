@@ -386,7 +386,17 @@
             const { month, year } = getCurrentMonthYear();
 
             // Generate contributions if not exist
+            const contributionCountBeforeGenerate = StorageManager.getContributions().length;
             App.generateMonthlyContributions(month, year);
+            const contributionCountAfterGenerate = StorageManager.getContributions().length;
+            if (
+                contributionCountAfterGenerate > contributionCountBeforeGenerate
+                && window.FirebaseSync?.enabled
+                && window.FirebaseSync?.syncCollectionToFirebase
+            ) {
+                FirebaseSync.syncCollectionToFirebase('contributions')
+                    .catch(error => console.warn('Generated monthly contributions sync failed', error));
+            }
 
             // Get stats
             const stats = StorageManager.getMonthlyStats(month, year);
