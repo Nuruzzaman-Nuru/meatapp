@@ -759,13 +759,30 @@
                 button.textContent = 'Deleting...';
             }
 
+            try {
+                if (window.FirebaseSync?.deleteUserEverywhere) {
+                    await FirebaseSync.deleteUserEverywhere(user);
+                }
+                if (window.AuthManager?.deleteUserIndexesFromFirebase) {
+                    await AuthManager.deleteUserIndexesFromFirebase(user);
+                }
+            } catch (error) {
+                console.error('Firebase user deletion failed', error);
+                if (button) {
+                    button.disabled = false;
+                    button.textContent = 'Delete';
+                }
+                App.showToast('Firebase delete failed. User was not deleted.', 'error');
+                return;
+            }
+
             const deleted = StorageManager.deleteUser(userId);
             if (!deleted) {
                 if (button) {
                     button.disabled = false;
                     button.textContent = 'Delete';
                 }
-                App.showToast('User could not be deleted', 'error');
+                App.showToast('User could not be deleted locally after Firebase delete', 'error');
                 return;
             }
 
@@ -776,12 +793,8 @@
 
             App.showToast('User deleted successfully', 'success');
             runFirebaseAction(
-                () => window.DataSyncManager?.syncUserDeletion
-                    ? DataSyncManager.syncUserDeletion(userId, user)
-                    : Promise.all([
+                () => Promise.all([
                         FirebaseSync.syncCollectionToFirebase('users'),
-                        FirebaseSync.deleteUserEverywhere ? FirebaseSync.deleteUserEverywhere(user) : Promise.resolve(),
-                        AuthManager.deleteUserIndexesFromFirebase(user),
                         FirebaseSync.syncCollectionToFirebase('deletedUserIds'),
                         FirebaseSync.syncCollectionToFirebase('contributions'),
                         FirebaseSync.syncCollectionToFirebase('collectors')
@@ -1909,11 +1922,25 @@
                 return;
             }
 
+            try {
+                await Promise.all(inactiveUsers.map(user => Promise.all([
+                    window.FirebaseSync?.deleteUserEverywhere
+                        ? FirebaseSync.deleteUserEverywhere(user)
+                        : Promise.resolve(),
+                    window.AuthManager?.deleteUserIndexesFromFirebase
+                        ? AuthManager.deleteUserIndexesFromFirebase(user)
+                        : Promise.resolve()
+                ])));
+            } catch (error) {
+                console.error('Firebase inactive user deletion failed', error);
+                App.showToast('Firebase delete failed. Inactive users were not deleted.', 'error');
+                return;
+            }
+
             let deleteCount = 0;
             let errorCount = 0;
             const deletedUserIds = [];
 
-            // Delete users from the Firebase-backed cache, then hard-delete in Firebase.
             inactiveUsers.forEach(user => {
                 const deleted = StorageManager.deleteUser(user.id);
                 if (deleted) {
@@ -1935,13 +1962,8 @@
 
             if (deleteCount > 0) {
                 runFirebaseAction(
-                    () => window.DataSyncManager?.syncBatchUserDeletions
-                        ? DataSyncManager.syncBatchUserDeletions(deletedUserIds, inactiveUsers)
-                        : Promise.all([
+                    () => Promise.all([
                             FirebaseSync.syncCollectionToFirebase('users'),
-                            ...(FirebaseSync.deleteUserEverywhere
-                                ? inactiveUsers.map(user => FirebaseSync.deleteUserEverywhere(user))
-                                : []),
                             FirebaseSync.syncCollectionToFirebase('deletedUserIds'),
                             FirebaseSync.syncCollectionToFirebase('contributions'),
                             FirebaseSync.syncCollectionToFirebase('collectors')
