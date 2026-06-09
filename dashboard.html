@@ -236,17 +236,11 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
-                    scheme: 'bkash',
-                    androidPackage: 'com.bKash.customerapp',
-                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
-                    appStore: 'https://apps.apple.com/app/bkash/id1351183172'
+                    appUrl: 'bkash://'
                 },
                 nagad: {
                     name: 'Nagad',
-                    scheme: 'nagad',
-                    androidPackage: 'com.konasl.nagad',
-                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
-                    appStore: 'https://apps.apple.com/app/nagad/id1471844924'
+                    appUrl: 'nagad://'
                 }
             };
             const wallet = walletApps[method];
@@ -258,20 +252,14 @@
 
             App.showToast(`Opening ${wallet.name}. After payment, enter the transaction ID.`, 'info');
 
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const fallbackTimer = setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    App.showToast(`${wallet.name} app did not open. Please open it manually.`, 'warning');
+                }
+            }, 1500);
 
-            if (isAndroid) {
-                window.location.href = `intent://open/#Intent;scheme=${wallet.scheme};package=${wallet.androidPackage};end`;
-                return;
-            }
-
-            if (isIOS) {
-                window.location.href = wallet.appStore;
-                return;
-            }
-
-            window.open(wallet.playStore, '_blank', 'noopener');
+            window.addEventListener('blur', () => clearTimeout(fallbackTimer), { once: true });
+            window.location.href = wallet.appUrl;
         }
 
         function startMemberContributionAutoRefresh() {
