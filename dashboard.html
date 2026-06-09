@@ -94,6 +94,7 @@
                     <label for="paymentMethod">Payment Method</label>
                     <select id="paymentMethod">
                         <option value="">-- Select --</option>
+                        <option value="cash">Cash</option>
                         <option value="bkash">bKash</option>
                         <option value="nagad">Nagad</option>
                     </select>
@@ -217,7 +218,7 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
-                    androidIntent: 'intent://open/#Intent;scheme=bkash;package=com.bKash.customerapp;S.browser_fallback_url=',
+                    androidIntent: 'intent://#Intent;package=com.bKash.customerapp;S.browser_fallback_url=',
                     appUrl: 'bkash://'
                 },
                 nagad: {
