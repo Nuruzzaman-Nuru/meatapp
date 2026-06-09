@@ -204,8 +204,17 @@
             const paymentMethod = document.getElementById('paymentMethod');
             if (!paymentMethod) return;
 
-            paymentMethod.addEventListener('change', updateWalletPaymentActions);
+            paymentMethod.addEventListener('change', handlePaymentMethodChange);
             updateWalletPaymentActions();
+        }
+
+        function handlePaymentMethodChange() {
+            updateWalletPaymentActions();
+
+            const method = document.getElementById('paymentMethod')?.value;
+            if (method === 'bkash' || method === 'nagad') {
+                openSelectedWalletApp();
+            }
         }
 
         function updateWalletPaymentActions() {
@@ -236,10 +245,12 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
+                    androidIntent: 'intent://open/#Intent;scheme=bkash;package=com.bKash.customerapp;end',
                     appUrl: 'bkash://'
                 },
                 nagad: {
                     name: 'Nagad',
+                    androidIntent: 'intent://open/#Intent;scheme=nagad;package=com.konasl.nagad;end',
                     appUrl: 'nagad://'
                 }
             };
@@ -259,6 +270,16 @@
             }, 1500);
 
             window.addEventListener('blur', () => clearTimeout(fallbackTimer), { once: true });
+            if (/Android/i.test(navigator.userAgent)) {
+                window.location.href = wallet.androidIntent;
+                setTimeout(() => {
+                    if (document.visibilityState === 'visible') {
+                        window.location.href = wallet.appUrl;
+                    }
+                }, 300);
+                return;
+            }
+
             window.location.href = wallet.appUrl;
         }
 
