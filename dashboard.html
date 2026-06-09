@@ -96,6 +96,10 @@
                     </select>
                 </div>
 
+                <div id="walletPaymentNumber" class="alert alert-info" style="display: none;">
+                    Send payment to: <strong id="walletPaymentNumberText">01931634792</strong>
+                </div>
+
                 <div id="mobileWalletActions" class="form-group" style="display: none;">
                     <button id="openWalletAppBtn" class="btn btn-primary btn-block" type="button" onclick="openSelectedWalletApp()">Open Payment App</button>
                     <small id="walletPaymentHint" style="color: #6b7280; display: block; margin-top: 0.4rem;">
@@ -220,6 +224,8 @@
         function updateWalletPaymentActions() {
             const method = document.getElementById('paymentMethod')?.value;
             const actions = document.getElementById('mobileWalletActions');
+            const paymentNumber = document.getElementById('walletPaymentNumber');
+            const paymentNumberText = document.getElementById('walletPaymentNumberText');
             const button = document.getElementById('openWalletAppBtn');
             const hint = document.getElementById('walletPaymentHint');
             const walletNames = {
@@ -227,16 +233,19 @@
                 nagad: 'Nagad'
             };
 
-            if (!actions || !button || !hint) return;
+            if (!actions || !paymentNumber || !paymentNumberText || !button || !hint) return;
 
             const walletName = walletNames[method];
             if (!walletName) {
                 actions.style.display = 'none';
+                paymentNumber.style.display = 'none';
                 return;
             }
 
+            paymentNumberText.textContent = '01931634792';
             button.textContent = `Open ${walletName} App`;
-            hint.textContent = `Pay manually in ${walletName}, then enter the transaction ID below.`;
+            hint.textContent = `Pay manually to 01931634792 in ${walletName}, then enter the transaction ID below.`;
+            paymentNumber.style.display = 'block';
             actions.style.display = 'block';
         }
 
