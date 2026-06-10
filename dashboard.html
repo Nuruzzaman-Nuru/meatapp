@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -224,6 +225,19 @@
             if (!walletName) {
                 actions.style.display = 'none';
                 return;
+=======
+        function handlePaymentMethodChange() {
+            clearPaymentMonthMessage();
+
+            const method = document.getElementById('paymentMethod')?.value;
+            console.log('Payment method changed to:', method);
+            
+            if (method === 'bkash' || method === 'nagad') {
+                // Add small delay to ensure UI update completes
+                setTimeout(() => {
+                    openSelectedWalletApp();
+                }, 300);
+>>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
             }
 
             button.textContent = `Open ${walletName} App`;
@@ -233,23 +247,39 @@
 
         function openSelectedWalletApp() {
             const method = document.getElementById('paymentMethod')?.value;
+            console.log('Opening wallet app for method:', method);
+            
             const walletApps = {
                 bkash: {
                     name: 'bKash',
                     androidPackage: 'com.bKash.customerapp',
+<<<<<<< HEAD
                     playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
                     appStore: 'https://apps.apple.com/app/bkash/id1351183172'
+=======
+                    androidIntent: 'bkash://start',
+                    fallbackUrl: 'https://www.bkash.com',
+                    appUrl: 'bkash://start'
+>>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
                 },
                 nagad: {
                     name: 'Nagad',
                     androidPackage: 'com.konasl.nagad',
+<<<<<<< HEAD
                     playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
                     appStore: 'https://apps.apple.com/app/nagad/id1471844924'
+=======
+                    androidIntent: 'nagad://start',
+                    fallbackUrl: 'https://www.nagad.com.bd',
+                    appUrl: 'nagad://start'
+>>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
                 }
             };
+            
             const wallet = walletApps[method];
 
             if (!wallet) {
+<<<<<<< HEAD
                 App.showToast('Please select bKash or Nagad first', 'warning');
                 return;
             }
@@ -279,11 +309,47 @@
             if (memberContributionRefreshTimer) return;
 
             memberContributionRefreshTimer = setInterval(() => {
+=======
+                console.log('Wallet not found for method:', method);
+                return;
+            }
+
+            console.log('Wallet configuration:', wallet);
+            App.showToast(`Opening ${wallet.name}. Pay to 01931634792, then enter the transaction ID.`, 'info');
+
+            // For Android devices
+            if (/Android/i.test(navigator.userAgent)) {
+                console.log('Android device detected');
+                
+                // Method 1: Try intent scheme (most reliable for apps)
+                const intentUrl = `intent://#Intent;scheme=${method};package=${wallet.androidPackage};action=android.intent.action.VIEW;end`;
+                console.log('Attempting intent:', intentUrl);
+                window.location.href = intentUrl;
+                
+                // Fallback: if app doesn't open, show warning after delay
+                setTimeout(() => {
+                    if (document.visibilityState === 'visible') {
+                        console.log('App did not open, showing fallback message');
+                        App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
+                    }
+                }, 2000);
+                
+                return;
+            }
+
+            // For iOS and other devices
+            console.log('Non-Android device, attempting app URL');
+            window.location.href = wallet.appUrl;
+            
+            setTimeout(() => {
+>>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
                 if (document.visibilityState === 'visible') {
-                    refreshMemberDashboardFromFirebase();
+                    console.log('App did not open, showing fallback message');
+                    App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
                 }
-            }, 5000);
+            }, 2000);
         }
+<<<<<<< HEAD
 
         async function refreshMemberDashboardFromFirebase() {
             if (!window.FirebaseSync?.enabled || memberContributionRefreshInProgress) return;
@@ -847,3 +913,5 @@
 <script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
 </body>
 </html>
+=======
+>>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
