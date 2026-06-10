@@ -193,12 +193,12 @@
                     <p style="margin: 0; font-weight: bold; color: #856404;">
                         ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
                           নম্বর: 01931634792
-                           <!-- <button class="copy-btn" onclick="copyPaymentNumber()">📋 নম্বর কপি করুন</button>
+                           <button class="copy-btn" onclick="copyPaymentNumber()">📋 নম্বর কপি করুন</button>
                           <span id="paymentAppNameHint"></span> নম্বর:
                         </div>
-                      
+                        <div class="payment-number" id="paymentNumber">01931634792</div>
                     </p>
-                </div>-->
+                </div>
 
                 <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
 
@@ -218,7 +218,7 @@
                     <p class="payment-instruction">
                         <span id="paymentAppName"></span> এ টাকা পাঠান:
                     </p>
-                      <div class="payment-number" id="paymentNumber">01931634792</div>
+                    
                     <div class="payment-number-box" onclick="openPaymentApp()">
                         <div class="payment-app-name">
                           
@@ -238,8 +238,10 @@
                         required
                     />
                 </div>
+
+                <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">✓ Mark as Paid</button>
             </div>
-    <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">✓ Mark as Paid</button>
+
             <!-- Contribution History -->
             <div class="card">
                 <div class="flex-between" style="margin-bottom: 1rem;">
