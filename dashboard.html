@@ -119,7 +119,7 @@
                 <div class="navbar-brand">💰 Contribution System</div>
                 <div class="navbar-menu">
                     <a href="dashboard.html">Dashboard</a>
-                    <a href="announcements.html">নোটিশ</a>
+                    <a href="announcements.html">Announcements</a>
                     <button class="logout-btn" onclick="handleLogout()">Logout</button>
                 </div>
             </div>
@@ -191,7 +191,7 @@
                 <!-- Month Info Message -->
                 <div id="monthInfoBox" class="month-info-box">
                     <p style="margin: 0; font-weight: bold; color: #856404;">
-                        ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
+                        ✓ Send money to this number and submit after completing the payment.
                     </p>
                 </div>
 
@@ -211,18 +211,18 @@
                 <!-- Payment Number Display -->
                 <div id="paymentInfoBox" class="payment-info-box">
                     <p class="payment-instruction">
-                        <span id="paymentAppName"></span> এ টাকা পাঠান:
+                        Send money to <span id="paymentAppName"></span>:
                     </p>
                     
                     <div class="payment-number-box" onclick="openPaymentApp()">
                         <div class="payment-app-name">
-                            <span id="paymentAppNameHint"></span> নম্বর:
+                            <span id="paymentAppNameHint"></span> Number:
                         </div>
                         <div class="payment-number" id="paymentNumber">01931634792</div>
-                        <div class="payment-click-hint">📱 অ্যাপ খুলতে ট্যাপ করুন</div>
+                        <div class="payment-click-hint">📱 Tap to open app</div>
                     </div>
 
-                    <button class="copy-btn" onclick="copyPaymentNumber()">📋 নম্বর কপি করুন</button>
+                    <button class="copy-btn" onclick="copyPaymentNumber()">📋 Copy Number</button>
                 </div>
 
                 <!-- Transaction ID Input -->
@@ -231,7 +231,7 @@
                     <input 
                         type="text" 
                         id="paymentPaidBy" 
-                        placeholder="e.g., TrxID: 8HG72K or Nuru"
+                        placeholder="e.g., TrxID: 8HG72K or Name"
                         required
                     />
                 </div>
@@ -336,6 +336,7 @@
         function onMonthSelected() {
             const monthYear = document.getElementById('paymentMonth').value;
             const monthInfoBox = document.getElementById('monthInfoBox');
+            const paymentMethodSelect = document.getElementById('paymentMethod');
 
             if (monthYear) {
                 const [month, year] = monthYear.split('-').map(Number);
@@ -343,24 +344,36 @@
 
                 if (contribution) {
                     if (contribution.status === 'paid') {
-                        const warningMessage = `⚠️ ইতিমধ্যে Payment হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                        const warningMessage = `⚠️ Payment already made - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                         showPaymentMonthMessage(warningMessage, 'warning');
                         monthInfoBox.classList.remove('show');
+                        paymentMethodSelect.value = '';
+                        document.getElementById('paymentInfoBox').classList.remove('show');
                     } else if (contribution.status === 'pending') {
-                        const warningMessage = `⏳ Payment request জমা দেওয়া হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                        const warningMessage = `⏳ Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                         showPaymentMonthMessage(warningMessage, 'warning');
                         monthInfoBox.classList.remove('show');
+                        paymentMethodSelect.value = '';
+                        document.getElementById('paymentInfoBox').classList.remove('show');
                     } else {
                         clearPaymentMonthMessage();
                         monthInfoBox.classList.add('show');
+                        
+                        // Auto-show bKash if month is selected
+                        paymentMethodSelect.value = 'bkash';
+                        onPaymentMethodChanged();
                     }
                 } else {
-                    showPaymentMonthMessage('আপনার এই মাসে Account নেই', 'warning');
+                    showPaymentMonthMessage('You do not have an account for this month.', 'warning');
                     monthInfoBox.classList.remove('show');
+                    paymentMethodSelect.value = '';
+                    document.getElementById('paymentInfoBox').classList.remove('show');
                 }
             } else {
                 clearPaymentMonthMessage();
                 monthInfoBox.classList.remove('show');
+                paymentMethodSelect.value = '';
+                document.getElementById('paymentInfoBox').classList.remove('show');
             }
         }
 
@@ -381,8 +394,10 @@
                 
                 infoBox.classList.add('show');
                 
-                // Show toast
-                App.showToast(`${config.name} নম্বরে ট্যাপ করে অ্যাপ খুলুন`, 'info');
+                // Auto-open payment app
+                setTimeout(() => {
+                    openPaymentApp();
+                }, 500);
             } else {
                 selectedPaymentMethod = '';
                 infoBox.classList.remove('show');
@@ -391,7 +406,7 @@
 
         function openPaymentApp() {
             if (!selectedPaymentMethod) {
-                App.showToast('প্রথমে Payment Method সিলেক্ট করুন', 'warning');
+                App.showToast('Please select a payment method first', 'warning');
                 return;
             }
 
@@ -399,7 +414,7 @@
             const isAndroid = /Android/i.test(navigator.userAgent);
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-            App.showToast(`${config.name} অ্যাপ খোলা হচ্ছে...`, 'info');
+            App.showToast(`Opening ${config.name}...`, 'info');
 
             if (isAndroid) {
                 // Try to open app via package name
@@ -423,14 +438,14 @@
             navigator.clipboard.writeText(number).then(() => {
                 const btn = event.target;
                 const originalText = btn.textContent;
-                btn.textContent = '✓ কপি হয়েছে!';
+                btn.textContent = '✓ Copied!';
                 btn.classList.add('copied');
                 setTimeout(() => {
                     btn.textContent = originalText;
                     btn.classList.remove('copied');
                 }, 2000);
             }).catch(() => {
-                alert('নম্বর কপি করতে ব্যর্থ হয়েছে');
+                alert('Failed to copy number');
             });
         }
 
@@ -469,10 +484,10 @@
 
                 html = `
                     <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                        <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
-                        <p><strong>💰 পরিমাণ:</strong> ${App.formatCurrency(userContribution.amount)}</p>
-                        <p><strong>📊 স্ট্যাটাস:</strong> ${statusBadge}</p>
-                        ${userContribution.paymentDate ? `<p><strong>✓ পেমেন্ট তারিখ:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
+                        <p><strong>📅 Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                        <p><strong>💰 Amount:</strong> ${App.formatCurrency(userContribution.amount)}</p>
+                        <p><strong>📊 Status:</strong> ${statusBadge}</p>
+                        ${userContribution.paymentDate ? `<p><strong>✓ Payment Date:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
                     </div>
                 `;
             } else {
@@ -480,16 +495,16 @@
                 if (generated) {
                     html = `
                         <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                            <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
-                            <p><strong>💰 পরিমাণ:</strong> ${App.formatCurrency(200)}</p>
-                            <p><strong>📊 স্ট্যাটাস:</strong> <span class="table-badge badge-danger">✗ অপেক্ষমান</span></p>
+                            <p><strong>📅 Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p><strong>💰 Amount:</strong> ${App.formatCurrency(200)}</p>
+                            <p><strong>📊 Status:</strong> <span class="table-badge badge-danger">✗ Unpaid</span></p>
                         </div>
                     `;
                 } else {
                     html = `
                         <div style="padding: 1rem; background: #fff6f6; border-radius: 4px;">
-                            <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
-                            <p style="color:#555;">এই মাসে আপনার Account নেই।</p>
+                            <p><strong>📅 Month:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p style="color:#555;">You did not have an account in this month.</p>
                         </div>
                     `;
                 }
@@ -500,14 +515,14 @@
 
         function getContributionStatusBadge(status) {
             if (status === 'paid') {
-                return '<span class="table-badge badge-success">✓ পেমেন্ট হয়েছে</span>';
+                return '<span class="table-badge badge-success">✓ Paid</span>';
             }
 
             if (status === 'pending') {
-                return '<span class="table-badge badge-warning">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষা</span>';
+                return '<span class="table-badge badge-warning">⏳ Waiting for Admin Confirmation</span>';
             }
 
-            return '<span class="table-badge badge-danger">✗ পেমেন্ট হয়নি</span>';
+            return '<span class="table-badge badge-danger">✗ Unpaid</span>';
         }
 
         function loadCollectorInfo() {
@@ -527,7 +542,7 @@
                 });
                 html += '</div>';
             } else {
-                html = '<p style="color: #999;">এই মাসে কালেক্টর নির্ধারণ করা হয়নি।</p>';
+                html = '<p style="color: #999;">No collectors assigned for this month.</p>';
             }
 
             document.getElementById('collectorInfo').innerHTML = html;
@@ -574,19 +589,19 @@
             const paidBy = paidByInput.value.trim();
 
             if (!monthYear) {
-                App.showToast('প্রথমে মাস সিলেক্ট করুন', 'warning');
+                App.showToast('Please select a month first', 'warning');
                 monthSelect.focus();
                 return;
             }
 
             if (!method) {
-                App.showToast('প্রথমে Payment Method সিলেক্ট করুন', 'warning');
+                App.showToast('Please select a payment method', 'warning');
                 methodSelect.focus();
                 return;
             }
 
             if (!paidBy) {
-                App.showToast('Transaction ID / Paid To পূরণ করুন', 'warning');
+                App.showToast('Please enter Transaction ID / Paid To', 'warning');
                 paidByInput.focus();
                 return;
             }
@@ -595,24 +610,24 @@
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
             
             if (!contribution) {
-                App.showToast('এই মাসে আপনার Account নেই', 'warning');
+                App.showToast('You do not have an account for this month.', 'warning');
                 return;
             }
 
             if (contribution.status === 'paid') {
-                App.showToast(`⚠️ ইতিমধ্যে Payment হয়েছে - ${App.getMonthName(month)} ${year}`, 'warning');
+                App.showToast(`⚠️ Payment already made - ${App.getMonthName(month)} ${year}`, 'warning');
                 return;
             }
 
             if (contribution.status === 'pending') {
-                App.showToast(`⏳ Payment request ইতিমধ্যে জমা দেওয়া হয়েছে`, 'warning');
+                App.showToast(`⏳ Payment request already submitted`, 'warning');
                 return;
             }
 
             const result = App.recordPayment(contribution.id, method, paidBy, null);
             if (result.success) {
                 await syncPaymentRequestToFirebase(result.contribution);
-                App.showToast('✓ Payment request সফলভাবে জমা হয়েছে!', 'success');
+                App.showToast('✓ Payment request submitted successfully!', 'success');
                 
                 loadHistory();
                 
@@ -631,7 +646,7 @@
                     initializeDashboard();
                 }, 3000);
             } else {
-                App.showToast(result.message || 'Payment জমা দিতে ব্যর্থ', 'error');
+                App.showToast(result.message || 'Failed to submit payment', 'error');
             }
         }
 
@@ -657,14 +672,14 @@
                 }
             } catch (error) {
                 console.error('Payment request Firebase sync failed', error);
-                App.showToast('Firebase এ পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', 'error');
+                App.showToast('Failed to send to Firebase. Please try again.', 'error');
                 throw error;
             }
         }
 
         function showPaymentSuccessScreen(contribution, method, paidBy = '') {
             const monthName = App.getMonthName(contribution.month);
-            const paidDate = new Date().toLocaleDateString('bn-BD', { 
+            const paidDate = new Date().toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric',
@@ -676,23 +691,23 @@
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
                     
-                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Request জমা হয়েছে!</h2>
+                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Request Submitted!</h2>
                     
                     <div style="background: #d5f4e6; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; text-align: left;">
-                        <p style="margin: 0.5rem 0;"><strong>সদস্য:</strong> ${currentUser.name}</p>
-                        <p style="margin: 0.5rem 0;"><strong>মাস:</strong> ${monthName} ${contribution.year}</p>
-                        <p style="margin: 0.5rem 0;"><strong>পরিমাণ:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Member:</strong> ${currentUser.name}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Month:</strong> ${monthName} ${contribution.year}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Amount:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
                         <p style="margin: 0.5rem 0;"><strong>Payment Method:</strong> ${method.charAt(0).toUpperCase() + method.slice(1)}</p>
                         ${paidBy ? `<p style="margin: 0.5rem 0;"><strong>Paid By:</strong> ${paidBy}</p>` : ''}
-                        <p style="margin: 0.5rem 0;"><strong>সময়:</strong> ${paidDate}</p>
-                        <p style="margin: 0.5rem 0;"><strong>স্ট্যাটাস:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষায়</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>Time:</strong> ${paidDate}</p>
+                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">⏳ Waiting for Admin Confirmation</span></p>
                     </div>
 
                     <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                        <p style="margin: 0; color: #555; font-size: 0.9rem;">আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।</p>
+                        <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment request has been submitted. Admin will confirm it shortly.</p>
                     </div>
 
-                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">ঠিক আছে, বন্ধ করুন</button>
+                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">Done, Close</button>
                 </div>
             `;
 
@@ -712,19 +727,19 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>মাস</th>
-                            <th>পরিমাণ</th>
-                            <th>স্ট্যাটাস</th>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Status</th>
                             <th>Payment Method</th>
                             <th>Paid By</th>
-                            <th>পেমেন্ট তারিখ</th>
+                            <th>Payment Date</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             if (contributions.length === 0) {
-                html += '<tr><td colspan="6" style="text-align: center; color: #999;">কোন ইতিহাস নেই</td></tr>';
+                html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
             } else {
                 contributions.forEach(c => {
                     const statusBadge = getContributionStatusBadge(c.status);
@@ -779,26 +794,26 @@
                         <h1>Contribution Report</h1>
                         <p><strong>${currentUser.name}</strong></p>
                         <p>Email: ${currentUser.email} | Phone: ${currentUser.phone}</p>
-                        <p>প্রিন্ট করা হয়েছে: ${new Date().toLocaleString()}</p>
+                        <p>Printed: ${new Date().toLocaleString()}</p>
                     </div>
 
                     <div class="section">
-                        <h2>সারসংক্ষেপ</h2>
+                        <h2>Summary</h2>
                         <div class="summary">
                             <div class="summary-box">
-                                <div>মোট Contributions</div>
+                                <div>Total Contributions</div>
                                 <div style="font-size: 1.5rem; font-weight: bold;">${summary.totalContributions}</div>
                             </div>
                             <div class="summary-box">
-                                <div>পেমেন্ট করা পরিমাণ</div>
+                                <div>Amount Paid</div>
                                 <div style="font-size: 1.5rem; font-weight: bold;">${App.formatCurrency(summary.totalPaid)}</div>
                             </div>
                             <div class="summary-box">
-                                <div>বকেয়া পরিমাণ</div>
+                                <div>Amount Due</div>
                                 <div style="font-size: 1.5rem; font-weight: bold;">${App.formatCurrency(summary.totalDue)}</div>
                             </div>
                             <div class="summary-box">
-                                <div>সদস্য হিসেবে যোগ</div>
+                                <div>Member Since</div>
                                 <div style="font-size: 1.5rem; font-weight: bold;">${App.formatDate(currentUser.joinDate)}</div>
                             </div>
                         </div>
@@ -809,19 +824,19 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>মাস</th>
-                                    <th>পরিমাণ</th>
-                                    <th>স্ট্যাটাস</th>
+                                    <th>Month</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
                                     <th>Method</th>
                                     <th>Paid By</th>
-                                    <th>তারিখ</th>
+                                    <th>Date</th>
                                 </tr>
                             </thead>
                             <tbody>
             `;
 
             summary.contributions.forEach(c => {
-                const statusText = c.status === 'paid' ? '✓ পেমেন্ট' : c.status === 'pending' ? '⏳ অপেক্ষা' : '✗ অপেক্ষমান';
+                const statusText = c.status === 'paid' ? '✓ Paid' : c.status === 'pending' ? '⏳ Pending' : '✗ Unpaid';
                 printContent += `
                     <tr>
                         <td>${App.getMonthName(c.month)} ${c.year}</td>
