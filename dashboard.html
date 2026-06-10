@@ -375,8 +375,11 @@
                 select.appendChild(option);
             }
 
-            // Add change listener
-            select.addEventListener('change', checkSelectedMonthStatus);
+            // Add change listener - FIX: Now handles empty value correctly
+            select.addEventListener('change', (e) => {
+                console.log('Month dropdown changed:', e.target.value);
+                checkSelectedMonthStatus();
+            });
         }
 
         function checkSelectedMonthStatus() {
