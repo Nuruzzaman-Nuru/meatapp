@@ -183,7 +183,7 @@
                 <!-- Month Selection -->
                 <div class="form-group">
                     <label for="paymentMonth">Select Month <span style="color: red;">*</span></label>
-                    <select id="paymentMonth" onchange="onMonthSelected()">
+                    <!-- <select id="paymentMonth" onchange="onMonthSelected()"> -->
                         <option value="">-- Select Month --</option>
                     </select>
                 </div>
@@ -193,6 +193,10 @@
                     <p style="margin: 0; font-weight: bold; color: #856404;">
                         ✓ Send money to this number and submit after completing the payment.
                     </p>
+                      <span id="paymentAppNameHint"></span> Number:
+                        </div>
+                        <div class="payment-number" id="paymentNumber">01931634792</div>
+                           <button class="copy-btn" onclick="copyPaymentNumber()">📋 Copy Number</button>
                 </div>
 
                 <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
@@ -216,13 +220,11 @@
                     
                     <div class="payment-number-box" onclick="openPaymentApp()">
                         <div class="payment-app-name">
-                            <span id="paymentAppNameHint"></span> Number:
-                        </div>
-                        <div class="payment-number" id="paymentNumber">01931634792</div>
+                          
                         <div class="payment-click-hint">📱 Tap to open app</div>
                     </div>
 
-                    <button class="copy-btn" onclick="copyPaymentNumber()">📋 Copy Number</button>
+                 
                 </div>
 
                 <!-- Transaction ID Input -->
