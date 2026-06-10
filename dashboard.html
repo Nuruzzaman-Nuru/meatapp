@@ -623,10 +623,11 @@
                 document.getElementById('paymentInfoBox').classList.remove('show');
                 clearPaymentMonthMessage();
                 
-                setTimeout(() => {
-                    showPaymentSuccessScreen(result.contribution, method, paidBy);
-                }, 100);
-                
+                document.getElementById('paymentSuccessBanner').style.display = 'block';
+
+setTimeout(() => {
+    document.getElementById('paymentSuccessBanner').style.display = 'none';
+}, 5000);
                 setTimeout(() => {
                     initializeDashboard();
                 }, 3000);
@@ -688,9 +689,16 @@
                         <p style="margin: 0.5rem 0;"><strong>স্ট্যাটাস:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষায়</span></p>
                     </div>
 
-                    <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                        <p style="margin: 0; color: #555; font-size: 0.9rem;">আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।</p>
-                    </div>
+                 <div id="paymentSuccessBanner"
+     style="background:#d4edda;
+            color:#155724;
+            padding:15px;
+            text-align:center;
+            font-weight:bold;
+            border-bottom:2px solid #28a745;
+            display:none;">
+    ✅ আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।
+</div>
 
                     <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">ঠিক আছে, বন্ধ করুন</button>
                 </div>
