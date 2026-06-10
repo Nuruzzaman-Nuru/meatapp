@@ -8,6 +8,108 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Member Dashboard - Contribution System</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .month-info-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            display: none;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        .month-info-box.show {
+            display: block;
+        }
+        .payment-info-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 1.2rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            display: none;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        .payment-info-box.show {
+            display: block;
+        }
+        .payment-instruction {
+            font-size: 0.95rem;
+            color: #2e7d32;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .payment-number-box {
+            background: white;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .payment-number-box:hover {
+            background: #f1f8f6;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            transform: translateY(-2px);
+        }
+        .payment-number-box:active {
+            transform: translateY(0);
+        }
+        .payment-app-name {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+        .payment-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2e7d32;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+        .payment-click-hint {
+            font-size: 0.8rem;
+            color: #4caf50;
+            text-align: center;
+            margin-top: 0.5rem;
+            font-style: italic;
+        }
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.8rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        .copy-btn.copied {
+            background: #2e7d32;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .alert-warning {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
@@ -77,33 +179,55 @@
             <!-- Quick Pay Section -->
             <div class="card">
                 <h2>💳 Record Payment</h2>
+                
+                <!-- Month Selection -->
                 <div class="form-group">
-                    <label for="paymentMonth">Select Month</label>
-                    <select id="paymentMonth">
+                    <label for="paymentMonth">Select Month <span style="color: red;">*</span></label>
+                    <select id="paymentMonth" onchange="onMonthSelected()">
                         <option value="">-- Select Month --</option>
                     </select>
                 </div>
 
+                <!-- Month Info Message -->
+                <div id="monthInfoBox" class="month-info-box">
+                    <p style="margin: 0; font-weight: bold; color: #856404;">
+                        ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
+                    </p>
+                </div>
+
                 <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
 
+                <!-- Payment Method Selection -->
                 <div class="form-group">
-                    <label for="paymentMethod">Payment Method</label>
-                    <select id="paymentMethod">
+                    <label for="paymentMethod">Payment Method <span style="color: red;">*</span></label>
+                    <select id="paymentMethod" onchange="onPaymentMethodChanged()">
+                        <option value="">-- Select Payment Method --</option>
                         <option value="cash">Cash</option>
                         <option value="bkash">bKash</option>
                         <option value="nagad">Nagad</option>
                     </select>
                 </div>
 
-                <div id="mobileWalletActions" class="form-group" style="display: none;">
-                    <button id="openWalletAppBtn" class="btn btn-primary btn-block" type="button" onclick="openSelectedWalletApp()">Open Payment App</button>
-                    <small id="walletPaymentHint" style="color: #6b7280; display: block; margin-top: 0.4rem;">
-                        Pay manually in the app, then enter the transaction ID below.
-                    </small>
+                <!-- Payment Number Display -->
+                <div id="paymentInfoBox" class="payment-info-box">
+                    <p class="payment-instruction">
+                        <span id="paymentAppName"></span> এ টাকা পাঠান:
+                    </p>
+                    
+                    <div class="payment-number-box" onclick="openPaymentApp()">
+                        <div class="payment-app-name">
+                            <span id="paymentAppNameHint"></span> নম্বর:
+                        </div>
+                        <div class="payment-number" id="paymentNumber">01931634792</div>
+                        <div class="payment-click-hint">📱 অ্যাপ খুলতে ট্যাপ করুন</div>
+                    </div>
+
+                    <button class="copy-btn" onclick="copyPaymentNumber()">📋 নম্বর কপি করুন</button>
                 </div>
 
+                <!-- Transaction ID Input -->
                 <div class="form-group">
-                    <label for="paymentPaidBy">Transaction ID / Paid To</label>
+                    <label for="paymentPaidBy">Transaction ID / Paid To <span style="color: red;">*</span></label>
                     <input 
                         type="text" 
                         id="paymentPaidBy" 
@@ -112,7 +236,7 @@
                     />
                 </div>
 
-                <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">Mark as Paid</button>
+                <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">✓ Mark as Paid</button>
             </div>
 
             <!-- Contribution History -->
@@ -145,6 +269,27 @@
         let currentUser = null;
         let memberContributionRefreshTimer = null;
         let memberContributionRefreshInProgress = false;
+        let selectedPaymentMethod = '';
+
+        // Payment configuration
+        const paymentConfig = {
+            bkash: {
+                name: 'bKash',
+                number: '01931634792',
+                androidPackage: 'com.bKash.customerapp',
+                playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
+                appStore: 'https://apps.apple.com/app/bkash/id1146643852',
+                appUrl: 'bkash://start'
+            },
+            nagad: {
+                name: 'Nagad',
+                number: '01931634792',
+                androidPackage: 'com.konasl.nagad',
+                playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
+                appStore: 'https://apps.apple.com/app/nagad/id1471844924',
+                appUrl: 'nagad://start'
+            }
+        };
 
         window.addEventListener('DOMContentLoaded', () => {
             if (!AuthManager.requireAuth()) return;
@@ -152,7 +297,6 @@
             currentUser = AuthManager.getCurrentUser();
             initializeDashboard();
             populateMonthSelector();
-            initializePaymentMethodActions();
             startMemberContributionAutoRefresh();
         });
 
@@ -175,121 +319,119 @@
                 currentUser = savedUser;
             }
 
-            // Set user info
             document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
             document.getElementById('userInfo').textContent = `Email: ${currentUser.email} | Phone: ${currentUser.phone}`;
 
-            // Get stats
             const summary = App.getUserContributionSummary(currentUser.id);
             document.getElementById('totalContrib').textContent = summary.totalContributions;
             document.getElementById('totalPaid').textContent = App.formatCurrency(summary.totalPaid);
             document.getElementById('totalDue').textContent = App.formatCurrency(summary.totalDue);
             document.getElementById('joinDate').textContent = App.formatDate(currentUser.joinDate);
 
-            // Current month status
             loadCurrentMonthStatus();
-
-            // Collector info
             loadCollectorInfo();
-
-            // History
             loadHistory();
         }
 
-        function initializePaymentMethodActions() {
-            const paymentMethod = document.getElementById('paymentMethod');
-            if (!paymentMethod) return;
+        function onMonthSelected() {
+            const monthYear = document.getElementById('paymentMonth').value;
+            const monthInfoBox = document.getElementById('monthInfoBox');
 
-            paymentMethod.addEventListener('change', updateWalletPaymentActions);
-            updateWalletPaymentActions();
-        }
+            if (monthYear) {
+                const [month, year] = monthYear.split('-').map(Number);
+                const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
 
-        function updateWalletPaymentActions() {
-            const method = document.getElementById('paymentMethod')?.value;
-            const actions = document.getElementById('mobileWalletActions');
-            const button = document.getElementById('openWalletAppBtn');
-            const hint = document.getElementById('walletPaymentHint');
-            const walletNames = {
-                bkash: 'bKash',
-                nagad: 'Nagad'
-            };
-
-            if (!actions || !button || !hint) return;
-
-            const walletName = walletNames[method];
-            if (!walletName) {
-                actions.style.display = 'none';
-                return;
-            }
-
-            button.textContent = `Open ${walletName} App`;
-            hint.textContent = `Pay manually in ${walletName}, then enter the transaction ID below.`;
-            actions.style.display = 'block';
-        }
-
-        function handlePaymentMethodChange() {
-            clearPaymentMonthMessage();
-            const method = document.getElementById('paymentMethod')?.value;
-            console.log('Payment method changed to:', method);
-            
-            if (method === 'bkash' || method === 'nagad') {
-                setTimeout(() => {
-                    openSelectedWalletApp();
-                }, 300);
-            }
-        }
-
-        function openSelectedWalletApp() {
-            const method = document.getElementById('paymentMethod')?.value;
-            console.log('Opening wallet app for method:', method);
-            
-            const walletApps = {
-                bkash: {
-                    name: 'bKash',
-                    androidPackage: 'com.bKash.customerapp',
-                    androidIntent: 'bkash://start',
-                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
-                    appStore: 'https://apps.apple.com/app/bkash/id1146643852',
-                    fallbackUrl: 'https://www.bkash.com',
-                    appUrl: 'bkash://start'
-                },
-                nagad: {
-                    name: 'Nagad',
-                    androidPackage: 'com.konasl.nagad',
-                    androidIntent: 'nagad://start',
-                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
-                    appStore: 'https://apps.apple.com/app/nagad/id1471844924',
-                    fallbackUrl: 'https://www.nagad.com.bd',
-                    appUrl: 'nagad://start'
+                if (contribution) {
+                    if (contribution.status === 'paid') {
+                        const warningMessage = `⚠️ ইতিমধ্যে Payment হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                        showPaymentMonthMessage(warningMessage, 'warning');
+                        monthInfoBox.classList.remove('show');
+                    } else if (contribution.status === 'pending') {
+                        const warningMessage = `⏳ Payment request জমা দেওয়া হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
+                        showPaymentMonthMessage(warningMessage, 'warning');
+                        monthInfoBox.classList.remove('show');
+                    } else {
+                        clearPaymentMonthMessage();
+                        monthInfoBox.classList.add('show');
+                    }
+                } else {
+                    showPaymentMonthMessage('আপনার এই মাসে Account নেই', 'warning');
+                    monthInfoBox.classList.remove('show');
                 }
-            };
-            
-            const wallet = walletApps[method];
+            } else {
+                clearPaymentMonthMessage();
+                monthInfoBox.classList.remove('show');
+            }
+        }
 
-            if (!wallet) {
-                App.showToast('Please select bKash or Nagad first', 'warning');
+        function onPaymentMethodChanged() {
+            const method = document.getElementById('paymentMethod')?.value;
+            const infoBox = document.getElementById('paymentInfoBox');
+            const appNameSpan = document.getElementById('paymentAppName');
+            const appNameHint = document.getElementById('paymentAppNameHint');
+            const numberSpan = document.getElementById('paymentNumber');
+
+            if (method === 'bkash' || method === 'nagad') {
+                selectedPaymentMethod = method;
+                const config = paymentConfig[method];
+                
+                appNameSpan.textContent = config.name;
+                appNameHint.textContent = config.name;
+                numberSpan.textContent = config.number;
+                
+                infoBox.classList.add('show');
+                
+                // Show toast
+                App.showToast(`${config.name} নম্বরে ট্যাপ করে অ্যাপ খুলুন`, 'info');
+            } else {
+                selectedPaymentMethod = '';
+                infoBox.classList.remove('show');
+            }
+        }
+
+        function openPaymentApp() {
+            if (!selectedPaymentMethod) {
+                App.showToast('প্রথমে Payment Method সিলেক্ট করুন', 'warning');
                 return;
             }
 
-            App.showToast(`Opening ${wallet.name}. After payment, enter the transaction ID.`, 'info');
-
+            const config = paymentConfig[selectedPaymentMethod];
             const isAndroid = /Android/i.test(navigator.userAgent);
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+            App.showToast(`${config.name} অ্যাপ খোলা হচ্ছে...`, 'info');
+
             if (isAndroid) {
-                window.location.href = `intent://#Intent;package=${wallet.androidPackage};end`;
+                // Try to open app via package name
+                window.location.href = `intent://#Intent;package=${config.androidPackage};end`;
+                
+                // Fallback: Open Play Store after delay
                 setTimeout(() => {
-                    window.location.href = wallet.playStore;
-                }, 1200);
-                return;
+                    window.location.href = config.playStore;
+                }, 1500);
+            } else if (isIOS) {
+                // Open App Store
+                window.location.href = config.appStore;
+            } else {
+                // Desktop/Web fallback
+                window.open(config.playStore, '_blank', 'noopener');
             }
+        }
 
-            if (isIOS) {
-                window.location.href = wallet.appStore;
-                return;
-            }
-
-            window.open(wallet.playStore, '_blank', 'noopener');
+        function copyPaymentNumber() {
+            const number = document.getElementById('paymentNumber').textContent;
+            navigator.clipboard.writeText(number).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ কপি হয়েছে!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                alert('নম্বর কপি করতে ব্যর্থ হয়েছে');
+            });
         }
 
         function startMemberContributionAutoRefresh() {
@@ -308,7 +450,7 @@
             try {
                 await FirebaseSync.syncFromFirebase();
                 initializeDashboard();
-                checkSelectedMonthStatus();
+                onMonthSelected();
             } catch (error) {
                 console.error('Member dashboard Firebase refresh failed', error);
             } finally {
@@ -327,11 +469,10 @@
 
                 html = `
                     <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                        <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
-                        <p><strong>Amount:</strong> ${App.formatCurrency(userContribution.amount)}</p>
-                        <p><strong>Status:</strong> ${statusBadge}</p>
-                        ${userContribution.paymentDate ? `<p><strong>Paid on:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
-                        ${userContribution.paymentRequestedAt && userContribution.status === 'pending' ? `<p><strong>Requested on:</strong> ${App.formatDate(userContribution.paymentRequestedAt)}</p>` : ''}
+                        <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
+                        <p><strong>💰 পরিমাণ:</strong> ${App.formatCurrency(userContribution.amount)}</p>
+                        <p><strong>📊 স্ট্যাটাস:</strong> ${statusBadge}</p>
+                        ${userContribution.paymentDate ? `<p><strong>✓ পেমেন্ট তারিখ:</strong> ${App.formatDate(userContribution.paymentDate)}</p>` : ''}
                     </div>
                 `;
             } else {
@@ -339,16 +480,16 @@
                 if (generated) {
                     html = `
                         <div style="padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                            <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
-                            <p><strong>Amount:</strong> ${App.formatCurrency(200)}</p>
-                            <p><strong>Status:</strong> <span class="table-badge badge-danger">✗ UNPAID</span></p>
+                            <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p><strong>💰 পরিমাণ:</strong> ${App.formatCurrency(200)}</p>
+                            <p><strong>📊 স্ট্যাটাস:</strong> <span class="table-badge badge-danger">✗ অপেক্ষমান</span></p>
                         </div>
                     `;
                 } else {
                     html = `
                         <div style="padding: 1rem; background: #fff6f6; border-radius: 4px;">
-                            <p><strong>Month:</strong> ${App.getMonthName(month)} ${year}</p>
-                            <p style="color:#555;">You did not have an account in this month.</p>
+                            <p><strong>📅 মাস:</strong> ${App.getMonthName(month)} ${year}</p>
+                            <p style="color:#555;">এই মাসে আপনার Account নেই।</p>
                         </div>
                     `;
                 }
@@ -359,14 +500,14 @@
 
         function getContributionStatusBadge(status) {
             if (status === 'paid') {
-                return '<span class="table-badge badge-success">PAID</span>';
+                return '<span class="table-badge badge-success">✓ পেমেন্ট হয়েছে</span>';
             }
 
             if (status === 'pending') {
-                return '<span class="table-badge badge-warning">WAITING FOR ADMIN CONFIRMATION</span>';
+                return '<span class="table-badge badge-warning">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষা</span>';
             }
 
-            return '<span class="table-badge badge-danger">UNPAID</span>';
+            return '<span class="table-badge badge-danger">✗ পেমেন্ট হয়নি</span>';
         }
 
         function loadCollectorInfo() {
@@ -380,13 +521,13 @@
                     html += `
                         <div style="padding: 1rem; background: #f9f9f9; border-left: 4px solid var(--primary-color); border-radius: 4px;">
                             <p><strong>📌 ${collector.name}</strong></p>
-                            <p style="font-size: 0.9rem; color: #666;">Phone: ${collector.phone}</p>
+                            <p style="font-size: 0.9rem; color: #666;">☎️ ${collector.phone}</p>
                         </div>
                     `;
                 });
                 html += '</div>';
             } else {
-                html = '<p style="color: #999;">No collectors assigned for this month yet.</p>';
+                html = '<p style="color: #999;">এই মাসে কালেক্টর নির্ধারণ করা হয়নি।</p>';
             }
 
             document.getElementById('collectorInfo').innerHTML = html;
@@ -408,35 +549,6 @@
                 option.value = `${m}-${y}`;
                 option.textContent = `${monthName} ${y}`;
                 select.appendChild(option);
-            }
-
-            select.addEventListener('change', checkSelectedMonthStatus);
-        }
-
-        function checkSelectedMonthStatus() {
-            const monthYear = document.getElementById('paymentMonth').value;
-
-            if (!monthYear) {
-                clearPaymentMonthMessage();
-                return;
-            }
-
-            const [month, year] = monthYear.split('-').map(Number);
-            const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
-
-            if (!contribution) {
-                showPaymentMonthMessage('You did not have an account in the selected month.', 'warning');
-                return;
-            }
-
-            if (contribution.status === 'paid') {
-                const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
-                showPaymentMonthMessage(warningMessage, 'warning');
-            } else if (contribution.status === 'pending') {
-                const warningMessage = `Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
-                showPaymentMonthMessage(warningMessage, 'warning');
-            } else {
-                clearPaymentMonthMessage();
             }
         }
 
@@ -462,20 +574,19 @@
             const paidBy = paidByInput.value.trim();
 
             if (!monthYear) {
-                App.showToast('আগে মাস সিলেক্ট করুন', 'warning');
-                showPaymentMonthMessage('আগে মাস সিলেক্ট করুন', 'warning');
+                App.showToast('প্রথমে মাস সিলেক্ট করুন', 'warning');
                 monthSelect.focus();
                 return;
             }
 
             if (!method) {
-                App.showToast('আগে Payment Method সিলেক্ট করুন', 'warning');
+                App.showToast('প্রথমে Payment Method সিলেক্ট করুন', 'warning');
                 methodSelect.focus();
                 return;
             }
 
             if (!paidBy) {
-                App.showToast('আগে Transaction ID / Paid To পূরণ করুন', 'warning');
+                App.showToast('Transaction ID / Paid To পূরণ করুন', 'warning');
                 paidByInput.focus();
                 return;
             }
@@ -483,51 +594,44 @@
             const [month, year] = monthYear.split('-').map(Number);
             const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
             
-            console.log('Current contribution:', contribution);
-
             if (!contribution) {
-                App.showToast('You did not have an account for the selected month.', 'warning');
+                App.showToast('এই মাসে আপনার Account নেই', 'warning');
                 return;
             }
 
             if (contribution.status === 'paid') {
-                const warningMessage = `⚠️ Already Payment This Month - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
-                showPaymentMonthMessage(warningMessage, 'warning');
+                App.showToast(`⚠️ ইতিমধ্যে Payment হয়েছে - ${App.getMonthName(month)} ${year}`, 'warning');
                 return;
             }
 
             if (contribution.status === 'pending') {
-                const warningMessage = `Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
-                showPaymentMonthMessage(warningMessage, 'warning');
+                App.showToast(`⏳ Payment request ইতিমধ্যে জমা দেওয়া হয়েছে`, 'warning');
                 return;
             }
 
             const result = App.recordPayment(contribution.id, method, paidBy, null);
             if (result.success) {
                 await syncPaymentRequestToFirebase(result.contribution);
-                App.showToast('Payment request submitted successfully!', 'success');
-                console.log('Payment success:', result);
+                App.showToast('✓ Payment request সফলভাবে জমা হয়েছে!', 'success');
                 
-                console.log('Immediately refreshing history...');
                 loadHistory();
                 
                 document.getElementById('paymentMonth').value = '';
-                clearPaymentMonthMessage();
-                document.getElementById('paymentMethod').value = 'cash';
-                updateWalletPaymentActions();
+                document.getElementById('paymentMethod').value = '';
                 document.getElementById('paymentPaidBy').value = '';
+                document.getElementById('monthInfoBox').classList.remove('show');
+                document.getElementById('paymentInfoBox').classList.remove('show');
+                clearPaymentMonthMessage();
                 
                 setTimeout(() => {
                     showPaymentSuccessScreen(result.contribution, method, paidBy);
                 }, 100);
                 
                 setTimeout(() => {
-                    console.log('Refreshing full dashboard...');
                     initializeDashboard();
                 }, 3000);
             } else {
-                console.error('Payment failed:', result);
-                App.showToast(result.message, 'error');
+                App.showToast(result.message || 'Payment জমা দিতে ব্যর্থ', 'error');
             }
         }
 
@@ -553,14 +657,14 @@
                 }
             } catch (error) {
                 console.error('Payment request Firebase sync failed', error);
-                App.showToast('Payment request could not be sent to Firebase. Please try again.', 'error');
+                App.showToast('Firebase এ পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', 'error');
                 throw error;
             }
         }
 
         function showPaymentSuccessScreen(contribution, method, paidBy = '') {
             const monthName = App.getMonthName(contribution.month);
-            const paidDate = new Date().toLocaleDateString('en-US', { 
+            const paidDate = new Date().toLocaleDateString('bn-BD', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric',
@@ -572,23 +676,23 @@
                 <div style="text-align: center; padding: 2rem;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
                     
-                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Request Submitted!</h2>
+                    <h2 style="color: #27ae60; margin-bottom: 1rem; font-size: 1.8rem;">Payment Request জমা হয়েছে!</h2>
                     
                     <div style="background: #d5f4e6; padding: 1.5rem; border-radius: 8px; margin: 2rem 0; text-align: left;">
-                        <p style="margin: 0.5rem 0;"><strong>Member:</strong> ${currentUser.name}</p>
-                        <p style="margin: 0.5rem 0;"><strong>Month:</strong> ${monthName} ${contribution.year}</p>
-                        <p style="margin: 0.5rem 0;"><strong>Amount:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>সদস্য:</strong> ${currentUser.name}</p>
+                        <p style="margin: 0.5rem 0;"><strong>মাস:</strong> ${monthName} ${contribution.year}</p>
+                        <p style="margin: 0.5rem 0;"><strong>পরিমাণ:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
                         <p style="margin: 0.5rem 0;"><strong>Payment Method:</strong> ${method.charAt(0).toUpperCase() + method.slice(1)}</p>
                         ${paidBy ? `<p style="margin: 0.5rem 0;"><strong>Paid By:</strong> ${paidBy}</p>` : ''}
-                        <p style="margin: 0.5rem 0;"><strong>Request Time:</strong> ${paidDate}</p>
-                        <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">WAITING FOR ADMIN CONFIRMATION</span></p>
+                        <p style="margin: 0.5rem 0;"><strong>সময়:</strong> ${paidDate}</p>
+                        <p style="margin: 0.5rem 0;"><strong>স্ট্যাটাস:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষায়</span></p>
                     </div>
 
                     <div style="background: #ecf0f1; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                        <p style="margin: 0; color: #555; font-size: 0.9rem;">Your payment request has been submitted. Admin will confirm it shortly.</p>
+                        <p style="margin: 0; color: #555; font-size: 0.9rem;">আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।</p>
                     </div>
 
-                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">Great! Close</button>
+                    <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">ঠিক আছে, বন্ধ করুন</button>
                 </div>
             `;
 
@@ -608,19 +712,19 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Month</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                            <th>মাস</th>
+                            <th>পরিমাণ</th>
+                            <th>স্ট্যাটাস</th>
                             <th>Payment Method</th>
                             <th>Paid By</th>
-                            <th>Paid Date</th>
+                            <th>পেমেন্ট তারিখ</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             if (contributions.length === 0) {
-                html += '<tr><td colspan="6" style="text-align: center; color: #999;">No contribution history</td></tr>';
+                html += '<tr><td colspan="6" style="text-align: center; color: #999;">কোন ইতিহাস নেই</td></tr>';
             } else {
                 contributions.forEach(c => {
                     const statusBadge = getContributionStatusBadge(c.status);
@@ -648,7 +752,6 @@
 
         function handlePrintReport() {
             const summary = App.getUserContributionSummary(currentUser.id);
-            const { month, year } = App.getCurrentMonthYear();
             
             let printContent = `
                 <!DOCTYPE html>
@@ -667,12 +770,7 @@
                         th { background-color: #667eea; color: white; }
                         .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
                         .summary-box { padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
-                        .summary-label { font-size: 0.9rem; color: #666; }
-                        .summary-value { font-size: 1.5rem; font-weight: bold; color: #333; }
                         .footer { margin-top: 30px; text-align: center; color: #999; font-size: 0.9rem; border-top: 1px solid #ddd; padding-top: 10px; }
-                        @media (max-width: 768px) {
-                            .summary { grid-template-columns: 1fr; }
-                        }
                         @media print { body { margin: 0; } }
                     </style>
                 </head>
@@ -681,27 +779,27 @@
                         <h1>Contribution Report</h1>
                         <p><strong>${currentUser.name}</strong></p>
                         <p>Email: ${currentUser.email} | Phone: ${currentUser.phone}</p>
-                        <p>Printed on: ${new Date().toLocaleString()}</p>
+                        <p>প্রিন্ট করা হয়েছে: ${new Date().toLocaleString()}</p>
                     </div>
 
                     <div class="section">
-                        <h2>Summary</h2>
+                        <h2>সারসংক্ষেপ</h2>
                         <div class="summary">
                             <div class="summary-box">
-                                <div class="summary-label">Total Contributions</div>
-                                <div class="summary-value">${summary.totalContributions}</div>
+                                <div>মোট Contributions</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${summary.totalContributions}</div>
                             </div>
                             <div class="summary-box">
-                                <div class="summary-label">Amount Paid</div>
-                                <div class="summary-value">${App.formatCurrency(summary.totalPaid)}</div>
+                                <div>পেমেন্ট করা পরিমাণ</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${App.formatCurrency(summary.totalPaid)}</div>
                             </div>
                             <div class="summary-box">
-                                <div class="summary-label">Amount Due</div>
-                                <div class="summary-value">${App.formatCurrency(summary.totalDue)}</div>
+                                <div>বকেয়া পরিমাণ</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${App.formatCurrency(summary.totalDue)}</div>
                             </div>
                             <div class="summary-box">
-                                <div class="summary-label">Member Since</div>
-                                <div class="summary-value">${App.formatDate(currentUser.joinDate)}</div>
+                                <div>সদস্য হিসেবে যোগ</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${App.formatDate(currentUser.joinDate)}</div>
                             </div>
                         </div>
                     </div>
@@ -711,19 +809,19 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Month</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                    <th>Payment Method</th>
+                                    <th>মাস</th>
+                                    <th>পরিমাণ</th>
+                                    <th>স্ট্যাটাস</th>
+                                    <th>Method</th>
                                     <th>Paid By</th>
-                                    <th>Paid Date</th>
+                                    <th>তারিখ</th>
                                 </tr>
                             </thead>
                             <tbody>
             `;
 
             summary.contributions.forEach(c => {
-                const statusText = c.status === 'paid' ? 'PAID' : c.status === 'pending' ? 'PENDING' : 'UNPAID';
+                const statusText = c.status === 'paid' ? '✓ পেমেন্ট' : c.status === 'pending' ? '⏳ অপেক্ষা' : '✗ অপেক্ষমান';
                 printContent += `
                     <tr>
                         <td>${App.getMonthName(c.month)} ${c.year}</td>
