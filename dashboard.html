@@ -1047,24 +1047,3 @@
 <script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
 </body>
 </html>
-        // Clear payment month message (if used elsewhere)
-        function clearPaymentMonthMessage() {
-            // Implementation based on your app structure
-            console.log('Payment month message cleared');
-        }
-
-        // Initialize payment handler on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard initialized');
-            
-            // Setup payment method change listener
-            const paymentMethod = document.getElementById('paymentMethod');
-            if (paymentMethod) {
-                paymentMethod.addEventListener('change', function() {
-                    PaymentHandler.handlePaymentMethodChange();
-                });
-            }
-        });
-    </script>
-</body>
-</html>
