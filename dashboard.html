@@ -1,76 +1,197 @@
-        function handlePaymentMethodChange() {
-            clearPaymentMonthMessage();
-
-            const method = document.getElementById('paymentMethod')?.value;
-            console.log('Payment method changed to:', method);
-            
-            if (method === 'bkash' || method === 'nagad') {
-                // Add small delay to ensure UI update completes
-                setTimeout(() => {
-                    openSelectedWalletApp();
-                }, 300);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meatapp Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .dashboard-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .dashboard-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .payment-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        .toast.success {
+            background: #4CAF50;
+        }
+        .toast.error {
+            background: #f44336;
+        }
+        .toast.warning {
+            background: #ff9800;
+        }
+        .toast.info {
+            background: #2196F3;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
         }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <p>Welcome to Meatapp Dashboard</p>
+        </div>
 
-        function openSelectedWalletApp() {
-            const method = document.getElementById('paymentMethod')?.value;
-            console.log('Opening wallet app for method:', method);
+        <!-- Payment Section -->
+        <div class="payment-section">
+            <h2>Payment Methods</h2>
             
-            const walletApps = {
-                bkash: {
-                    name: 'bKash',
-                    androidPackage: 'com.bKash.customerapp',
-                    androidIntent: 'bkash://start',
-                    fallbackUrl: 'https://www.bkash.com',
-                    appUrl: 'bkash://start'
-                },
-                nagad: {
-                    name: 'Nagad',
-                    androidPackage: 'com.konasl.nagad',
-                    androidIntent: 'nagad://start',
-                    fallbackUrl: 'https://www.nagad.com.bd',
-                    appUrl: 'nagad://start'
-                }
-            };
-            
-            const wallet = walletApps[method];
+            <div class="form-group">
+                <label for="paymentMethod">Select Payment Method:</label>
+                <select id="paymentMethod">
+                    <option value="">-- Choose a method --</option>
+                    <option value="bkash">bKash</option>
+                    <option value="nagad">Nagad</option>
+                </select>
+            </div>
 
-            if (!wallet) {
-                console.log('Wallet not found for method:', method);
-                return;
-            }
+            <div class="form-group">
+                <label for="paymentAmount">Amount:</label>
+                <input type="number" id="paymentAmount" placeholder="Enter amount" min="1">
+            </div>
 
-            console.log('Wallet configuration:', wallet);
-            App.showToast(`Opening ${wallet.name}. Pay to 01931634792, then enter the transaction ID.`, 'info');
+            <div class="form-group">
+                <label for="orderId">Order ID:</label>
+                <input type="text" id="orderId" placeholder="Enter order ID">
+            </div>
 
-            // For Android devices
-            if (/Android/i.test(navigator.userAgent)) {
-                console.log('Android device detected');
-                
-                // Method 1: Try intent scheme (most reliable for apps)
-                const intentUrl = `intent://#Intent;scheme=${method};package=${wallet.androidPackage};action=android.intent.action.VIEW;end`;
-                console.log('Attempting intent:', intentUrl);
-                window.location.href = intentUrl;
-                
-                // Fallback: if app doesn't open, show warning after delay
+            <button class="btn" onclick="PaymentHandler.handlePaymentMethodChange()">Process Payment</button>
+        </div>
+
+        <!-- Payment Verification Section (Optional) -->
+        <div class="payment-section" style="display: none;" id="verificationSection">
+            <h2>Verify Payment</h2>
+            <form id="paymentVerifyForm">
+                <div class="form-group">
+                    <label for="transactionId">Transaction ID:</label>
+                    <input type="text" id="transactionId" placeholder="Enter transaction ID" required>
+                </div>
+                <button type="submit" class="btn">Verify Payment</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Include Secure Payment Handler -->
+    <script src="secure-payment.js"></script>
+
+    <!-- Application Toast System -->
+    <script>
+        // Global App object for UI utilities
+        window.App = {
+            showToast: function(message, type = 'info') {
+                const toastDiv = document.createElement('div');
+                toastDiv.className = 'toast ' + type;
+                toastDiv.textContent = message;
+                document.body.appendChild(toastDiv);
+
+                // Auto-remove after 3 seconds
                 setTimeout(() => {
-                    if (document.visibilityState === 'visible') {
-                        console.log('App did not open, showing fallback message');
-                        App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
-                    }
-                }, 2000);
-                
-                return;
+                    toastDiv.remove();
+                }, 3000);
             }
+        };
 
-            // For iOS and other devices
-            console.log('Non-Android device, attempting app URL');
-            window.location.href = wallet.appUrl;
-            
-            setTimeout(() => {
-                if (document.visibilityState === 'visible') {
-                    console.log('App did not open, showing fallback message');
-                    App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
-                }
-            }, 2000);
+        // Clear payment month message (if used elsewhere)
+        function clearPaymentMonthMessage() {
+            // Implementation based on your app structure
+            console.log('Payment month message cleared');
         }
+
+        // Initialize payment handler on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard initialized');
+            
+            // Setup payment method change listener
+            const paymentMethod = document.getElementById('paymentMethod');
+            if (paymentMethod) {
+                paymentMethod.addEventListener('change', function() {
+                    PaymentHandler.handlePaymentMethodChange();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
