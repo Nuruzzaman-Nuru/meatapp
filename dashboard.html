@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,7 +92,6 @@
                         <option value="cash">Cash</option>
                         <option value="bkash">bKash</option>
                         <option value="nagad">Nagad</option>
-    
                     </select>
                 </div>
 
@@ -104,18 +102,15 @@
                     </small>
                 </div>
 
-            
-
                 <div class="form-group">
-    <label for="paymentPaidBy">Transaction ID / Paid To</label>
-    
-    <input 
-        type="text" 
-        id="paymentPaidBy" 
-        placeholder="e.g., TrxID: 8HG72K or Nuru"
-      required
-    />
-</div>
+                    <label for="paymentPaidBy">Transaction ID / Paid To</label>
+                    <input 
+                        type="text" 
+                        id="paymentPaidBy" 
+                        placeholder="e.g., TrxID: 8HG72K or Nuru"
+                        required
+                    />
+                </div>
 
                 <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">Mark as Paid</button>
             </div>
@@ -225,164 +220,53 @@
             if (!walletName) {
                 actions.style.display = 'none';
                 return;
-        function handlePaymentMethodChange() {
-            clearPaymentMonthMessage();
-
-            const method = document.getElementById('paymentMethod')?.value;
-            console.log('Payment method changed to:', method);
-            
-            if (method === 'bkash' || method === 'nagad') {
-                // Add small delay to ensure UI update completes
-                setTimeout(() => {
-                    openSelectedWalletApp();
-                }, 300);
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meatapp Dashboard</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .dashboard-header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .dashboard-header h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .payment-section {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-        }
-        .btn {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-        .btn:hover {
-            background: #45a049;
-        }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 4px;
-            color: white;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-in-out;
-        }
-        .toast.success {
-            background: #4CAF50;
-        }
-        .toast.error {
-            background: #f44336;
-        }
-        .toast.warning {
-            background: #ff9800;
-        }
-        .toast.info {
-            background: #2196F3;
-        }
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
             }
 
             button.textContent = `Open ${walletName} App`;
             hint.textContent = `Pay manually in ${walletName}, then enter the transaction ID below.`;
             actions.style.display = 'block';
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Dashboard Header -->
-        <div class="dashboard-header">
-            <h1>Dashboard</h1>
-            <p>Welcome to Meatapp Dashboard</p>
-        </div>
 
-        <!-- Payment Section -->
-        <div class="payment-section">
-            <h2>Payment Methods</h2>
+        function handlePaymentMethodChange() {
+            clearPaymentMonthMessage();
+            const method = document.getElementById('paymentMethod')?.value;
+            console.log('Payment method changed to:', method);
             
+            if (method === 'bkash' || method === 'nagad') {
+                setTimeout(() => {
+                    openSelectedWalletApp();
+                }, 300);
+            }
+        }
 
+        function openSelectedWalletApp() {
+            const method = document.getElementById('paymentMethod')?.value;
+            console.log('Opening wallet app for method:', method);
+            
             const walletApps = {
                 bkash: {
                     name: 'bKash',
                     androidPackage: 'com.bKash.customerapp',
                     androidIntent: 'bkash://start',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
+                    appStore: 'https://apps.apple.com/app/bkash/id1146643852',
                     fallbackUrl: 'https://www.bkash.com',
                     appUrl: 'bkash://start'
                 },
                 nagad: {
                     name: 'Nagad',
-
-                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
-                    appStore: 'https://apps.apple.com/app/nagad/id1471844924'
-
+                    androidPackage: 'com.konasl.nagad',
                     androidIntent: 'nagad://start',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
+                    appStore: 'https://apps.apple.com/app/nagad/id1471844924',
                     fallbackUrl: 'https://www.nagad.com.bd',
                     appUrl: 'nagad://start'
-
                 }
             };
             
             const wallet = walletApps[method];
 
             if (!wallet) {
-
                 App.showToast('Please select bKash or Nagad first', 'warning');
                 return;
             }
@@ -412,79 +296,11 @@
             if (memberContributionRefreshTimer) return;
 
             memberContributionRefreshTimer = setInterval(() => {
-
-                console.log('Wallet not found for method:', method);
-                return;
-            }
-
-            <div class="form-group">
-                <label for="paymentMethod">Select Payment Method:</label>
-                <select id="paymentMethod">
-                    <option value="">-- Choose a method --</option>
-                    <option value="bkash">bKash</option>
-                    <option value="nagad">Nagad</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="paymentAmount">Amount:</label>
-                <input type="number" id="paymentAmount" placeholder="Enter amount" min="1">
-            </div>
-
-            <div class="form-group">
-                <label for="orderId">Order ID:</label>
-                <input type="text" id="orderId" placeholder="Enter order ID">
-            </div>
-
-            <button class="btn" onclick="PaymentHandler.handlePaymentMethodChange()">Process Payment</button>
-        </div>
-
-        <!-- Payment Verification Section (Optional) -->
-        <div class="payment-section" style="display: none;" id="verificationSection">
-            <h2>Verify Payment</h2>
-            <form id="paymentVerifyForm">
-                <div class="form-group">
-                    <label for="transactionId">Transaction ID:</label>
-                    <input type="text" id="transactionId" placeholder="Enter transaction ID" required>
-                </div>
-                <button type="submit" class="btn">Verify Payment</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Include Secure Payment Handler -->
-    <script src="secure-payment.js"></script>
-
-    <!-- Application Toast System -->
-    <script>
-        // Global App object for UI utilities
-        window.App = {
-            showToast: function(message, type = 'info') {
-                const toastDiv = document.createElement('div');
-                toastDiv.className = 'toast ' + type;
-                toastDiv.textContent = message;
-                document.body.appendChild(toastDiv);
-
-                // Auto-remove after 3 seconds
-                setTimeout(() => {
-                    toastDiv.remove();
-                }, 3000);
-            }
-        };
-
-
-            // For iOS and other devices
-            console.log('Non-Android device, attempting app URL');
-            window.location.href = wallet.appUrl;
-            
-            setTimeout(() => {
-
-                if (document.visibilityState === 'visible') {
-                    console.log('App did not open, showing fallback message');
-                    App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
-                }
-            }, 2000);
+                if (!AuthManager.isLoggedIn()) return;
+                refreshMemberDashboardFromFirebase();
+            }, 30000);
         }
+
         async function refreshMemberDashboardFromFirebase() {
             if (!window.FirebaseSync?.enabled || memberContributionRefreshInProgress) return;
 
@@ -519,7 +335,6 @@
                     </div>
                 `;
             } else {
-                // Try to generate if not exists (will be null if user joined after this month)
                 const generated = StorageManager.getOrCreateContribution(currentUser.id, month, year);
                 if (generated) {
                     html = `
@@ -581,7 +396,6 @@
             const select = document.getElementById('paymentMonth');
             const { month, year } = App.getCurrentMonthYear();
 
-            // Add last 12 months
             for (let i = 11; i >= 0; i--) {
                 let m = month - i;
                 let y = year;
@@ -596,7 +410,6 @@
                 select.appendChild(option);
             }
 
-            // Add change listener
             select.addEventListener('change', checkSelectedMonthStatus);
         }
 
@@ -646,8 +459,6 @@
             const paidByInput = document.getElementById('paymentPaidBy');
             const monthYear = monthSelect.value;
             const method = methodSelect.value;
-            const proofFileInput = document.getElementById('paymentProof');
-            const proofFile = proofFileInput ? proofFileInput.files[0] : null;
             const paidBy = paidByInput.value.trim();
 
             if (!monthYear) {
@@ -691,82 +502,32 @@
                 return;
             }
 
-            // If proof file exists, convert to base64
-            if (proofFile) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const paymentProof = e.target.result;
-                    const result = App.recordPayment(contribution.id, method, paidBy, paymentProof);
-                    if (result.success) {
-                        await syncPaymentRequestToFirebase(result.contribution);
-                        // Show immediate success toast
-                        App.showToast('Payment request submitted successfully!', 'success');
-                        console.log('Payment success:', result);
-                        
-                        // IMMEDIATELY refresh history
-                        console.log('Immediately refreshing history (file)...');
-                        loadHistory();
-                        
-                        // Reset form
-                        document.getElementById('paymentMonth').value = '';
-                        clearPaymentMonthMessage();
-                        document.getElementById('paymentMethod').value = 'cash';
-                        updateWalletPaymentActions();
-                        const proofInput = document.getElementById('paymentProof');
-                        if (proofInput) proofInput.value = '';
-                        document.getElementById('paymentPaidBy').value = '';
-                        
-                        // Show detailed success modal
-                        setTimeout(() => {
-                            showPaymentSuccessScreen(result.contribution, method, paidBy);
-                        }, 100);
-                        
-                        // Full refresh after modal
-                        setTimeout(() => {
-                            console.log('Refreshing full dashboard (file)...');
-                            initializeDashboard();
-                        }, 3000);
-                    } else {
-                        console.error('Payment failed (file):', result);
-                        App.showToast(result.message, 'error');
-                    }
-                };
-                reader.readAsDataURL(proofFile);
+            const result = App.recordPayment(contribution.id, method, paidBy, null);
+            if (result.success) {
+                await syncPaymentRequestToFirebase(result.contribution);
+                App.showToast('Payment request submitted successfully!', 'success');
+                console.log('Payment success:', result);
+                
+                console.log('Immediately refreshing history...');
+                loadHistory();
+                
+                document.getElementById('paymentMonth').value = '';
+                clearPaymentMonthMessage();
+                document.getElementById('paymentMethod').value = 'cash';
+                updateWalletPaymentActions();
+                document.getElementById('paymentPaidBy').value = '';
+                
+                setTimeout(() => {
+                    showPaymentSuccessScreen(result.contribution, method, paidBy);
+                }, 100);
+                
+                setTimeout(() => {
+                    console.log('Refreshing full dashboard...');
+                    initializeDashboard();
+                }, 3000);
             } else {
-                const result = App.recordPayment(contribution.id, method, paidBy, null);
-                if (result.success) {
-                    await syncPaymentRequestToFirebase(result.contribution);
-                    // Show immediate success toast
-                    App.showToast('Payment request submitted successfully!', 'success');
-                    console.log('Payment success:', result);
-                    
-                    // IMMEDIATELY refresh the history to show updated status
-                    console.log('Immediately refreshing history...');
-                    loadHistory();
-                    
-                    // Reset form immediately
-                    document.getElementById('paymentMonth').value = '';
-                    clearPaymentMonthMessage();
-                    document.getElementById('paymentMethod').value = 'cash';
-                    updateWalletPaymentActions();
-                    const proofInputEl = document.getElementById('paymentProof');
-                    if (proofInputEl) proofInputEl.value = '';
-                    document.getElementById('paymentPaidBy').value = '';
-                    
-                    // Show detailed success modal
-                    setTimeout(() => {
-                        showPaymentSuccessScreen(result.contribution, method, paidBy);
-                    }, 100);
-                    
-                    // Refresh dashboard stats after modal
-                    setTimeout(() => {
-                        console.log('Refreshing full dashboard...');
-                        initializeDashboard();
-                    }, 3000);
-                } else {
-                    console.error('Payment failed (no file):', result);
-                    App.showToast(result.message, 'error');
-                }
+                console.error('Payment failed:', result);
+                App.showToast(result.message, 'error');
             }
         }
 
@@ -792,51 +553,9 @@
                 }
             } catch (error) {
                 console.error('Payment request Firebase sync failed', error);
-                rollbackLocalPaymentRequest(submittedContribution);
                 App.showToast('Payment request could not be sent to Firebase. Please try again.', 'error');
                 throw error;
             }
-        }
-
-        function rollbackLocalPaymentRequest(submittedContribution) {
-            if (!submittedContribution?.id) return;
-
-            StorageManager.updateContribution(submittedContribution.id, {
-                status: 'unpaid',
-                paymentMethod: null,
-                paymentRequestedAt: null,
-                paidBy: null,
-                paymentProof: null
-            });
-        }
-
-        function preserveSubmittedPaymentRequest(submittedContribution) {
-            if (!submittedContribution) return;
-
-            const contributions = StorageManager.getContributions();
-            const existingIndex = contributions.findIndex(c =>
-                Number(c.id) === Number(submittedContribution.id) ||
-                (
-                    Number(c.userId) === Number(submittedContribution.userId) &&
-                    Number(c.month) === Number(submittedContribution.month) &&
-                    Number(c.year) === Number(submittedContribution.year)
-                )
-            );
-
-            if (existingIndex >= 0) {
-                contributions[existingIndex] = {
-                    ...contributions[existingIndex],
-                    ...submittedContribution,
-                    status: 'pending'
-                };
-            } else {
-                contributions.push({
-                    ...submittedContribution,
-                    status: 'pending'
-                });
-            }
-
-            localStorage.setItem(StorageManager.KEYS.CONTRIBUTIONS, JSON.stringify(contributions));
         }
 
         function showPaymentSuccessScreen(contribution, method, paidBy = '') {
@@ -861,7 +580,6 @@
                         <p style="margin: 0.5rem 0;"><strong>Amount:</strong> <span style="font-size: 1.2rem; color: #27ae60; font-weight: bold;">${App.formatCurrency(contribution.amount)}</span></p>
                         <p style="margin: 0.5rem 0;"><strong>Payment Method:</strong> ${method.charAt(0).toUpperCase() + method.slice(1)}</p>
                         ${paidBy ? `<p style="margin: 0.5rem 0;"><strong>Paid By:</strong> ${paidBy}</p>` : ''}
-                        ${contribution.paymentProof ? `<p style="margin: 0.5rem 0;"><strong>Receipt:</strong> <span style="color: #27ae60; font-weight: bold;">✓ Uploaded</span></p>` : ''}
                         <p style="margin: 0.5rem 0;"><strong>Request Time:</strong> ${paidDate}</p>
                         <p style="margin: 0.5rem 0;"><strong>Status:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">WAITING FOR ADMIN CONFIRMATION</span></p>
                     </div>
@@ -883,7 +601,7 @@
             const contributions = summary.contributions.sort((a, b) => {
                 const aKey = a.year * 12 + a.month;
                 const bKey = b.year * 12 + b.month;
-                return bKey - aKey; // Newest first
+                return bKey - aKey;
             });
 
             let html = `
@@ -955,10 +673,6 @@
                         @media (max-width: 768px) {
                             .summary { grid-template-columns: 1fr; }
                         }
-                        @media (max-width: 480px) {
-                            .summary { grid-template-columns: 1fr; }
-                            .summary-box { padding: 12px; }
-                        }
                         @media print { body { margin: 0; } }
                     </style>
                 </head>
@@ -1001,49 +715,49 @@
                                     <th>Amount</th>
                                     <th>Status</th>
                                     <th>Payment Method</th>
+                                    <th>Paid By</th>
                                     <th>Paid Date</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${summary.contributions.sort((a, b) => {
-                                    const aKey = a.year * 12 + a.month;
-                                    const bKey = b.year * 12 + b.month;
-                                    return bKey - aKey;
-                                }).map(c => `
-                                    <tr>
-                                        <td>${App.getMonthName(c.month)} ${c.year}</td>
-                                        <td>${App.formatCurrency(c.amount)}</td>
-                                        <td>${c.status === 'paid' ? 'PAID' : c.status === 'pending' ? 'PENDING ADMIN CONFIRMATION' : 'UNPAID'}</td>
-                                        <td>${c.paymentMethod || '-'}</td>
-                                        <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
-                                    </tr>
-                                `).join('')}
+            `;
+
+            summary.contributions.forEach(c => {
+                const statusText = c.status === 'paid' ? 'PAID' : c.status === 'pending' ? 'PENDING' : 'UNPAID';
+                printContent += `
+                    <tr>
+                        <td>${App.getMonthName(c.month)} ${c.year}</td>
+                        <td>${App.formatCurrency(c.amount)}</td>
+                        <td>${statusText}</td>
+                        <td>${c.paymentMethod || '-'}</td>
+                        <td>${c.paidBy || '-'}</td>
+                        <td>${c.paymentDate ? App.formatDate(c.paymentDate) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
                             </tbody>
                         </table>
                     </div>
 
                     <div class="footer">
-                        <p>মাংসের সমিতি - Contribution Management System</p>
-                        <p>This is an official report. Please keep it safe for your records.</p>
+                        <p>Generated on ${new Date().toLocaleString()}</p>
                     </div>
                 </body>
                 </html>
             `;
-            
-            const printWindow = window.open('', 'printReport', 'height=600,width=900');
+
+            const printWindow = window.open('', '_blank');
             printWindow.document.write(printContent);
             printWindow.document.close();
-            setTimeout(() => { printWindow.print(); }, 250);
+            printWindow.print();
         }
 
         function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
-                AuthManager.logout();
-                window.location.href = 'index.html';
-            }
+            AuthManager.logout();
+            window.location.href = 'login.html';
         }
     </script>
-    <script type="module" src="firebase-config.js"></script>
-<script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
 </body>
 </html>
