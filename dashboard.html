@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> cecfa2342b66f4ad2b0e0c52de2ee0be59a48f56
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#2c3e50">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -229,7 +225,6 @@
             if (!walletName) {
                 actions.style.display = 'none';
                 return;
-=======
         function handlePaymentMethodChange() {
             clearPaymentMonthMessage();
 
@@ -241,8 +236,6 @@
                 setTimeout(() => {
                     openSelectedWalletApp();
                 }, 300);
->>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
-=======
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meatapp Dashboard</title>
     <style>
@@ -344,7 +337,6 @@
             to {
                 transform: translateX(0);
                 opacity: 1;
->>>>>>> cecfa2342b66f4ad2b0e0c52de2ee0be59a48f56
             }
 
             button.textContent = `Open ${walletName} App`;
@@ -365,38 +357,32 @@
         <div class="payment-section">
             <h2>Payment Methods</h2>
             
-<<<<<<< HEAD
+
             const walletApps = {
                 bkash: {
                     name: 'bKash',
                     androidPackage: 'com.bKash.customerapp',
-<<<<<<< HEAD
-                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
-                    appStore: 'https://apps.apple.com/app/bkash/id1351183172'
-=======
                     androidIntent: 'bkash://start',
                     fallbackUrl: 'https://www.bkash.com',
                     appUrl: 'bkash://start'
->>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
                 },
                 nagad: {
                     name: 'Nagad',
-                    androidPackage: 'com.konasl.nagad',
-<<<<<<< HEAD
+
                     playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
                     appStore: 'https://apps.apple.com/app/nagad/id1471844924'
-=======
+
                     androidIntent: 'nagad://start',
                     fallbackUrl: 'https://www.nagad.com.bd',
                     appUrl: 'nagad://start'
->>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
+
                 }
             };
             
             const wallet = walletApps[method];
 
             if (!wallet) {
-<<<<<<< HEAD
+
                 App.showToast('Please select bKash or Nagad first', 'warning');
                 return;
             }
@@ -426,11 +412,11 @@
             if (memberContributionRefreshTimer) return;
 
             memberContributionRefreshTimer = setInterval(() => {
-=======
+
                 console.log('Wallet not found for method:', method);
                 return;
             }
-=======
+
             <div class="form-group">
                 <label for="paymentMethod">Select Payment Method:</label>
                 <select id="paymentMethod">
@@ -444,7 +430,6 @@
                 <label for="paymentAmount">Amount:</label>
                 <input type="number" id="paymentAmount" placeholder="Enter amount" min="1">
             </div>
->>>>>>> cecfa2342b66f4ad2b0e0c52de2ee0be59a48f56
 
             <div class="form-group">
                 <label for="orderId">Order ID:</label>
@@ -487,21 +472,19 @@
             }
         };
 
-<<<<<<< HEAD
+
             // For iOS and other devices
             console.log('Non-Android device, attempting app URL');
             window.location.href = wallet.appUrl;
             
             setTimeout(() => {
->>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
+
                 if (document.visibilityState === 'visible') {
                     console.log('App did not open, showing fallback message');
                     App.showToast(`${wallet.name} app may not be installed. Try copying the number 01931634792 and opening ${wallet.name} manually.`, 'warning');
                 }
             }, 2000);
         }
-<<<<<<< HEAD
-
         async function refreshMemberDashboardFromFirebase() {
             if (!window.FirebaseSync?.enabled || memberContributionRefreshInProgress) return;
 
@@ -1064,9 +1047,6 @@
 <script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
 </body>
 </html>
-=======
->>>>>>> 6072856ad85389a26023cbe2c1ef3bb9557a77a9
-=======
         // Clear payment month message (if used elsewhere)
         function clearPaymentMonthMessage() {
             // Implementation based on your app structure
@@ -1088,4 +1068,3 @@
     </script>
 </body>
 </html>
->>>>>>> cecfa2342b66f4ad2b0e0c52de2ee0be59a48f56
