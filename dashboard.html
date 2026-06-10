@@ -180,27 +180,36 @@
             <div class="card">
                 <h2>💳 Record Payment</h2>
                 
-                <!-- Month Selection -->
-                <div class="form-group">
-                    <label for="paymentMonth">Select Month <span style="color: red;">*</span></label>
-                    <!-- <select id="paymentMonth" onchange="onMonthSelected()"> -->
-                        <option value="">-- Select Month --</option>
-                    </select>
-                </div>
+              <!-- Month Selection -->
+<div class="form-group">
+    <label for="paymentMonth">
+        Select Month <span style="color:red;">*</span>
+    </label>
 
-                <!-- Month Info Message -->
-                <div id="monthInfoBox" class="month-info-box">
-                    <p style="margin: 0; font-weight: bold; color: #856404;">
-                        ✓ Send money to this number and submit after completing the payment.
-                    </p>
-                      <span id="paymentAppNameHint"></span> Number:
-                        </div>
-                        <div class="payment-number" id="paymentNumber">01931634792</div>
-                           <button class="copy-btn" onclick="copyPaymentNumber()">📋 Copy Number</button>
-                </div>
+    <select id="paymentMonth" onchange="onMonthSelected()">
+        <option value="">-- Select Month --</option>
+    </select>
+</div>
 
-                <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
+<!-- Month Info Message -->
+<div id="monthInfoBox" class="month-info-box">
+    <p style="margin:0;font-weight:bold;color:#856404;">
+        ✓ Send money to this number and submit after completing the payment.
+    </p>
 
+    <div style="margin-top:10px;">
+        <strong>bKash / Nagad Number:</strong>
+        <div class="payment-number">01931634792</div>
+    </div>
+
+    <button type="button"
+            class="copy-btn"
+            onclick="copyPaymentNumber()">
+        📋 Copy Number
+    </button>
+</div>
+
+<div id="paymentMonthMessage" class="alert" style="display:none;"></div>
                 <!-- Payment Method Selection -->
                 <div class="form-group">
                     <label for="paymentMethod">Payment Method <span style="color: red;">*</span></label>
@@ -873,6 +882,7 @@
             AuthManager.logout();
             window.location.href = 'login.html';
         }
+        document.getElementById('monthInfoBox').classList.add('show');
     </script>
 </body>
 </html>
