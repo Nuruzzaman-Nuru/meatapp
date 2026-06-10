@@ -86,18 +86,21 @@
 
                 <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
 
-                <div class="alert alert-info">
-                    Please send money to this bKash/Nagad number: <strong>01931634792</strong>
-                </div>
-
                 <div class="form-group">
                     <label for="paymentMethod">Payment Method</label>
                     <select id="paymentMethod">
-                        <option value="">-- Select --</option>
                         <option value="cash">Cash</option>
                         <option value="bkash">bKash</option>
                         <option value="nagad">Nagad</option>
+    
                     </select>
+                </div>
+
+                <div id="mobileWalletActions" class="form-group" style="display: none;">
+                    <button id="openWalletAppBtn" class="btn btn-primary btn-block" type="button" onclick="openSelectedWalletApp()">Open Payment App</button>
+                    <small id="walletPaymentHint" style="color: #6b7280; display: block; margin-top: 0.4rem;">
+                        Pay manually in the app, then enter the transaction ID below.
+                    </small>
                 </div>
 
             
@@ -201,16 +204,31 @@
             const paymentMethod = document.getElementById('paymentMethod');
             if (!paymentMethod) return;
 
-            paymentMethod.addEventListener('change', handlePaymentMethodChange);
+            paymentMethod.addEventListener('change', updateWalletPaymentActions);
+            updateWalletPaymentActions();
         }
 
-        function handlePaymentMethodChange() {
-            clearPaymentMonthMessage();
-
+        function updateWalletPaymentActions() {
             const method = document.getElementById('paymentMethod')?.value;
-            if (method === 'bkash' || method === 'nagad') {
-                openSelectedWalletApp();
+            const actions = document.getElementById('mobileWalletActions');
+            const button = document.getElementById('openWalletAppBtn');
+            const hint = document.getElementById('walletPaymentHint');
+            const walletNames = {
+                bkash: 'bKash',
+                nagad: 'Nagad'
+            };
+
+            if (!actions || !button || !hint) return;
+
+            const walletName = walletNames[method];
+            if (!walletName) {
+                actions.style.display = 'none';
+                return;
             }
+
+            button.textContent = `Open ${walletName} App`;
+            hint.textContent = `Pay manually in ${walletName}, then enter the transaction ID below.`;
+            actions.style.display = 'block';
         }
 
         function openSelectedWalletApp() {
@@ -218,40 +236,43 @@
             const walletApps = {
                 bkash: {
                     name: 'bKash',
-                    androidIntent: 'intent://#Intent;package=com.bKash.customerapp;S.browser_fallback_url=',
-                    appUrl: 'bkash://'
+                    androidPackage: 'com.bKash.customerapp',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.bKash.customerapp',
+                    appStore: 'https://apps.apple.com/app/bkash/id1351183172'
                 },
                 nagad: {
                     name: 'Nagad',
-                    androidIntent: 'intent://open/#Intent;scheme=nagad;package=com.konasl.nagad;end',
-                    appUrl: 'nagad://'
+                    androidPackage: 'com.konasl.nagad',
+                    playStore: 'https://play.google.com/store/apps/details?id=com.konasl.nagad',
+                    appStore: 'https://apps.apple.com/app/nagad/id1471844924'
                 }
             };
             const wallet = walletApps[method];
 
-            if (!wallet) return;
-
-            App.showToast(`Opening ${wallet.name}. Pay to 01931634792, then enter the transaction ID.`, 'info');
-
-            const fallbackTimer = setTimeout(() => {
-                if (document.visibilityState === 'visible') {
-                    App.showToast(`${wallet.name} app did not open. Please open it manually.`, 'warning');
-                }
-            }, 1500);
-
-            window.addEventListener('blur', () => clearTimeout(fallbackTimer), { once: true });
-
-            if (/Android/i.test(navigator.userAgent) && wallet.androidIntent) {
-                window.location.href = `${wallet.androidIntent}${encodeURIComponent(window.location.href)};end`;
-                setTimeout(() => {
-                    if (document.visibilityState === 'visible') {
-                        window.location.href = wallet.appUrl;
-                    }
-                }, 300);
+            if (!wallet) {
+                App.showToast('Please select bKash or Nagad first', 'warning');
                 return;
             }
 
-            window.location.href = wallet.appUrl;
+            App.showToast(`Opening ${wallet.name}. After payment, enter the transaction ID.`, 'info');
+
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+            if (isAndroid) {
+                window.location.href = `intent://#Intent;package=${wallet.androidPackage};end`;
+                setTimeout(() => {
+                    window.location.href = wallet.playStore;
+                }, 1200);
+                return;
+            }
+
+            if (isIOS) {
+                window.location.href = wallet.appStore;
+                return;
+            }
+
+            window.open(wallet.playStore, '_blank', 'noopener');
         }
 
         function startMemberContributionAutoRefresh() {
@@ -402,9 +423,7 @@
                 const warningMessage = `Payment request already submitted - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                 showPaymentMonthMessage(warningMessage, 'warning');
             } else {
-                const paymentMessage = 'Please send money to this bKash/Nagad number: 01931634792. Then select bKash or Nagad below.';
-                showPaymentMonthMessage(paymentMessage, 'info');
-                App.showToast(paymentMessage, 'info');
+                clearPaymentMonthMessage();
             }
         }
 
@@ -491,7 +510,8 @@
                         // Reset form
                         document.getElementById('paymentMonth').value = '';
                         clearPaymentMonthMessage();
-                        document.getElementById('paymentMethod').value = '';
+                        document.getElementById('paymentMethod').value = 'cash';
+                        updateWalletPaymentActions();
                         const proofInput = document.getElementById('paymentProof');
                         if (proofInput) proofInput.value = '';
                         document.getElementById('paymentPaidBy').value = '';
@@ -527,7 +547,8 @@
                     // Reset form immediately
                     document.getElementById('paymentMonth').value = '';
                     clearPaymentMonthMessage();
-                    document.getElementById('paymentMethod').value = '';
+                    document.getElementById('paymentMethod').value = 'cash';
+                    updateWalletPaymentActions();
                     const proofInputEl = document.getElementById('paymentProof');
                     if (proofInputEl) proofInputEl.value = '';
                     document.getElementById('paymentPaidBy').value = '';
