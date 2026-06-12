@@ -116,6 +116,8 @@
             padding: 1rem 1rem 0.75rem;
             background: #f0fdf4;
             border-bottom: 1px solid #dcfce7;
+            position: relative;
+            padding-right: 3rem;
         }
         .payment-success-icon {
             width: 34px;
@@ -141,6 +143,32 @@
             color: #4b5563;
             font-size: 0.88rem;
             line-height: 1.4;
+        }
+        .payment-success-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            width: 32px;
+            height: 32px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(22, 101, 52, 0.08);
+            color: #166534;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            line-height: 1;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .payment-success-close:hover {
+            background: rgba(22, 101, 52, 0.16);
+            transform: scale(1.04);
+        }
+        .payment-success-close:focus-visible {
+            outline: 2px solid #16a34a;
+            outline-offset: 2px;
         }
         .payment-success-body {
             padding: 1rem;
@@ -386,6 +414,7 @@
         let memberContributionRefreshInProgress = false;
         let selectedPaymentMethod = '';
         let selectedPaymentMonthYear = '';
+        let paymentSuccessHideTimer = null;
 
         // Payment configuration
         const paymentConfig = {
@@ -881,6 +910,7 @@
                         <p class="payment-success-title">Payment Request জমা হয়েছে</p>
                         <p class="payment-success-subtitle">প্রশাসক যাচাই করার পর আপনার payment confirmed হবে।</p>
                     </div>
+                    <button class="payment-success-close" type="button" onclick="hidePaymentSuccessBanner()" aria-label="Hide payment confirmation">&times;</button>
                 </div>
                 <div class="payment-success-body">
                     <div class="payment-success-amount">
@@ -909,6 +939,23 @@
                 </div>
             `;
             banner.style.display = 'block';
+            if (paymentSuccessHideTimer) {
+                clearTimeout(paymentSuccessHideTimer);
+            }
+            paymentSuccessHideTimer = setTimeout(() => {
+                hidePaymentSuccessBanner();
+            }, 5000);
+        }
+
+        function hidePaymentSuccessBanner() {
+            const banner = document.getElementById('paymentSuccessBanner');
+            if (!banner) return;
+
+            banner.style.display = 'none';
+            if (paymentSuccessHideTimer) {
+                clearTimeout(paymentSuccessHideTimer);
+                paymentSuccessHideTimer = null;
+            }
         }
 
         function formatPaymentMethodName(method) {
