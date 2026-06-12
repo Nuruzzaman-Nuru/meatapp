@@ -197,15 +197,62 @@ const AuthManager = {
         const firebaseMaxId = firebaseUsers.reduce((max, user) => {
             return Math.max(max, Number(user.id) || 0);
         }, 0);
+        const localDeletedMaxId = this.getLocalDeletedUserMaxId();
+        const firebaseDeletedMaxId = await this.getFirebaseDeletedUserMaxId();
         const keyMaxId = await this.getFirebaseUserKeyMaxId();
         const metaCount = await this.getFirebaseUsersMetaCount();
-        const maxKnownId = Math.max(localMaxId, firebaseMaxId, keyMaxId, metaCount);
+        const maxKnownId = Math.max(
+            localMaxId,
+            firebaseMaxId,
+            localDeletedMaxId,
+            firebaseDeletedMaxId,
+            keyMaxId,
+            metaCount
+        );
 
         if (maxKnownId > 0) {
             return maxKnownId + 1;
         }
 
         return Date.now();
+    },
+
+    getLocalDeletedUserMaxId() {
+        if (!StorageManager.getDeletedUserIds) return 0;
+
+        return StorageManager.getDeletedUserIds().reduce((max, userId) => {
+            return Math.max(max, Number(userId) || 0);
+        }, 0);
+    },
+
+    async getFirebaseDeletedUserMaxId() {
+        try {
+            const databaseURL = this.getFirebaseDatabaseURL();
+            const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+            if (!databaseURL) return 0;
+
+            const response = await this.fetchWithTimeout(`${databaseURL}/${basePath}/deletedUserIds.json`, {
+                cache: 'no-store'
+            }, 5000);
+
+            if (!response.ok) return 0;
+
+            const value = await response.json();
+            if (!value) return 0;
+
+            const ids = Array.isArray(value)
+                ? value
+                : typeof value === 'object'
+                    ? Object.entries(value).map(([key, item]) => item === true ? key : item)
+                    : [value];
+
+            return ids.reduce((max, userId) => {
+                return Math.max(max, Number(userId) || 0);
+            }, 0);
+        } catch (error) {
+            console.warn('Firebase deleted user id scan failed', error);
+            return 0;
+        }
     },
 
     async getFirebaseUserKeyMaxId() {
@@ -437,6 +484,7 @@ const AuthManager = {
                 throw new Error(`Firebase users write failed: ${response.status}`);
             }
 
+            await this.clearDeletedUserMarker(newUser.id);
             await this.saveUserIndexesToFirebase(newUser);
             await this.updateUsersMetaInFirebase();
             return true;
@@ -444,6 +492,23 @@ const AuthManager = {
             console.error('Firebase users write failed', error);
             return false;
         }
+    },
+
+    async clearDeletedUserMarker(userId) {
+        const numericUserId = Number(userId);
+        if (!Number.isFinite(numericUserId) || numericUserId <= 0) return;
+
+        if (StorageManager.getDeletedUserIds) {
+            const deletedIds = StorageManager.getDeletedUserIds()
+                .filter(deletedId => Number(deletedId) !== numericUserId);
+            localStorage.setItem(StorageManager.KEYS.DELETED_USER_IDS, JSON.stringify(deletedIds));
+        }
+
+        const databaseURL = this.getFirebaseDatabaseURL();
+        const basePath = window.FirebaseSync?.basePath || this.firebaseUsersPath.replace(/\/users$/, '');
+        if (!databaseURL) return;
+
+        await this.putFirebaseValue(`${basePath}/deletedUserIds/${numericUserId}`, null);
     },
 
     async updateUsersMetaInFirebase() {

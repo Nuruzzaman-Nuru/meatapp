@@ -290,12 +290,12 @@ const FirebaseSync = {
         if (keyMap.deletedUserIds) {
             const deletedIds = await this.readDeletedUserIdsFromFirebase().catch(error => {
                 console.warn('Firebase deleted user ids read failed. Continuing without deleted id refresh.', error);
-                return [];
+                return null;
             });
-            if (deletedIds.length > 0) {
-                const localDeletedIds = this.getLocalItems(keyMap.deletedUserIds);
-                const mergedDeletedIds = [...new Set([...localDeletedIds, ...deletedIds].map(id => Number(id)))];
-                localStorage.setItem(keyMap.deletedUserIds, JSON.stringify(mergedDeletedIds));
+
+            if (deletedIds) {
+                const cloudDeletedIds = [...new Set(deletedIds.map(id => Number(id)))];
+                localStorage.setItem(keyMap.deletedUserIds, JSON.stringify(cloudDeletedIds));
                 this.purgeDeletedUsersLocally();
             }
         }
