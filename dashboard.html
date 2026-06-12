@@ -284,6 +284,7 @@
         let memberContributionRefreshTimer = null;
         let memberContributionRefreshInProgress = false;
         let selectedPaymentMethod = '';
+        let selectedPaymentMonthYear = '';
 
         // Payment configuration
         const paymentConfig = {
@@ -352,10 +353,14 @@
             const monthInfoBox = document.getElementById('monthInfoBox');
             const methodSelect = document.getElementById('paymentMethod');
             const paymentInfoBox = document.getElementById('paymentInfoBox');
+            const monthChanged = monthYear !== selectedPaymentMonthYear;
 
-            selectedPaymentMethod = '';
-            methodSelect.value = '';
-            paymentInfoBox.classList.remove('show');
+            if (monthChanged) {
+                selectedPaymentMethod = '';
+                methodSelect.value = '';
+                paymentInfoBox.classList.remove('show');
+                selectedPaymentMonthYear = monthYear;
+            }
 
             if (monthYear) {
                 const [month, year] = monthYear.split('-').map(Number);
@@ -365,10 +370,16 @@
                     if (contribution.status === 'paid') {
                         const warningMessage = `⚠️ ইতিমধ্যে Payment হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                         showPaymentMonthMessage(warningMessage, 'warning');
+                        selectedPaymentMethod = '';
+                        methodSelect.value = '';
+                        paymentInfoBox.classList.remove('show');
                         monthInfoBox.classList.remove('show');
                     } else if (contribution.status === 'pending') {
                         const warningMessage = `⏳ Payment request জমা দেওয়া হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
                         showPaymentMonthMessage(warningMessage, 'warning');
+                        selectedPaymentMethod = '';
+                        methodSelect.value = '';
+                        paymentInfoBox.classList.remove('show');
                         monthInfoBox.classList.remove('show');
                     } else {
                         clearPaymentMonthMessage();
@@ -376,10 +387,16 @@
                     }
                 } else {
                     showPaymentMonthMessage('আপনার এই মাসে Account নেই', 'warning');
+                    selectedPaymentMethod = '';
+                    methodSelect.value = '';
+                    paymentInfoBox.classList.remove('show');
                     monthInfoBox.classList.remove('show');
                 }
             } else {
                 clearPaymentMonthMessage();
+                selectedPaymentMethod = '';
+                methodSelect.value = '';
+                paymentInfoBox.classList.remove('show');
                 monthInfoBox.classList.remove('show');
             }
         }
@@ -702,6 +719,8 @@
                 document.getElementById('paymentMonth').value = '';
                 document.getElementById('paymentMethod').value = '';
                 document.getElementById('paymentPaidBy').value = '';
+                selectedPaymentMethod = '';
+                selectedPaymentMonthYear = '';
                 document.getElementById('monthInfoBox').classList.remove('show');
                 document.getElementById('paymentInfoBox').classList.remove('show');
                 clearPaymentMonthMessage();
