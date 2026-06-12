@@ -200,7 +200,7 @@
                 </div>
 
                 <!-- Month Info Message -->
-                <div id="monthInfoBox" class="month-info-box">
+                <div id="monthInfoBox" class="month-info-box show">
                     <p style="margin: 0; font-weight: bold; color: #856404;">
                         ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
                         <span id="paymentAppNameHint">Payment</span> নম্বর:
@@ -249,9 +249,8 @@
                     />
                 </div>
 
-             
+                <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">✓ Mark as Paid</button>
             </div>
-   <button class="btn btn-success btn-block" onclick="recordCurrentPayment()">✓ Mark as Paid</button>
             <!-- Contribution History -->
             <div class="card">
                 <div class="flex-between" style="margin-bottom: 1rem;">
@@ -375,7 +374,7 @@
                 }
             } else {
                 clearPaymentMonthMessage();
-                monthInfoBox.classList.remove('show');
+                monthInfoBox.classList.add('show');
             }
         }
 
@@ -675,7 +674,7 @@
                 document.getElementById('paymentMonth').value = '';
                 document.getElementById('paymentMethod').value = '';
                 document.getElementById('paymentPaidBy').value = '';
-                document.getElementById('monthInfoBox').classList.remove('show');
+                document.getElementById('monthInfoBox').classList.add('show');
                 document.getElementById('paymentInfoBox').classList.remove('show');
                 clearPaymentMonthMessage();
 
