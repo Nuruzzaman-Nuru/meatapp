@@ -136,7 +136,16 @@ const AuthManager = {
 
     async waitForFirebaseSyncReady(timeoutMs = this.firebaseReadyTimeoutMs) {
         if (!window.FirebaseSync?.ready) {
-            return;
+            await Promise.race([
+                new Promise(resolve => {
+                    window.addEventListener('firebase-sync-ready', resolve, { once: true });
+                }),
+                new Promise(resolve => setTimeout(resolve, timeoutMs))
+            ]);
+
+            if (!window.FirebaseSync?.ready) {
+                return;
+            }
         }
 
         await Promise.race([
@@ -463,7 +472,7 @@ const AuthManager = {
 
         await this.waitForFirebaseSyncReady();
         if (!window.FirebaseSync?.enabled) {
-            return { success: false, message: 'Firebase is not connected. Please refresh and try again.' };
+            console.warn('FirebaseSync is not enabled. Trying Firebase REST auth fallback.');
         }
 
         const indexedUser = await this.refreshIndexedUserBeforeAuth(phone);

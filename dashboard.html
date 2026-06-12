@@ -94,6 +94,17 @@
         .copy-btn.copied {
             background: #2e7d32;
         }
+        .payment-success-banner {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #28a745;
+            border-radius: 4px;
+            margin: 1rem 0;
+            display: none;
+        }
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -192,15 +203,16 @@
                 <div id="monthInfoBox" class="month-info-box">
                     <p style="margin: 0; font-weight: bold; color: #856404;">
                         ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
-                          নম্বর: 01931634792
-                           <button class="copy-btn" onclick="copyPaymentNumber()">📋 নম্বর কপি করুন</button>
-                          <span id="paymentAppNameHint"></span> নম্বর:
-                        </div>
-                        <div class="payment-number" id="paymentNumber">01931634792</div>
+                        <span id="paymentAppNameHint">Payment</span> নম্বর:
                     </p>
+                    <div class="payment-number" id="paymentNumber">01931634792</div>
+                    <button class="copy-btn" onclick="copyPaymentNumber(event)">📋 নম্বর কপি করুন</button>
                 </div>
 
                 <div id="paymentMonthMessage" class="alert" style="display: none;"></div>
+                <div id="paymentSuccessBanner" class="payment-success-banner">
+                    ✅ আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।
+                </div>
 
                 <!-- Payment Method Selection -->
                 <div class="form-group">
@@ -219,13 +231,11 @@
                         <span id="paymentAppName"></span> এ টাকা পাঠান:
                     </p>
                     
-                    <div class="payment-number-box" onclick="openPaymentApp()">
-                        <div class="payment-app-name">
-                          
+                    <div class="payment-number-box" onclick="openSelectedWalletApp()">
+                        <div class="payment-app-name" id="paymentAppNameLabel"></div>
+                        <div class="payment-number" id="paymentNumberDisplay">01931634792</div>
                         <div class="payment-click-hint">📱 অ্যাপ খুলতে ট্যাপ করুন</div>
                     </div>
-
-                   
                 </div>
 
                 <!-- Transaction ID Input -->
@@ -265,9 +275,11 @@
     </div>
 
     <script src="js/storage.js"></script>
-    <script src="js/auth.js?v=firebase-only-6"></script>
+    <script src="js/auth.js?v=firebase-only-7"></script>
     <script src="js/app.js"></script>
     <script type="module" src="js/notifications.js"></script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="js/firebase-sync.js?v=firebase-only-6"></script>
     <script>
         let currentUser = null;
         let memberContributionRefreshTimer = null;
@@ -368,11 +380,20 @@
         }
 
         function onPaymentMethodChanged() {
+            handlePaymentMethodChange();
+        }
+
+        function handlePaymentMethodChange() {
+            clearPaymentMonthMessage();
             const method = document.getElementById('paymentMethod')?.value;
             const infoBox = document.getElementById('paymentInfoBox');
             const appNameSpan = document.getElementById('paymentAppName');
             const appNameHint = document.getElementById('paymentAppNameHint');
             const numberSpan = document.getElementById('paymentNumber');
+            const numberDisplay = document.getElementById('paymentNumberDisplay');
+            const appNameLabel = document.getElementById('paymentAppNameLabel');
+
+            console.log('Payment method changed to:', method);
 
             if (method === 'bkash' || method === 'nagad') {
                 selectedPaymentMethod = method;
@@ -381,47 +402,79 @@
                 appNameSpan.textContent = config.name;
                 appNameHint.textContent = config.name;
                 numberSpan.textContent = config.number;
+                numberDisplay.textContent = config.number;
+                appNameLabel.textContent = `${config.name} নম্বর`;
                 
                 infoBox.classList.add('show');
                 
-                // Show toast
                 App.showToast(`${config.name} নম্বরে ট্যাপ করে অ্যাপ খুলুন`, 'info');
+                setTimeout(() => {
+                    openSelectedWalletApp();
+                }, 300);
             } else {
                 selectedPaymentMethod = '';
+                appNameHint.textContent = 'Payment';
                 infoBox.classList.remove('show');
             }
         }
 
         function openPaymentApp() {
+            openSelectedWalletApp();
+        }
+
+        function openSelectedWalletApp() {
             if (!selectedPaymentMethod) {
                 App.showToast('প্রথমে Payment Method সিলেক্ট করুন', 'warning');
                 return;
             }
 
             const config = paymentConfig[selectedPaymentMethod];
-            const isAndroid = /Android/i.test(navigator.userAgent);
-            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const walletApps = {
+                bkash: {
+                    name: 'bKash',
+                    androidPackage: 'com.bKash.customerapp',
+                    appUrl: 'bkash://start',
+                    fallbackUrl: 'https://www.bkash.com'
+                },
+                nagad: {
+                    name: 'Nagad',
+                    androidPackage: 'com.konasl.nagad',
+                    appUrl: 'nagad://start',
+                    fallbackUrl: 'https://www.nagad.com.bd'
+                }
+            };
+            const wallet = walletApps[selectedPaymentMethod];
 
-            App.showToast(`${config.name} অ্যাপ খোলা হচ্ছে...`, 'info');
-
-            if (isAndroid) {
-                // Try to open app via package name
-                window.location.href = `intent://#Intent;package=${config.androidPackage};end`;
-                
-                // Fallback: Open Play Store after delay
-                setTimeout(() => {
-                    window.location.href = config.playStore;
-                }, 1500);
-            } else if (isIOS) {
-                // Open App Store
-                window.location.href = config.appStore;
-            } else {
-                // Desktop/Web fallback
-                window.open(config.playStore, '_blank', 'noopener');
+            if (!wallet) {
+                console.log('Wallet not found for method:', selectedPaymentMethod);
+                return;
             }
+
+            console.log('Opening wallet app for method:', selectedPaymentMethod, wallet);
+            App.showToast(`Opening ${wallet.name}. Pay to ${config.number}, then enter the transaction ID.`, 'info');
+
+            if (/Android/i.test(navigator.userAgent)) {
+                const intentUrl = `intent://start#Intent;scheme=${selectedPaymentMethod};package=${wallet.androidPackage};action=android.intent.action.VIEW;end`;
+                console.log('Attempting intent:', intentUrl);
+                window.location.href = intentUrl;
+
+                setTimeout(() => {
+                    if (document.visibilityState === 'visible') {
+                        App.showToast(`${wallet.name} app may not be installed. Copy 01931634792 and open ${wallet.name} manually.`, 'warning');
+                    }
+                }, 2000);
+                return;
+            }
+
+            window.location.href = wallet.appUrl;
+            setTimeout(() => {
+                if (document.visibilityState === 'visible') {
+                    App.showToast(`${wallet.name} app may not be installed. Copy 01931634792 and open ${wallet.name} manually.`, 'warning');
+                }
+            }, 2000);
         }
 
-        function copyPaymentNumber() {
+        function copyPaymentNumber(event) {
             const number = document.getElementById('paymentNumber').textContent;
             navigator.clipboard.writeText(number).then(() => {
                 const btn = event.target;
@@ -625,18 +678,24 @@
                 document.getElementById('monthInfoBox').classList.remove('show');
                 document.getElementById('paymentInfoBox').classList.remove('show');
                 clearPaymentMonthMessage();
-                
-                document.getElementById('paymentSuccessBanner').style.display = 'block';
 
-setTimeout(() => {
-    document.getElementById('paymentSuccessBanner').style.display = 'none';
-}, 5000);
+                showPaymentSuccessBanner();
                 setTimeout(() => {
                     initializeDashboard();
                 }, 3000);
             } else {
                 App.showToast(result.message || 'Payment জমা দিতে ব্যর্থ', 'error');
             }
+        }
+
+        function showPaymentSuccessBanner() {
+            const banner = document.getElementById('paymentSuccessBanner');
+            if (!banner) return;
+
+            banner.style.display = 'block';
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
         }
 
         async function syncPaymentRequestToFirebase(submittedContribution) {
@@ -651,7 +710,8 @@ setTimeout(() => {
                 }
 
                 if (!window.FirebaseSync?.enabled) {
-                    throw new Error('Firebase sync is not ready');
+                    await syncPaymentRequestWithRestFallback(submittedContribution);
+                    return;
                 }
 
                 if (FirebaseSync.syncContributionToFirebase) {
@@ -663,6 +723,34 @@ setTimeout(() => {
                 console.error('Payment request Firebase sync failed', error);
                 App.showToast('Firebase এ পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।', 'error');
                 throw error;
+            }
+        }
+
+        async function syncPaymentRequestWithRestFallback(submittedContribution) {
+            const databaseURL = AuthManager.getFirebaseDatabaseURL?.() || AuthManager.firebaseDatabaseURL;
+            const basePath = AuthManager.getFirebaseBasePath?.() || 'meatAppData/default';
+
+            if (!databaseURL || !submittedContribution?.id) {
+                throw new Error('Firebase REST fallback is not ready');
+            }
+
+            const writes = [
+                fetch(`${databaseURL}/${basePath}/contributions/${submittedContribution.id}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submittedContribution)
+                }),
+                fetch(`${databaseURL}/${basePath}/pendingPaymentIds/${submittedContribution.id}.json`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(submittedContribution.status === 'pending' ? true : null)
+                })
+            ];
+            const responses = await Promise.all(writes);
+            const failedResponse = responses.find(response => !response.ok);
+
+            if (failedResponse) {
+                throw new Error(`Firebase REST payment sync failed: ${failedResponse.status}`);
             }
         }
 
@@ -691,18 +779,6 @@ setTimeout(() => {
                         <p style="margin: 0.5rem 0;"><strong>সময়:</strong> ${paidDate}</p>
                         <p style="margin: 0.5rem 0;"><strong>স্ট্যাটাস:</strong> <span style="background: #f59e0b; color: white; padding: 0.3rem 0.8rem; border-radius: 4px;">⏳ প্রশাসক নিশ্চিতকরণের অপেক্ষায়</span></p>
                     </div>
-
-                 <div id="paymentSuccessBanner"
-     style="background:#d4edda;
-            color:#155724;
-            padding:15px;
-            text-align:center;
-            font-weight:bold;
-            border-bottom:2px solid #28a745;
-            display:none;">
-    ✅ আপনার Payment Request জমা হয়েছে। প্রশাসক শীঘ্রই নিশ্চিত করবেন।
-</div>
-
                     <button class="btn btn-success" onclick="closePaymentModal()" style="padding: 0.8rem 2rem; font-size: 1rem; margin-top: 1.5rem;">ঠিক আছে, বন্ধ করুন</button>
                 </div>
             `;
@@ -869,4 +945,4 @@ setTimeout(() => {
         }
     </script>
 </body>
-</html
+</html>
