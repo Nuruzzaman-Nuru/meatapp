@@ -240,11 +240,11 @@
 
                 <!-- Transaction ID Input -->
                 <div class="form-group">
-                    <label for="paymentPaidBy">Transaction ID / Paid To <span style="color: red;">*</span></label>
+                    <label id="paymentPaidByLabel" for="paymentPaidBy">Transaction ID / Paid To <span style="color: red;">*</span></label>
                     <input 
                         type="text" 
                         id="paymentPaidBy" 
-                        placeholder="e.g., TrxID: 8HG72K or Nuru"
+                        placeholder="Payment method select করুন"
                         required
                     />
                 </div>
@@ -359,6 +359,7 @@
                 selectedPaymentMethod = '';
                 methodSelect.value = '';
                 paymentInfoBox.classList.remove('show');
+                resetPaymentEntryHints();
                 selectedPaymentMonthYear = monthYear;
             }
 
@@ -373,6 +374,7 @@
                         selectedPaymentMethod = '';
                         methodSelect.value = '';
                         paymentInfoBox.classList.remove('show');
+                        resetPaymentEntryHints();
                         monthInfoBox.classList.remove('show');
                     } else if (contribution.status === 'pending') {
                         const warningMessage = `⏳ Payment request জমা দেওয়া হয়েছে - ${App.getMonthName(month)} ${year} (${App.formatCurrency(contribution.amount)})`;
@@ -380,6 +382,7 @@
                         selectedPaymentMethod = '';
                         methodSelect.value = '';
                         paymentInfoBox.classList.remove('show');
+                        resetPaymentEntryHints();
                         monthInfoBox.classList.remove('show');
                     } else {
                         clearPaymentMonthMessage();
@@ -390,6 +393,7 @@
                     selectedPaymentMethod = '';
                     methodSelect.value = '';
                     paymentInfoBox.classList.remove('show');
+                    resetPaymentEntryHints();
                     monthInfoBox.classList.remove('show');
                 }
             } else {
@@ -397,6 +401,7 @@
                 selectedPaymentMethod = '';
                 methodSelect.value = '';
                 paymentInfoBox.classList.remove('show');
+                resetPaymentEntryHints();
                 monthInfoBox.classList.remove('show');
             }
         }
@@ -416,6 +421,8 @@
             const numberSpan = document.getElementById('paymentNumber');
             const numberDisplay = document.getElementById('paymentNumberDisplay');
             const appNameLabel = document.getElementById('paymentAppNameLabel');
+            const paidByInput = document.getElementById('paymentPaidBy');
+            const paidByLabel = document.getElementById('paymentPaidByLabel');
 
             console.log('Payment method changed to:', method);
 
@@ -423,6 +430,7 @@
                 selectedPaymentMethod = '';
                 methodSelect.value = '';
                 infoBox.classList.remove('show');
+                resetPaymentEntryHints();
 
                 if (method) {
                     App.showToast('প্রথমে মাস সিলেক্ট করুন', 'warning');
@@ -437,6 +445,7 @@
                 selectedPaymentMethod = '';
                 methodSelect.value = '';
                 infoBox.classList.remove('show');
+                resetPaymentEntryHints();
                 onMonthSelected();
                 return;
             }
@@ -450,14 +459,19 @@
                 numberSpan.textContent = config.number;
                 numberDisplay.textContent = config.number;
                 appNameLabel.textContent = `${config.name} নম্বর`;
+                paidByLabel.innerHTML = `${config.name} Transaction ID <span style="color: red;">*</span>`;
+                paidByInput.placeholder = `${config.name} TrxID লিখুন`;
                 
                 infoBox.classList.add('show');
                 
-                App.showToast(`${config.name} নম্বরে ট্যাপ করে অ্যাপ খুলুন`, 'info');
+                App.showToast(`${config.name} খুলছে। Payment শেষে ফিরে এসে Transaction ID লিখুন`, 'info');
+                paidByInput.focus();
                 openSelectedWalletApp();
             } else {
                 selectedPaymentMethod = '';
                 appNameHint.textContent = 'Payment';
+                paidByLabel.innerHTML = 'Transaction ID / Paid To <span style="color: red;">*</span>';
+                paidByInput.placeholder = method === 'cash' ? 'যার কাছে Cash দিয়েছেন তার নাম লিখুন' : 'Payment method select করুন';
                 infoBox.classList.remove('show');
             }
         }
@@ -665,6 +679,15 @@
             messageBox.style.display = 'none';
         }
 
+        function resetPaymentEntryHints() {
+            const paidByLabel = document.getElementById('paymentPaidByLabel');
+            const paidByInput = document.getElementById('paymentPaidBy');
+            if (!paidByLabel || !paidByInput) return;
+
+            paidByLabel.innerHTML = 'Transaction ID / Paid To <span style="color: red;">*</span>';
+            paidByInput.placeholder = 'Payment method select করুন';
+        }
+
         async function recordCurrentPayment() {
             const monthSelect = document.getElementById('paymentMonth');
             const methodSelect = document.getElementById('paymentMethod');
@@ -723,6 +746,7 @@
                 selectedPaymentMonthYear = '';
                 document.getElementById('monthInfoBox').classList.remove('show');
                 document.getElementById('paymentInfoBox').classList.remove('show');
+                resetPaymentEntryHints();
                 clearPaymentMonthMessage();
 
                 showPaymentSuccessBanner();
