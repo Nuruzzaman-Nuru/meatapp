@@ -37,6 +37,54 @@ const PasswordUtils = {
     }
 };
 
+const PhoneUtils = {
+    digits(value) {
+        return String(value || '').replace(/\D/g, '');
+    },
+
+    normalize(value) {
+        const digits = this.digits(value);
+        if (!digits) return '';
+
+        if (digits.length === 13 && digits.startsWith('880')) {
+            return `0${digits.slice(3)}`;
+        }
+        if (digits.length === 12 && digits.startsWith('880')) {
+            return `0${digits.slice(3)}`;
+        }
+        if (digits.length === 10 && digits.startsWith('1')) {
+            return `0${digits}`;
+        }
+
+        return digits;
+    },
+
+    getVariants(value) {
+        const normalized = this.normalize(value);
+        const variants = new Set();
+        const raw = String(value || '').trim();
+        const digits = this.digits(value);
+
+        if (raw) variants.add(raw);
+        if (digits) variants.add(digits);
+        if (normalized) {
+            variants.add(normalized);
+            if (normalized.startsWith('0')) {
+                variants.add(`880${normalized.slice(1)}`);
+                variants.add(`+880${normalized.slice(1)}`);
+            }
+        }
+
+        return [...variants].filter(Boolean);
+    },
+
+    matches(a, b) {
+        const normalizedA = this.normalize(a);
+        const normalizedB = this.normalize(b);
+        return Boolean(normalizedA && normalizedB && normalizedA === normalizedB);
+    }
+};
+
 const StorageManager = {
     // Key constants
     KEYS: {
@@ -149,8 +197,7 @@ const StorageManager = {
      */
     getUserByPhone(phone) {
         const users = this.getUsers();
-        const normalizedPhone = String(phone || '').trim();
-        return users.find(u => String(u.phone || '').trim() === normalizedPhone);
+        return users.find(u => PhoneUtils.matches(u.phone, phone));
     },
 
     /**
@@ -572,6 +619,7 @@ const StorageManager = {
 };
 
 window.StorageManager = StorageManager;
+window.PhoneUtils = PhoneUtils;
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {

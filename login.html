@@ -66,8 +66,20 @@
     <script src="js/auth.js?v=firebase-only-7"></script>
     <script>
         window.addEventListener('DOMContentLoaded', () => {
+            fillPhoneFromLoginLink();
             AuthManager.blockIfLoggedIn();
         });
+
+        function fillPhoneFromLoginLink() {
+            const params = new URLSearchParams(window.location.search);
+            const phone = params.get('phone') || params.get('number') || params.get('mobile');
+            if (!phone) return;
+
+            const phoneInput = document.getElementById('loginPhone');
+            if (phoneInput) {
+                phoneInput.value = phone.trim();
+            }
+        }
 
         async function handleLogin() {
             const phone = document.getElementById('loginPhone').value;

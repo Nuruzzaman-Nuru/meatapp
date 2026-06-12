@@ -261,10 +261,15 @@ const AuthManager = {
     },
 
     async getFirebaseUserByIndexedPhone(phone) {
-        const phoneKey = this.makeFirebaseKey(phone);
-        if (!phoneKey) return null;
+        const phoneKeys = this.getPhoneIndexKeys(phone);
+        if (phoneKeys.length === 0) return null;
 
-        return await this.getFirebaseUserByIndex(`userPhoneIndex/${phoneKey}`);
+        for (const phoneKey of phoneKeys) {
+            const user = await this.getFirebaseUserByIndex(`userPhoneIndex/${phoneKey}`);
+            if (user) return user;
+        }
+
+        return null;
     },
 
     async getFirebaseUserByIndexedEmail(email) {
@@ -330,12 +335,12 @@ const AuthManager = {
             if (!databaseURL || !user?.id) return;
 
             const writes = [];
-            const phoneKey = this.makeFirebaseKey(user.phone);
+            const phoneKeys = this.getPhoneIndexKeys(user.phone);
             const emailKey = this.makeFirebaseKey(user.email);
 
-            if (phoneKey) {
+            phoneKeys.forEach(phoneKey => {
                 writes.push(this.putFirebaseValue(`${basePath}/userPhoneIndex/${phoneKey}`, user.id));
-            }
+            });
             if (emailKey) {
                 writes.push(this.putFirebaseValue(`${basePath}/userEmailIndex/${emailKey}`, user.id));
             }
@@ -358,12 +363,12 @@ const AuthManager = {
                 this.putFirebaseValue(`${basePath}/pendingUserIds/${user.id}`, null),
                 this.putFirebaseValue(`${basePath}/recentUserIds/${user.id}`, null)
             ];
-            const phoneKey = this.makeFirebaseKey(user.phone);
+            const phoneKeys = this.getPhoneIndexKeys(user.phone);
             const emailKey = this.makeFirebaseKey(user.email);
 
-            if (phoneKey) {
+            phoneKeys.forEach(phoneKey => {
                 writes.push(this.putFirebaseValue(`${basePath}/userPhoneIndex/${phoneKey}`, null));
-            }
+            });
             if (emailKey) {
                 writes.push(this.putFirebaseValue(`${basePath}/userEmailIndex/${emailKey}`, null));
             }
@@ -644,9 +649,22 @@ const AuthManager = {
 
     getUserIdentityKeys(user) {
         const keys = [];
-        if (user?.phone) keys.push(`phone:${String(user.phone).trim()}`);
+        if (user?.phone) {
+            const phoneVariants = window.PhoneUtils?.getVariants
+                ? PhoneUtils.getVariants(user.phone)
+                : [String(user.phone).trim()];
+            phoneVariants.forEach(phone => keys.push(`phone:${phone}`));
+        }
         if (user?.email) keys.push(`email:${String(user.email).trim().toLowerCase()}`);
         return keys;
+    },
+
+    getPhoneIndexKeys(phone) {
+        const variants = window.PhoneUtils?.getVariants
+            ? PhoneUtils.getVariants(phone)
+            : [String(phone || '').trim()];
+
+        return [...new Set(variants.map(value => this.makeFirebaseKey(value)).filter(Boolean))];
     },
 
     getUserTimestamp(user) {
