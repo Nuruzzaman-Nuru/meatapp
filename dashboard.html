@@ -437,9 +437,7 @@
                 infoBox.classList.add('show');
                 
                 App.showToast(`${config.name} নম্বরে ট্যাপ করে অ্যাপ খুলুন`, 'info');
-                setTimeout(() => {
-                    openSelectedWalletApp();
-                }, 300);
+                openSelectedWalletApp();
             } else {
                 selectedPaymentMethod = '';
                 appNameHint.textContent = 'Payment';
