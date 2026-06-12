@@ -200,7 +200,7 @@
                 </div>
 
                 <!-- Month Info Message -->
-                <div id="monthInfoBox" class="month-info-box show">
+                <div id="monthInfoBox" class="month-info-box">
                     <p style="margin: 0; font-weight: bold; color: #856404;">
                         ✓ এই নম্বরে টাকা পাঠান এবং Payment সম্পন্ন হলে Submit করুন।
                         <span id="paymentAppNameHint">Payment</span> নম্বর:
@@ -350,6 +350,12 @@
         function onMonthSelected() {
             const monthYear = document.getElementById('paymentMonth').value;
             const monthInfoBox = document.getElementById('monthInfoBox');
+            const methodSelect = document.getElementById('paymentMethod');
+            const paymentInfoBox = document.getElementById('paymentInfoBox');
+
+            selectedPaymentMethod = '';
+            methodSelect.value = '';
+            paymentInfoBox.classList.remove('show');
 
             if (monthYear) {
                 const [month, year] = monthYear.split('-').map(Number);
@@ -374,7 +380,7 @@
                 }
             } else {
                 clearPaymentMonthMessage();
-                monthInfoBox.classList.add('show');
+                monthInfoBox.classList.remove('show');
             }
         }
 
@@ -384,6 +390,8 @@
 
         function handlePaymentMethodChange() {
             clearPaymentMonthMessage();
+            const monthSelect = document.getElementById('paymentMonth');
+            const methodSelect = document.getElementById('paymentMethod');
             const method = document.getElementById('paymentMethod')?.value;
             const infoBox = document.getElementById('paymentInfoBox');
             const appNameSpan = document.getElementById('paymentAppName');
@@ -393,6 +401,28 @@
             const appNameLabel = document.getElementById('paymentAppNameLabel');
 
             console.log('Payment method changed to:', method);
+
+            if (!monthSelect.value) {
+                selectedPaymentMethod = '';
+                methodSelect.value = '';
+                infoBox.classList.remove('show');
+
+                if (method) {
+                    App.showToast('প্রথমে মাস সিলেক্ট করুন', 'warning');
+                    monthSelect.focus();
+                }
+                return;
+            }
+
+            const [month, year] = monthSelect.value.split('-').map(Number);
+            const contribution = StorageManager.getOrCreateContribution(currentUser.id, month, year);
+            if (!contribution || contribution.status === 'paid' || contribution.status === 'pending') {
+                selectedPaymentMethod = '';
+                methodSelect.value = '';
+                infoBox.classList.remove('show');
+                onMonthSelected();
+                return;
+            }
 
             if (method === 'bkash' || method === 'nagad') {
                 selectedPaymentMethod = method;
@@ -674,7 +704,7 @@
                 document.getElementById('paymentMonth').value = '';
                 document.getElementById('paymentMethod').value = '';
                 document.getElementById('paymentPaidBy').value = '';
-                document.getElementById('monthInfoBox').classList.add('show');
+                document.getElementById('monthInfoBox').classList.remove('show');
                 document.getElementById('paymentInfoBox').classList.remove('show');
                 clearPaymentMonthMessage();
 
