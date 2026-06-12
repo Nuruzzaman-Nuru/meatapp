@@ -164,7 +164,8 @@ const App = {
             confirmedBy: null,
             rejectedAt: new Date().toISOString(),
             rejectedBy,
-            rejectionReason: rejectionReason || 'Rejected by admin'
+            rejectionReason: rejectionReason || 'Rejected by admin',
+            updatedAt: new Date().toISOString()
         });
 
         if (!updated) {
@@ -196,7 +197,8 @@ const App = {
             paymentProof: null,
             confirmedBy: null,
             markedUnpaidAt: new Date().toISOString(),
-            markedUnpaidBy: updatedBy
+            markedUnpaidBy: updatedBy,
+            updatedAt: new Date().toISOString()
         });
 
         if (!updated) {

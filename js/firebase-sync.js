@@ -187,6 +187,8 @@ const FirebaseSync = {
         const dateValues = [
             contribution?.paymentDate,
             contribution?.paymentRequestedAt,
+            contribution?.markedUnpaidAt,
+            contribution?.rejectedAt,
             contribution?.updatedAt,
             contribution?.createdAt
         ];
@@ -207,6 +209,7 @@ const FirebaseSync = {
         return contribution?.status === 'unpaid'
             && !contribution.paymentDate
             && !contribution.paymentRequestedAt
+            && !contribution.markedUnpaidAt
             && !contribution.updatedAt
             && !contribution.rejectedAt;
     },
